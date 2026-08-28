@@ -1,17 +1,18 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: #ffffff;
+  --color-foreground: #202020;
+  --color-pink: #ffcfeb;
+  --color-gray: #9c9c9b;
+  --color-light-gray: #f0f0f0;
+  --radius-card: 10px;
+  --page-gutter: clamp(16px, 3vw, 40px);
+  --content-width: 1200px;
+  --font-involve: "Involve", Arial, Helvetica, sans-serif;
 }
 
 html {
-  height: 100%;
+  min-height: 100%;
+  background: var(--color-background);
 }
 
 html,
@@ -22,11 +23,9 @@ body {
 
 body {
   min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--color-foreground);
+  background: var(--color-background);
+  font-family: var(--font-involve);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -42,8 +41,11 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+button,
+input {
+  font: inherit;
+}
+
+button {
+  color: inherit;
 }

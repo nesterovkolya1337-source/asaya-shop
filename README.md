@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ASAYA shop
 
-## Getting Started
+Рабочий стартер интернет-магазина ASAYA на Next.js. Проект подготовлен для поэтапной верстки по **Figma Page 2**.
 
-First, run the development server:
+## Запуск на ноутбуке
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Открыть: [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Проверка перед отправкой изменений:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
 
-## Learn More
+## Маршруты
 
-To learn more about Next.js, take a look at the following resources:
+- `/` — главная, Figma `Frame 6`
+- `/catalog` — весь каталог, Figma `All shop`
+- `/checkout` — оформление заказа, Figma `Frame 7790`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Полная карта узлов и ссылки находятся в [`docs/figma.md`](docs/figma.md).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Важные договорённости
 
-## Deploy on Vercel
+- Визуальный источник — Figma Page 2.
+- Шрифт макета — Involve. Файлы шрифта нужно добавить отдельно после подтверждения лицензии.
+- Изображения из Figma нельзя оставлять на временных MCP-ссылках: перед финальной версткой их нужно скачать в `public/images`.
+- Ключи Ozon хранятся только на сервере и не должны начинаться с `NEXT_PUBLIC_`.
+- `sources/` в родительском ChatGPT-проекте — только для чтения и в этот репозиторий не входит.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Следующий этап
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Сверстать главную `/` по `Frame 6` с локальными изображениями и точной типографикой, затем вынести повторяющиеся элементы в компоненты карточки товара, хедера и футера.

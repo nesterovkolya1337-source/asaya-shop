@@ -1,0 +1,83 @@
+.header {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+}
+
+.navigation {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20px;
+}
+
+.navigationSide {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 3vw, 34px);
+  font-size: 15px;
+}
+
+.navigationEnd {
+  justify-content: flex-end;
+}
+
+.wordmark {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.08em;
+}
+
+.footer {
+  padding: 0 var(--page-gutter) var(--page-gutter);
+}
+
+.footerInner {
+  width: min(100%, var(--content-width));
+  min-height: 260px;
+  margin: 0 auto;
+  padding: clamp(28px, 5vw, 56px);
+  border-radius: var(--radius-card);
+  color: white;
+  background: var(--color-foreground);
+}
+
+.footerWordmark {
+  font-size: clamp(72px, 14vw, 172px);
+  font-weight: 700;
+  line-height: 0.8;
+  letter-spacing: -0.08em;
+}
+
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 32px;
+  margin-top: 64px;
+}
+
+.footerNote {
+  margin-top: 28px;
+  color: var(--color-gray);
+}
+
+@media (max-width: 680px) {
+  .navigation {
+    grid-template-columns: auto 1fr;
+  }
+
+  .wordmark {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .navigationSide:first-child {
+    display: none;
+  }
+
+  .navigationEnd {
+    grid-column: 2;
+    justify-content: flex-end;
+  }
+}
