@@ -201,8 +201,9 @@
 
 @media (max-width: 620px) {
   .card {
-    height: auto;
-    aspect-ratio: 0.7;
+    width: 100%;
+    height: 340px;
+    aspect-ratio: auto;
     min-height: 340px;
   }
 
