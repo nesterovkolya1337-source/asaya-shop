@@ -100,98 +100,6 @@
   text-align: center;
 }
 
-.productGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-}
-
-.productCard {
-  position: relative;
-  min-width: 0;
-  height: 500px;
-  overflow: hidden;
-  border-radius: var(--radius-card);
-  background: var(--color-light-gray);
-}
-
-.productBadges {
-  position: absolute;
-  z-index: 3;
-  top: 11px;
-  left: 11px;
-  display: flex;
-  gap: 6px;
-}
-
-.productBadges span {
-  display: inline-flex;
-  min-height: 25px;
-  align-items: center;
-  padding: 0 15px;
-  border-radius: 999px;
-  color: white;
-  background: var(--color-foreground);
-  font-size: 14px;
-}
-
-.productImage {
-  object-fit: contain;
-  padding: 38px 54px 78px;
-}
-
-.heart {
-  position: absolute;
-  z-index: 3;
-  top: 14px;
-  right: 18px;
-}
-
-.productInfo {
-  position: absolute;
-  z-index: 3;
-  right: 20px;
-  bottom: 18px;
-  left: 20px;
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.rating {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-bottom: 8px;
-  color: var(--color-gray);
-  font-size: 14px;
-}
-
-.productInfo h3 {
-  max-width: 190px;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 18px;
-}
-
-.price {
-  display: grid;
-  justify-items: end;
-  gap: 2px;
-  font-size: 16px;
-  white-space: nowrap;
-}
-
-.price strong {
-  font-weight: 700;
-}
-
-.price span {
-  color: var(--color-gray);
-  text-decoration: line-through;
-}
-
 .manifesto {
   position: relative;
   min-height: 585px;
@@ -333,20 +241,17 @@
 }
 
 @media (max-width: 900px) {
-  .productGrid {
+  .categoryGrid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .productCard:last-child {
-    grid-column: 1 / -1;
-  }
-
-  .categoryGrid {
-    grid-template-columns: 1fr;
-  }
-
   .categoryCard {
-    min-height: 520px;
+    min-height: 440px;
+  }
+
+  .categoryCard:last-child {
+    grid-column: 1 / -1;
+    min-height: 360px;
   }
 
   .careSection {
@@ -369,10 +274,11 @@
 
   .announcement {
     padding: 7px 12px;
+    font-size: 12px;
   }
 
   .hero {
-    min-height: 620px;
+    min-height: min(690px, 78svh);
   }
 
   .heroImage {
@@ -385,31 +291,95 @@
     left: 20px;
   }
 
-  .productGrid {
-    grid-template-columns: 1fr;
+  .heroCopy h1 {
+    max-width: 300px;
+    font-size: clamp(38px, 10vw, 48px);
   }
 
-  .productCard:last-child {
-    grid-column: auto;
+  .lightButton,
+  .darkButton {
+    min-height: 38px;
+    padding-inline: 20px;
+    font-size: 14px;
   }
 
   .manifesto {
-    min-height: 540px;
+    min-height: 460px;
   }
 
   .manifesto p {
-    width: 88%;
+    width: 90%;
+    font-size: clamp(20px, 6.2vw, 27px);
+    line-height: 1.05;
+  }
+
+  .categoryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .categoryCard {
-    min-height: 430px;
+    min-height: 250px;
+  }
+
+  .categoryCard:last-child {
+    grid-column: 1 / -1;
+    min-height: 210px;
+  }
+
+  .categoryCard span {
+    font-size: 24px;
   }
 
   .careImageWrap {
-    min-height: 510px;
+    min-height: 430px;
+  }
+
+  .careSection {
+    min-height: 0;
+  }
+
+  .careCopy {
+    min-height: 390px;
+    padding: 34px 24px;
+  }
+
+  .careCopy h2 {
+    font-size: 45px;
+  }
+
+  .careCopy p {
+    margin-top: 20px;
+    font-size: 16px;
   }
 
   .community {
     padding: 30px 20px;
+  }
+
+  .community h2 {
+    margin-bottom: 22px;
+    font-size: 32px;
+  }
+
+  .communityGrid {
+    grid-auto-columns: 72vw;
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    gap: 8px;
+    margin-inline: -20px;
+    padding-inline: 20px;
+    overflow-x: auto;
+    scroll-padding-inline: 20px;
+    scroll-snap-type: inline mandatory;
+    scrollbar-width: none;
+  }
+
+  .communityGrid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .communityPhoto {
+    scroll-snap-align: start;
   }
 }

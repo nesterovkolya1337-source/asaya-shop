@@ -1,12 +1,12 @@
 .page {
   width: min(100%, calc(var(--content-width) + (var(--page-gutter) * 2)));
   margin: 0 auto;
-  padding: 0 var(--page-gutter) 60px;
+  padding: 0 var(--page-gutter) 36px;
 }
 
 @media (max-width: 620px) {
   .page {
-    padding: 8px 10px 30px;
+    padding: 8px 10px 20px;
   }
 
   .page > header {

@@ -1,4 +1,6 @@
 .header {
+  position: relative;
+  z-index: 20;
   min-height: 76px;
   display: flex;
   align-items: center;
@@ -31,7 +33,7 @@
 }
 
 .overlay .navigationSide {
-  font-size: 24px;
+  font-size: 16px;
 }
 
 .navigationEnd {
@@ -44,6 +46,50 @@
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.08em;
+}
+
+.desktopLogo {
+  display: block;
+}
+
+.mobileWordmark,
+.mobileMenu {
+  display: none;
+}
+
+.iconLink {
+  position: relative;
+  display: grid;
+  width: 28px;
+  height: 34px;
+  flex: none;
+  place-items: center;
+}
+
+.iconLink svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.counter {
+  position: absolute;
+  top: 0;
+  right: -5px;
+  display: grid;
+  min-width: 17px;
+  height: 17px;
+  place-items: center;
+  padding: 0 4px;
+  border-radius: 999px;
+  color: var(--color-foreground);
+  background: var(--color-pink);
+  font-size: 10px;
+  line-height: 1;
 }
 
 .footer {
@@ -106,6 +152,11 @@
   border: 0;
   border-left: 1px solid var(--color-foreground);
   background: transparent;
+  cursor: pointer;
+}
+
+.subscribe input:disabled {
+  color: var(--color-gray);
 }
 
 .footerLinks {
@@ -126,28 +177,118 @@
   border: 0;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 720px) {
+  .header {
+    min-height: 54px;
+    padding: 0 14px;
+    border: 1px solid rgb(32 32 32 / 8%);
+    border-radius: 18px;
+    color: var(--color-foreground);
+    background: rgb(255 255 255 / 92%);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 8%);
+    backdrop-filter: blur(12px);
+  }
+
+  .overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    min-height: 54px;
+    padding: 0 14px;
+    color: var(--color-foreground);
+  }
+
   .navigation {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
   }
 
   .wordmark {
-    grid-column: 1;
-    grid-row: 1;
+    grid-column: 2;
+    font-size: 21px;
+    letter-spacing: -0.07em;
   }
 
   .navigationSide:first-child {
     display: none;
   }
 
-  .navigationEnd {
-    grid-column: 2;
-    justify-content: flex-end;
+  .mobileMenu {
+    position: relative;
+    display: block;
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
   }
 
-  .overlay .navigationEnd img {
-    width: 125px;
-    height: auto;
+  .mobileMenu summary {
+    display: grid;
+    width: 34px;
+    height: 40px;
+    align-content: center;
+    gap: 4px;
+    padding: 7px;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .mobileMenu summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .mobileMenu summary span {
+    width: 19px;
+    height: 1px;
+    background: currentColor;
+  }
+
+  .mobileMenuPanel {
+    position: absolute;
+    z-index: 30;
+    top: 48px;
+    left: -7px;
+    display: grid;
+    width: min(280px, calc(100vw - 36px));
+    gap: 0;
+    padding: 8px;
+    border-radius: 16px;
+    color: var(--color-foreground);
+    background: white;
+    box-shadow: 0 18px 50px rgb(0 0 0 / 14%);
+  }
+
+  .mobileMenuPanel a {
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 15px;
+  }
+
+  .mobileMenuPanel a:hover {
+    background: var(--color-light-gray);
+  }
+
+  .desktopLogo {
+    display: none;
+  }
+
+  .mobileWordmark {
+    display: inline;
+  }
+
+  .navigationEnd {
+    grid-column: 3;
+    grid-row: 1;
+    justify-content: flex-end;
+    gap: 5px;
+  }
+
+  .mobileOptional {
+    display: none;
+  }
+
+  .iconLink {
+    width: 27px;
   }
 
   .footerColumns {
@@ -160,5 +301,45 @@
 
   .subscribe button {
     min-width: 118px;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer {
+    padding-inline: 10px;
+  }
+
+  .footerInner {
+    padding: 28px 18px;
+  }
+
+  .footerColumns {
+    gap: 34px;
+    margin-top: 24px;
+    padding-top: 25px;
+  }
+
+  .footerLead {
+    font-size: 20px;
+  }
+
+  .footerLinks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 18px;
+    font-size: 14px;
+  }
+
+  .subscribe {
+    margin-top: 20px;
+  }
+
+  .subscribe input {
+    height: 44px;
+    padding-inline: 14px;
+  }
+
+  .subscribe button {
+    min-width: 105px;
+    font-size: 13px;
   }
 }

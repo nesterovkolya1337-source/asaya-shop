@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ShopProvider } from "@/components/shop-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,7 +13,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ru">
-      <body>{children}</body>
+      <body>
+        <ShopProvider>{children}</ShopProvider>
+      </body>
     </html>
   );
 }

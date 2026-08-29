@@ -1,66 +1,46 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ProductRail } from "@/components/product-rail";
 import { SiteFooter, SiteHeader } from "@/components/site-shell";
 import { assetPath } from "@/lib/asset-path";
 import styles from "./page.module.css";
-
-const products = [
-  {
-    name: "Мульти спрей для волос",
-    price: "500 ₽",
-    oldPrice: "700 ₽",
-    image: assetPath("/images/figma/product-spray.png"),
-  },
-  {
-    name: "Увлажняющий крем для тела с кокосом",
-    price: "500 ₽",
-    oldPrice: "700 ₽",
-    image: assetPath("/images/figma/product-cream-coconut.png"),
-  },
-  {
-    name: "Гель для душа",
-    price: "500 ₽",
-    oldPrice: "700 ₽",
-    image: assetPath("/images/figma/product-gel-pink.png"),
-  },
-];
 
 const categories = [
   {
     name: "Волосы",
     href: "/catalog?category=hair",
-    image: assetPath("/images/figma/asaya-6205.png"),
+    image: assetPath("/images/figma/asaya-6205.webp"),
     position: "hair",
   },
   {
     name: "Тело",
     href: "/catalog?category=body",
-    image: assetPath("/images/figma/asaya-6691.jpg"),
+    image: assetPath("/images/figma/asaya-6691.webp"),
     position: "body",
   },
   {
     name: "Лицо",
     href: "/catalog?category=face",
-    image: assetPath("/images/figma/asaya-6459.png"),
+    image: assetPath("/images/figma/asaya-6459.webp"),
     position: "face",
   },
 ];
 
 const communityPhotos = [
   {
-    image: assetPath("/images/figma/ugc-img5872.jpg"),
+    image: assetPath("/images/figma/ugc-img5872.webp"),
     alt: "Девушки с косметикой ASAYA",
   },
   {
-    image: assetPath("/images/figma/ugc-000012160039.png"),
+    image: assetPath("/images/figma/ugc-000012160039.webp"),
     alt: "Уход за волосами с ASAYA",
   },
   {
-    image: assetPath("/images/figma/ugc-red-product.png"),
+    image: assetPath("/images/figma/ugc-red-product.webp"),
     alt: "Красный флакон ASAYA",
   },
   {
-    image: assetPath("/images/figma/ugc-img3456.jpg"),
+    image: assetPath("/images/figma/ugc-img3456.webp"),
     alt: "Набор косметики ASAYA",
   },
 ];
@@ -81,7 +61,7 @@ export default function Home() {
               fill
               priority
               sizes="(max-width: 1280px) 94vw, 1160px"
-              src={assetPath("/images/figma/hero.png")}
+              src={assetPath("/images/figma/hero.webp")}
             />
             <SiteHeader overlay />
             <div className={styles.heroCopy}>
@@ -94,43 +74,7 @@ export default function Home() {
 
           <section className={styles.products} aria-labelledby="featured-title">
             <h2 id="featured-title">Бестселлеры / Новинки</h2>
-            <div className={styles.productGrid}>
-              {products.map((product) => (
-                <article className={styles.productCard} key={product.name}>
-                  <div className={styles.productBadges}>
-                    <span>Бестселлер</span>
-                    <span>-20%</span>
-                  </div>
-                  <Image
-                    alt={product.name}
-                    className={styles.productImage}
-                    fill
-                    sizes="(max-width: 760px) 92vw, 370px"
-                    src={product.image}
-                  />
-                  <Image
-                    alt="Добавить в избранное"
-                    className={styles.heart}
-                    height={21}
-                    src={assetPath("/images/figma/heart.svg")}
-                    width={23}
-                  />
-                  <div className={styles.productInfo}>
-                    <div>
-                      <div className={styles.rating}>
-                        <Image alt="5 звёзд" height={12} src={assetPath("/images/figma/stars.svg")} width={58} />
-                        <span>(123)</span>
-                      </div>
-                      <h3>{product.name}</h3>
-                    </div>
-                    <div className={styles.price}>
-                      <strong>{product.price}</strong>
-                      <span>{product.oldPrice}</span>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+            <ProductRail limit={3} />
           </section>
 
           <section className={styles.manifesto}>
@@ -139,7 +83,7 @@ export default function Home() {
               className={styles.coverImage}
               fill
               sizes="(max-width: 1280px) 94vw, 1160px"
-              src={assetPath("/images/figma/asaya-6139.png")}
+              src={assetPath("/images/figma/asaya-6139.webp")}
             />
             <p>
               Для ASAYA уход — это сочетание результата и эмоций. Мы создаём
@@ -170,7 +114,7 @@ export default function Home() {
                 className={styles.careImage}
                 fill
                 sizes="(max-width: 760px) 92vw, 580px"
-                src={assetPath("/images/figma/asaya-6459.png")}
+                src={assetPath("/images/figma/asaya-6459.webp")}
               />
             </div>
             <div className={styles.careCopy}>

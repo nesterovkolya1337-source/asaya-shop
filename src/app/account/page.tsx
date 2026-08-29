@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
-import { CheckoutView } from "@/components/checkout-view";
+import { AccountView } from "@/components/account-view";
 import { SiteFooter, SiteHeader } from "@/components/site-shell";
-import styles from "./checkout.module.css";
+import styles from "./account.module.css";
 
 export const metadata: Metadata = {
-  title: "Оформление заказа",
+  title: "Личный кабинет",
 };
 
-export default function CheckoutPage() {
+export default function AccountPage() {
   return (
     <>
       <div className={styles.page}>
         <SiteHeader />
-        <CheckoutView />
+        <AccountView />
       </div>
       <SiteFooter />
     </>

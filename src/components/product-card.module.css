@@ -1,0 +1,203 @@
+.card {
+  position: relative;
+  min-width: 0;
+  height: 500px;
+  scroll-snap-align: start;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--color-light-gray);
+}
+
+.badges {
+  position: absolute;
+  z-index: 3;
+  top: 11px;
+  left: 11px;
+  display: flex;
+  gap: 6px;
+}
+
+.badges span {
+  display: inline-flex;
+  min-height: 25px;
+  align-items: center;
+  padding: 0 15px;
+  border-radius: 999px;
+  color: white;
+  background: var(--color-foreground);
+  font-size: 14px;
+}
+
+.image {
+  object-fit: contain;
+  padding: 38px 54px 108px;
+}
+
+.favorite {
+  position: absolute;
+  z-index: 4;
+  top: 11px;
+  right: 11px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 68%);
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.favorite:hover {
+  transform: scale(1.06);
+}
+
+.favoriteActive {
+  background: var(--color-pink);
+}
+
+.favoriteActive img {
+  filter: brightness(0) saturate(100%);
+}
+
+.info {
+  position: absolute;
+  z-index: 3;
+  right: 20px;
+  bottom: 54px;
+  left: 20px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+  color: var(--color-gray);
+  font-size: 13px;
+}
+
+.meta h3 {
+  max-width: 205px;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.price {
+  display: grid;
+  flex: none;
+  justify-items: end;
+  gap: 1px;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.price span {
+  color: var(--color-gray);
+  text-decoration: line-through;
+}
+
+.addButton {
+  position: absolute;
+  z-index: 4;
+  right: 11px;
+  bottom: 10px;
+  left: 11px;
+  min-height: 34px;
+  border: 1px solid var(--color-foreground);
+  border-radius: 999px;
+  color: white;
+  background: var(--color-foreground);
+  cursor: pointer;
+}
+
+.addButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (max-width: 620px) {
+  .card {
+    height: auto;
+    aspect-ratio: 0.7;
+    min-height: 340px;
+  }
+
+  .badges {
+    top: 8px;
+    left: 8px;
+    gap: 4px;
+  }
+
+  .badges span {
+    min-height: 21px;
+    padding: 0 8px;
+    font-size: 10px;
+  }
+
+  .badges span:first-child:not(:only-child) {
+    display: none;
+  }
+
+  .favorite {
+    top: 7px;
+    right: 7px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .favorite img {
+    width: 18px;
+    height: auto;
+  }
+
+  .image {
+    padding: 34px 18px 120px;
+  }
+
+  .info {
+    right: 10px;
+    bottom: 49px;
+    left: 10px;
+    display: grid;
+    gap: 4px;
+  }
+
+  .rating {
+    gap: 4px;
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+
+  .rating img {
+    width: 48px;
+    height: auto;
+  }
+
+  .meta h3 {
+    max-width: none;
+    font-size: 13px;
+    line-height: 1.1;
+  }
+
+  .price {
+    display: flex;
+    justify-items: start;
+    gap: 7px;
+    font-size: 13px;
+  }
+
+  .addButton {
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    min-height: 32px;
+    font-size: 12px;
+  }
+}
