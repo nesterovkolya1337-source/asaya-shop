@@ -15,7 +15,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
       <nav aria-label="Основная навигация" className={styles.navigation}>
         <div className={styles.navigationSide}>
           <Link href="/catalog">Каталог</Link>
-          <Link href="/#about">О нас</Link>
+          <Link href="/about">О бренде</Link>
         </div>
         <details className={styles.mobileMenu}>
           <summary aria-label="Открыть меню" role="button">
@@ -25,10 +25,11 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           </summary>
           <div className={styles.mobileMenuPanel}>
             <Link href="/catalog">Каталог</Link>
-            <Link href="/#about">О бренде</Link>
-            <Link href="/account">Личный кабинет</Link>
-            <Link href="/checkout">Корзина</Link>
-            <Link href="/admin">Управление магазином</Link>
+            <Link href="/about">О бренде</Link>
+            <Link href="/delivery">Доставка и оплата</Link>
+            <Link href="/stores">Где нас найти</Link>
+            <Link href="/support">Служба заботы</Link>
+            <Link href="/order-status">Статус заказа</Link>
           </div>
         </details>
         <Link className={styles.wordmark} href="/" aria-label="ASAYA — главная">
@@ -62,6 +63,15 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   );
 }
 
+export function SiteChrome({ overlay = false }: { overlay?: boolean }) {
+  return (
+    <div className={`${styles.chrome} ${overlay ? styles.chromeOverlay : ""}`}>
+      <div className={styles.promo}>Бесплатная доставка при заказе от 1500 ₽</div>
+      <SiteHeader overlay={overlay} />
+    </div>
+  );
+}
+
 export function SiteFooter() {
   const [subscribed, setSubscribed] = useState(false);
 
@@ -85,10 +95,12 @@ export function SiteFooter() {
             </form>
           </div>
           <div className={styles.footerLinks}>
-            <Link href="/">О нас</Link>
+            <Link href="/about">О бренде</Link>
             <Link href="/catalog">Каталог</Link>
-            <Link href="/checkout">Доставка и оплата</Link>
-            <Link href="/admin">Управление</Link>
+            <Link href="/delivery">Доставка и оплата</Link>
+            <Link href="/stores">Где нас найти</Link>
+            <Link href="/support">Служба заботы</Link>
+            <Link href="/order-status">Статус заказа</Link>
             <a href="mailto:hello@asaya.ru">hello@asaya.ru</a>
           </div>
         </div>

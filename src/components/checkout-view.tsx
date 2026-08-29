@@ -8,7 +8,7 @@ import { formatPrice } from "@/lib/store-data";
 import styles from "./checkout-view.module.css";
 
 export function CheckoutView() {
-  const { cart, changeQuantity, clearCart, products, profile } = useShop();
+  const { cart, changeQuantity, clearCart, products } = useShop();
   const [delivery, setDelivery] = useState<"pickup" | "courier">("pickup");
   const [placed, setPlaced] = useState(false);
   const cartProducts = products.filter((product) => cart[product.id]);
@@ -27,8 +27,8 @@ export function CheckoutView() {
     return (
       <main className={styles.success}>
         <span>✓</span>
-        <p>Заказ принят</p>
-        <h1>Спасибо! Мы уже готовим ваш ASAYA-ритуал.</h1>
+        <p>Демо-оформление завершено</p>
+        <h1>Интерфейс работает, но заказ не отправлен без защищённого сервера.</h1>
         <Link href="/catalog">Вернуться в каталог</Link>
       </main>
     );
@@ -94,9 +94,9 @@ export function CheckoutView() {
           <section className={styles.block} aria-labelledby="customer-heading">
             <h2 id="customer-heading">Получатель</h2>
             <div className={styles.fieldGrid}>
-              <label>Имя<input defaultValue={profile.name} placeholder="Ваше имя" required={cartProducts.length > 0} /></label>
-              <label>Телефон<input defaultValue={profile.phone} placeholder="+7 000 000-00-00" required={cartProducts.length > 0} type="tel" /></label>
-              <label className={styles.fullWidth}>Почта<input defaultValue={profile.email} placeholder="name@example.com" required={cartProducts.length > 0} type="email" /></label>
+              <label>Имя<input placeholder="Ваше имя" required={cartProducts.length > 0} /></label>
+              <label>Телефон<input placeholder="+7 000 000-00-00" required={cartProducts.length > 0} type="tel" /></label>
+              <label className={styles.fullWidth}>Почта<input placeholder="name@example.com" required={cartProducts.length > 0} type="email" /></label>
             </div>
           </section>
 
@@ -114,7 +114,7 @@ export function CheckoutView() {
             <div><span>Доставка</span><strong>{deliveryPrice ? formatPrice(deliveryPrice) : "Бесплатно"}</strong></div>
           </div>
           <button disabled={!cartProducts.length} type="submit">Оформить заказ</button>
-          <span className={styles.note}>Нажимая кнопку, вы соглашаетесь с условиями покупки и обработки данных.</span>
+          <span className={styles.note}>Демо-режим: данные не отправляются и не сохраняются. Реальные заказы появятся только после подключения защищённого сервера.</span>
         </aside>
       </form>
     </main>

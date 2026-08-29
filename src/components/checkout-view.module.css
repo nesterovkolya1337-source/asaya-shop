@@ -109,6 +109,16 @@
   border: 0;
   background: transparent;
   cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.quantity button:hover,
+.quantity button:focus-visible {
+  background: var(--color-pink);
+}
+
+.quantity button:active {
+  transform: scale(0.88);
 }
 
 .quantity strong {
@@ -125,6 +135,11 @@
   cursor: pointer;
   font-size: 12px;
   text-decoration: underline;
+}
+
+.remove:hover,
+.remove:focus-visible {
+  color: var(--color-foreground);
 }
 
 .emptyCart {
@@ -163,6 +178,15 @@
   border-radius: 9px;
   background: white;
   cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.choiceGrid label:hover,
+.choiceGrid label:focus-within,
+.payment:hover,
+.payment:focus-within {
+  border-color: var(--color-foreground);
+  background: #fff8fc;
 }
 
 .choiceGrid label > span {
@@ -266,6 +290,20 @@
   color: white;
   background: var(--color-foreground);
   cursor: pointer;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.summary button:hover:not(:disabled),
+.summary button:focus-visible,
+.success a:hover,
+.success a:focus-visible {
+  color: var(--color-foreground);
+  background: white;
+}
+
+.summary button:active:not(:disabled),
+.success a:active {
+  transform: scale(0.98);
 }
 
 .summary button:disabled {

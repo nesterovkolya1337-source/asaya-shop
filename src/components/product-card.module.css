@@ -98,12 +98,32 @@
   white-space: nowrap;
 }
 
+.price > div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .price span {
   color: var(--color-gray);
   text-decoration: line-through;
 }
 
-.addButton {
+.price em {
+  display: inline-flex;
+  min-height: 20px;
+  align-items: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  color: var(--color-foreground);
+  background: var(--color-pink);
+  font-size: 11px;
+  font-style: normal;
+  text-decoration: none;
+}
+
+.addButton,
+.cartControl {
   position: absolute;
   z-index: 4;
   right: 11px;
@@ -115,11 +135,68 @@
   color: white;
   background: var(--color-foreground);
   cursor: pointer;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
 .addButton:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+}
+
+.addButton:hover:not(:disabled),
+.addButton:focus-visible {
+  color: var(--color-foreground);
+  background: var(--color-pink);
+}
+
+.addButton:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.cartControl {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  color: white;
+  background: var(--color-foreground);
+}
+
+.cartControl button {
+  height: 32px;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  font-size: 19px;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.cartControl button:first-child {
+  border-radius: 999px 0 0 999px;
+}
+
+.cartControl button:last-child {
+  border-radius: 0 999px 999px 0;
+}
+
+.cartControl button:hover:not(:disabled),
+.cartControl button:focus-visible {
+  color: var(--color-foreground);
+  background: var(--color-pink);
+}
+
+.cartControl button:active:not(:disabled) {
+  transform: scale(0.88);
+}
+
+.cartControl button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.cartControl span {
+  min-width: 32px;
+  text-align: center;
 }
 
 @media (max-width: 620px) {
@@ -139,10 +216,6 @@
     min-height: 21px;
     padding: 0 8px;
     font-size: 10px;
-  }
-
-  .badges span:first-child:not(:only-child) {
-    display: none;
   }
 
   .favorite {
@@ -193,11 +266,27 @@
     font-size: 13px;
   }
 
-  .addButton {
+  .price > div {
+    gap: 4px;
+  }
+
+  .price em {
+    min-height: 17px;
+    padding-inline: 5px;
+    font-size: 9px;
+  }
+
+  .addButton,
+  .cartControl {
     right: 8px;
     bottom: 8px;
     left: 8px;
     min-height: 32px;
     font-size: 12px;
+  }
+
+  .cartControl button {
+    height: 30px;
+    font-size: 17px;
   }
 }

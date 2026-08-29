@@ -4,18 +4,6 @@
   padding: 10px var(--page-gutter) 24px;
 }
 
-.announcement {
-  display: grid;
-  min-height: 35px;
-  place-items: center;
-  margin-bottom: 10px;
-  border-radius: var(--radius-card);
-  background: var(--color-pink);
-  font-size: clamp(14px, 2vw, 24px);
-  line-height: 1.2;
-  text-align: center;
-}
-
 .hero {
   position: relative;
   min-height: clamp(540px, 49vw, 595px);
@@ -75,6 +63,7 @@
   border-radius: 999px;
   font-size: 16px;
   line-height: 1;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
 .lightButton {
@@ -86,6 +75,23 @@
   border: 1px solid var(--color-foreground);
   color: white;
   background: var(--color-foreground);
+}
+
+.lightButton:hover,
+.lightButton:focus-visible {
+  color: var(--color-foreground);
+  background: white;
+}
+
+.darkButton:hover,
+.darkButton:focus-visible {
+  color: var(--color-foreground);
+  background: var(--color-pink);
+}
+
+.lightButton:active,
+.darkButton:active {
+  transform: scale(0.96);
 }
 
 .products {
@@ -131,6 +137,10 @@
   text-transform: uppercase;
 }
 
+.manifestoMobile {
+  display: none;
+}
+
 .categoryGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -169,6 +179,14 @@
   transform: translate(-50%, -50%);
   color: white;
   font-size: clamp(26px, 3vw, 38px);
+}
+
+.categoryImage {
+  transition: transform 350ms ease;
+}
+
+.categoryCard:hover .categoryImage {
+  transform: scale(1.025);
 }
 
 .careSection {
@@ -272,13 +290,8 @@
     padding-inline: 10px;
   }
 
-  .announcement {
-    padding: 7px 12px;
-    font-size: 12px;
-  }
-
   .hero {
-    min-height: min(690px, 78svh);
+    min-height: min(690px, calc(100svh - 110px));
   }
 
   .heroImage {
@@ -304,13 +317,25 @@
   }
 
   .manifesto {
-    min-height: 460px;
+    min-height: 410px;
+  }
+
+  .manifesto::after {
+    background: rgb(0 0 0 / 38%);
   }
 
   .manifesto p {
-    width: 90%;
-    font-size: clamp(20px, 6.2vw, 27px);
-    line-height: 1.05;
+    width: 84%;
+    font-size: clamp(24px, 7.2vw, 31px);
+    line-height: 1.02;
+  }
+
+  .manifestoDesktop {
+    display: none;
+  }
+
+  .manifestoMobile {
+    display: inline;
   }
 
   .categoryGrid {

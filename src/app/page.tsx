@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ProductRail } from "@/components/product-rail";
-import { SiteFooter, SiteHeader } from "@/components/site-shell";
+import { SiteChrome, SiteFooter } from "@/components/site-shell";
 import { assetPath } from "@/lib/asset-path";
 import styles from "./page.module.css";
 
@@ -21,7 +21,7 @@ const categories = [
   {
     name: "Лицо",
     href: "/catalog?category=face",
-    image: assetPath("/images/figma/asaya-6459.webp"),
+    image: assetPath("/images/figma/asaya-6629.webp"),
     position: "face",
   },
 ];
@@ -49,9 +49,7 @@ export default function Home() {
   return (
     <>
       <div className={styles.page} data-node-id="1:6">
-        <div className={styles.announcement}>
-          Бесплатная доставка при заказе от 1500 ₽
-        </div>
+        <SiteChrome overlay />
 
         <main>
           <section className={styles.hero}>
@@ -63,7 +61,6 @@ export default function Home() {
               sizes="(max-width: 1280px) 94vw, 1160px"
               src={assetPath("/images/figma/hero.webp")}
             />
-            <SiteHeader overlay />
             <div className={styles.heroCopy}>
               <h1>Уходовая косметика для волос</h1>
               <Link className={styles.lightButton} href="/catalog?category=hair">
@@ -86,9 +83,8 @@ export default function Home() {
               src={assetPath("/images/figma/asaya-6139.webp")}
             />
             <p>
-              Для ASAYA уход — это сочетание результата и эмоций. Мы создаём
-              профессиональные продукты, которые дарят видимый эффект и превращают
-              ежедневный уход в маленький ритуал любви к себе.
+              <span className={styles.manifestoDesktop}>Для ASAYA уход — это сочетание результата и эмоций. Мы создаём профессиональные продукты, которые дарят видимый эффект и превращают ежедневный уход в маленький ритуал любви к себе.</span>
+              <span className={styles.manifestoMobile}>Видимый результат и маленький ритуал любви к себе — каждый день.</span>
             </p>
           </section>
 

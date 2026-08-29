@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CheckoutView } from "@/components/checkout-view";
-import { SiteFooter, SiteHeader } from "@/components/site-shell";
+import { SiteChrome, SiteFooter } from "@/components/site-shell";
 import styles from "./checkout.module.css";
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export default function CheckoutPage() {
   return (
     <>
       <div className={styles.page}>
-        <SiteHeader />
+        <SiteChrome />
         <CheckoutView />
       </div>
       <SiteFooter />

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CatalogView } from "@/components/catalog-view";
-import { SiteFooter, SiteHeader } from "@/components/site-shell";
+import { SiteChrome, SiteFooter } from "@/components/site-shell";
 import styles from "./catalog.module.css";
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export default function CatalogPage() {
   return (
     <>
       <div className={styles.page}>
-        <SiteHeader />
+        <SiteChrome />
         <CatalogView />
       </div>
       <SiteFooter />

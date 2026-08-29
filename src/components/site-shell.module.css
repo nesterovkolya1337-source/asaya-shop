@@ -1,3 +1,29 @@
+.chrome {
+  position: relative;
+  z-index: 20;
+}
+
+.promo {
+  display: grid;
+  min-height: 35px;
+  place-items: center;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  border-radius: var(--radius-card);
+  background: var(--color-pink);
+  font-size: clamp(14px, 2vw, 24px);
+  line-height: 1.2;
+  text-align: center;
+}
+
+.chromeOverlay {
+  height: 45px;
+}
+
+.chromeOverlay .overlay {
+  top: 45px;
+}
+
 .header {
   position: relative;
   z-index: 20;
@@ -64,6 +90,28 @@
   height: 34px;
   flex: none;
   place-items: center;
+}
+
+.iconLink,
+.mobileMenu summary,
+.navigationSide a,
+.wordmark {
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.iconLink:hover,
+.iconLink:focus-visible {
+  border-radius: 50%;
+  background: rgb(255 207 235 / 78%);
+}
+
+.iconLink:active,
+.mobileMenu summary:active {
+  transform: scale(0.9);
+}
+
+.navigationSide a:hover {
+  opacity: 0.68;
 }
 
 .iconLink svg {
@@ -153,6 +201,13 @@
   border-left: 1px solid var(--color-foreground);
   background: transparent;
   cursor: pointer;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.subscribe button:hover,
+.subscribe button:focus-visible {
+  color: white;
+  background: var(--color-foreground);
 }
 
 .subscribe input:disabled {
@@ -164,6 +219,11 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: start;
   gap: 22px 36px;
+}
+
+.footerLinks a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 .srOnly {
@@ -178,6 +238,24 @@
 }
 
 @media (max-width: 720px) {
+  .chrome,
+  .chromeOverlay {
+    position: sticky;
+    z-index: 50;
+    top: 0;
+    display: grid;
+    height: auto;
+    gap: 8px;
+    padding-bottom: 8px;
+    background: white;
+  }
+
+  .promo {
+    min-height: 34px;
+    margin: 0;
+    font-size: 12px;
+  }
+
   .header {
     min-height: 54px;
     padding: 0 14px;
@@ -190,13 +268,17 @@
   }
 
   .overlay {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    left: 10px;
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
     min-height: 54px;
     padding: 0 14px;
     color: var(--color-foreground);
+  }
+
+  .chromeOverlay .overlay {
+    top: auto;
   }
 
   .navigation {
@@ -233,6 +315,12 @@
     list-style: none;
   }
 
+  .mobileMenu summary:hover,
+  .mobileMenu summary:focus-visible {
+    border-radius: 50%;
+    background: var(--color-pink);
+  }
+
   .mobileMenu summary::-webkit-details-marker {
     display: none;
   }
@@ -249,7 +337,7 @@
     top: 48px;
     left: -7px;
     display: grid;
-    width: min(280px, calc(100vw - 36px));
+    width: min(300px, calc(100vw - 36px));
     gap: 0;
     padding: 8px;
     border-radius: 16px;

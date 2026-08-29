@@ -1,10 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { ProductCard } from "@/components/product-card";
 import { useShop } from "@/components/shop-provider";
-import { assetPath } from "@/lib/asset-path";
 import { categoryLabels, type ProductCategory } from "@/lib/store-data";
 import styles from "./catalog-view.module.css";
 
@@ -35,24 +33,11 @@ export function CatalogView() {
 
   return (
     <main>
-      <section className={styles.hero}>
-        <Image
-          alt="Коллекция уходовой косметики ASAYA"
-          className={styles.heroImage}
-          fill
-          priority
-          sizes="(max-width: 1280px) 94vw, 1160px"
-          src={assetPath("/images/figma/asaya-6629.webp")}
-        />
-        <div className={styles.heroShade} />
-        <h1>Каталог</h1>
-      </section>
-
       <section className={styles.catalog} aria-labelledby="catalog-title">
         <div className={styles.catalogHeading}>
           <div>
-            <p className={styles.eyebrow}>ASAYA / Уход</p>
-            <h2 id="catalog-title">Найди свой ритуал</h2>
+            <p className={styles.eyebrow}>ASAYA / Каталог</p>
+            <h1 id="catalog-title">Найди свой ритуал</h1>
           </div>
           <label className={styles.search} id="search">
             <span className={styles.srOnly}>Поиск по каталогу</span>

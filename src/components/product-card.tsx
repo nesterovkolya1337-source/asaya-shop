@@ -7,7 +7,7 @@ import { formatPrice, type Product } from "@/lib/store-data";
 import styles from "./product-card.module.css";
 
 export function ProductCard({ product }: { product: Product }) {
-  const { addToCart, cart, favorites, toggleFavorite } = useShop();
+  const { addToCart, cart, changeQuantity, favorites, toggleFavorite } = useShop();
   const isFavorite = favorites.includes(product.id);
   const quantity = cart[product.id] ?? 0;
 
@@ -15,7 +15,6 @@ export function ProductCard({ product }: { product: Product }) {
     <article className={styles.card} id={product.id}>
       <div className={styles.badges}>
         {product.badge && <span>{product.badge}</span>}
-        {product.discount > 0 && <span>-{product.discount}%</span>}
       </div>
       <Image
         alt={product.name}
@@ -43,17 +42,28 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
         <div className={styles.price}>
           <strong>{formatPrice(product.price)}</strong>
-          {product.oldPrice > product.price && <span>{formatPrice(product.oldPrice)}</span>}
+          <div>
+            {product.oldPrice > product.price && <span>{formatPrice(product.oldPrice)}</span>}
+            {product.discount > 0 && <em>-{product.discount}%</em>}
+          </div>
         </div>
       </div>
-      <button
-        className={styles.addButton}
-        disabled={!product.stock}
-        onClick={() => addToCart(product.id)}
-        type="button"
-      >
-        {!product.stock ? "Нет в наличии" : quantity ? `В корзине · ${quantity}` : "В корзину"}
-      </button>
+      {quantity ? (
+        <div className={styles.cartControl} aria-label={`Количество ${product.name} в корзине`}>
+          <button aria-label={`Уменьшить количество ${product.name}`} onClick={() => changeQuantity(product.id, quantity - 1)} type="button">−</button>
+          <span>{quantity}</span>
+          <button aria-label={`Увеличить количество ${product.name}`} disabled={quantity >= product.stock} onClick={() => changeQuantity(product.id, quantity + 1)} type="button">+</button>
+        </div>
+      ) : (
+        <button
+          className={styles.addButton}
+          disabled={!product.stock}
+          onClick={() => addToCart(product.id)}
+          type="button"
+        >
+          {!product.stock ? "Нет в наличии" : "В корзину"}
+        </button>
+      )}
     </article>
   );
 }

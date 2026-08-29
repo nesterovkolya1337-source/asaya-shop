@@ -1,0 +1,14 @@
+.main { display:grid; min-height:620px; align-content:center; padding:60px 0; }
+.main > p { color:var(--color-gray); font-size:13px; letter-spacing:.08em; text-transform:uppercase; }
+.main h1 { margin-top:10px; font-size:clamp(58px,9vw,112px); font-weight:500; line-height:.9; letter-spacing:-.06em; }
+.main > span { margin-top:24px; color:#5b5b5b; font-size:18px; }
+.main form { display:grid; max-width:720px; grid-template-columns:1fr 1fr auto; gap:8px; margin-top:30px; }
+.main label { display:grid; gap:7px; color:#666; font-size:13px; }
+.main input { height:48px; padding:0 15px; border:1px solid #d1d1d1; border-radius:999px; outline:none; }
+.main input:focus { border-color:var(--color-foreground); }
+.main button { align-self:end; min-height:48px; padding:0 20px; border:1px solid var(--color-foreground); border-radius:999px; color:white; background:var(--color-foreground); cursor:pointer; transition:color 160ms ease,background 160ms ease,transform 160ms ease; }
+.main button:hover { color:var(--color-foreground); background:var(--color-pink); }
+.main button:active { transform:scale(.97); }
+.notice { display:grid; max-width:720px; gap:4px; margin-top:16px; padding:18px; border-radius:var(--radius-card); background:var(--color-pink); }
+@media (max-width:720px) { .main form { grid-template-columns:1fr; } .main button { margin-top:8px; } }
+@media (max-width:620px) { .main { min-height:570px; padding:48px 4px; } .main h1 { font-size:54px; } .main > span { font-size:16px; } }

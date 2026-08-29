@@ -4,13 +4,95 @@
   padding: 0 var(--page-gutter) 60px;
 }
 
+.locked {
+  display: grid;
+  min-height: 68vh;
+  place-items: center;
+  align-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.lockIcon {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-pink);
+}
+
+.lockIcon svg {
+  width: 34px;
+  height: 34px;
+  fill: none;
+  stroke: var(--color-foreground);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.locked > p {
+  margin-top: 24px;
+  color: var(--color-gray);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.locked h1 {
+  max-width: 900px;
+  margin-top: 10px;
+  font-size: clamp(42px, 6vw, 76px);
+  font-weight: 500;
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+}
+
+.explanation {
+  display: grid;
+  max-width: 680px;
+  gap: 7px;
+  margin-top: 28px;
+  padding: 22px;
+  border-radius: var(--radius-card);
+  background: var(--color-light-gray);
+  line-height: 1.4;
+}
+
+.locked > a {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 24px;
+  padding: 0 22px;
+  border-radius: 999px;
+  color: white;
+  background: var(--color-foreground);
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.locked > a:hover {
+  color: var(--color-foreground);
+  background: var(--color-pink);
+}
+
+.locked > a:active {
+  transform: scale(0.97);
+}
+
 @media (max-width: 620px) {
   .page {
     padding: 8px 10px 30px;
   }
 
-  .page > header {
-    position: sticky;
-    top: 8px;
+  .locked {
+    min-height: 64vh;
+    padding-inline: 6px;
+  }
+
+  .locked h1 {
+    font-size: 42px;
   }
 }

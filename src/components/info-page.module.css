@@ -1,0 +1,132 @@
+.page {
+  width: min(100%, calc(var(--content-width) + (var(--page-gutter) * 2)));
+  margin: 0 auto;
+  padding: 0 var(--page-gutter) 34px;
+}
+
+.heading {
+  display: grid;
+  min-height: 470px;
+  align-content: center;
+  padding: 60px 0;
+}
+
+.heading > p {
+  color: var(--color-gray);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heading h1 {
+  max-width: 980px;
+  margin-top: 10px;
+  font-size: clamp(58px, 9vw, 116px);
+  font-weight: 500;
+  line-height: 0.88;
+  letter-spacing: -0.065em;
+}
+
+.heading > span {
+  max-width: 620px;
+  margin-top: 28px;
+  color: #5b5b5b;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.heading > a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  margin-top: 26px;
+  padding: 0 20px;
+  border-radius: 999px;
+  color: white;
+  background: var(--color-foreground);
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.heading > a:hover {
+  color: var(--color-foreground);
+  background: var(--color-pink);
+}
+
+.heading > a:active {
+  transform: scale(0.97);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.grid article {
+  display: flex;
+  min-height: 330px;
+  flex-direction: column;
+  padding: clamp(24px, 4vw, 42px);
+  border-radius: var(--radius-card);
+  background: var(--color-light-gray);
+}
+
+.grid article:nth-child(2) {
+  background: var(--color-pink);
+}
+
+.grid article > span {
+  color: var(--color-gray);
+  font-size: 13px;
+}
+
+.grid h2 {
+  margin-top: auto;
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 500;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+}
+
+.grid p {
+  margin-top: 18px;
+  color: #555;
+  line-height: 1.45;
+}
+
+@media (max-width: 800px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .grid article {
+    min-height: 260px;
+  }
+}
+
+@media (max-width: 620px) {
+  .page {
+    padding: 8px 10px 24px;
+  }
+
+  .heading {
+    min-height: 390px;
+    padding: 48px 4px;
+  }
+
+  .heading h1 {
+    font-size: 54px;
+  }
+
+  .heading > span {
+    margin-top: 22px;
+    font-size: 16px;
+  }
+
+  .grid article {
+    min-height: 230px;
+    padding: 26px 20px;
+  }
+}

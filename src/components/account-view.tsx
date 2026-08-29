@@ -7,15 +7,14 @@ import { useShop } from "@/components/shop-provider";
 import styles from "./account-view.module.css";
 
 export function AccountView() {
-  const { favorites, products, profile, saveProfile } = useShop();
-  const [draft, setDraft] = useState(profile);
-  const [saved, setSaved] = useState(false);
+  const { favorites, products } = useShop();
+  const [email, setEmail] = useState("");
+  const [notice, setNotice] = useState(false);
   const favoriteProducts = products.filter((product) => favorites.includes(product.id) && product.active);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  function requestLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    saveProfile(draft);
-    setSaved(true);
+    setNotice(true);
   }
 
   return (
@@ -23,37 +22,33 @@ export function AccountView() {
       <header className={styles.heading}>
         <p>ASAYA / Профиль</p>
         <h1>Личный кабинет</h1>
-        <span>Контакты, избранное и история заказов в одном месте.</span>
+        <span>Заказы, избранное и персональные предложения в одном месте.</span>
       </header>
 
       <div className={styles.dashboard}>
-        <form className={styles.profileCard} onSubmit={submit}>
-          <div className={styles.cardHeading}>
-            <div>
-              <p>Профиль</p>
-              <h2>{profile.name || "Добро пожаловать"}</h2>
-            </div>
-            <span className={styles.avatar}>{(profile.name || "A").slice(0, 1).toUpperCase()}</span>
-          </div>
-          <div className={styles.fields}>
-            <label>Имя<input onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="Ваше имя" value={draft.name} /></label>
-            <label>Email<input onChange={(event) => setDraft({ ...draft, email: event.target.value })} placeholder="name@example.com" type="email" value={draft.email} /></label>
-            <label>Телефон<input onChange={(event) => setDraft({ ...draft, phone: event.target.value })} placeholder="+7 000 000-00-00" type="tel" value={draft.phone} /></label>
-          </div>
-          <button type="submit">{saved ? "Сохранено" : "Сохранить профиль"}</button>
-        </form>
+        <section className={styles.loginCard}>
+          <div className={styles.lock} aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+          <p>Защищённый вход</p>
+          <h2>Ваши данные должны оставаться только вашими</h2>
+          <span>Вход будет включён вместе с серверной авторизацией, подтверждением почты и безопасными HttpOnly-cookie.</span>
+          <form onSubmit={requestLogin}>
+            <label>Email<input onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" required type="email" value={email} /></label>
+            <button type="submit">Продолжить</button>
+          </form>
+          {notice && <div className={styles.notice} role="status">Данные не отправлены и не сохранены: защищённый серверный вход ещё не подключён.</div>}
+        </section>
 
         <section className={styles.orders}>
           <p>История заказов</p>
           <h2>Заказов пока нет</h2>
-          <span>После первой покупки здесь появятся состав заказа и его статус.</span>
+          <span>После подключения защищённого кабинета здесь появятся состав заказа и его статус.</span>
           <Link href="/catalog">Перейти в каталог</Link>
         </section>
       </div>
 
       <section className={styles.favorites} id="favorites">
         <div className={styles.sectionHeading}>
-          <h2>Избранное</h2>
+          <h2>Избранное на этом устройстве</h2>
           <span>{favoriteProducts.length}</span>
         </div>
         {favoriteProducts.length ? (
