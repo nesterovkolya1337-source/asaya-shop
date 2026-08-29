@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { assetPath } from "@/lib/asset-path";
 import styles from "./site-shell.module.css";
 
 export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
@@ -12,7 +13,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
         </div>
         <Link className={styles.wordmark} href="/" aria-label="ASAYA — главная">
           {overlay ? (
-            <Image alt="ASAYA" height={26} priority src="/images/figma/header-logo.svg" width={114} />
+            <Image alt="ASAYA" height={26} priority src={assetPath("/images/figma/header-logo.svg")} width={114} />
           ) : (
             "ASAYA"
           )}
@@ -23,7 +24,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
               alt="Аккаунт, избранное, корзина и поиск"
               height={22}
               priority
-              src="/images/figma/header-actions.svg"
+              src={assetPath("/images/figma/header-actions.svg")}
               width={155}
             />
           ) : (
@@ -43,7 +44,7 @@ export function SiteFooter() {
     <footer className={styles.footer} id="about">
       <div className={styles.footerInner}>
         <div className={styles.footerWordmark}>
-          <Image alt="ASAYA" fill sizes="(max-width: 1200px) 86vw, 1040px" src="/images/figma/footer-wordmark.svg" />
+          <Image alt="ASAYA" fill sizes="(max-width: 1200px) 86vw, 1040px" src={assetPath("/images/figma/footer-wordmark.svg")} />
         </div>
         <div className={styles.footerColumns}>
           <div>

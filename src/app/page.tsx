@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteFooter, SiteHeader } from "@/components/site-shell";
+import { assetPath } from "@/lib/asset-path";
 import styles from "./page.module.css";
 
 const products = [
@@ -8,19 +9,19 @@ const products = [
     name: "Мульти спрей для волос",
     price: "500 ₽",
     oldPrice: "700 ₽",
-    image: "/images/figma/product-spray.png",
+    image: assetPath("/images/figma/product-spray.png"),
   },
   {
     name: "Увлажняющий крем для тела с кокосом",
     price: "500 ₽",
     oldPrice: "700 ₽",
-    image: "/images/figma/product-cream-coconut.png",
+    image: assetPath("/images/figma/product-cream-coconut.png"),
   },
   {
     name: "Гель для душа",
     price: "500 ₽",
     oldPrice: "700 ₽",
-    image: "/images/figma/product-gel-pink.png",
+    image: assetPath("/images/figma/product-gel-pink.png"),
   },
 ];
 
@@ -28,38 +29,38 @@ const categories = [
   {
     name: "Волосы",
     href: "/catalog?category=hair",
-    image: "/images/figma/asaya-6205.png",
+    image: assetPath("/images/figma/asaya-6205.png"),
     position: "hair",
   },
   {
     name: "Тело",
     href: "/catalog?category=body",
-    image: "/images/figma/asaya-6691.jpg",
+    image: assetPath("/images/figma/asaya-6691.jpg"),
     position: "body",
   },
   {
     name: "Лицо",
     href: "/catalog?category=face",
-    image: "/images/figma/asaya-6459.png",
+    image: assetPath("/images/figma/asaya-6459.png"),
     position: "face",
   },
 ];
 
 const communityPhotos = [
   {
-    image: "/images/figma/ugc-img5872.jpg",
+    image: assetPath("/images/figma/ugc-img5872.jpg"),
     alt: "Девушки с косметикой ASAYA",
   },
   {
-    image: "/images/figma/ugc-000012160039.png",
+    image: assetPath("/images/figma/ugc-000012160039.png"),
     alt: "Уход за волосами с ASAYA",
   },
   {
-    image: "/images/figma/ugc-red-product.png",
+    image: assetPath("/images/figma/ugc-red-product.png"),
     alt: "Красный флакон ASAYA",
   },
   {
-    image: "/images/figma/ugc-img3456.jpg",
+    image: assetPath("/images/figma/ugc-img3456.jpg"),
     alt: "Набор косметики ASAYA",
   },
 ];
@@ -80,7 +81,7 @@ export default function Home() {
               fill
               priority
               sizes="(max-width: 1280px) 94vw, 1160px"
-              src="/images/figma/hero.png"
+              src={assetPath("/images/figma/hero.png")}
             />
             <SiteHeader overlay />
             <div className={styles.heroCopy}>
@@ -111,13 +112,13 @@ export default function Home() {
                     alt="Добавить в избранное"
                     className={styles.heart}
                     height={21}
-                    src="/images/figma/heart.svg"
+                    src={assetPath("/images/figma/heart.svg")}
                     width={23}
                   />
                   <div className={styles.productInfo}>
                     <div>
                       <div className={styles.rating}>
-                        <Image alt="5 звёзд" height={12} src="/images/figma/stars.svg" width={58} />
+                        <Image alt="5 звёзд" height={12} src={assetPath("/images/figma/stars.svg")} width={58} />
                         <span>(123)</span>
                       </div>
                       <h3>{product.name}</h3>
@@ -138,7 +139,7 @@ export default function Home() {
               className={styles.coverImage}
               fill
               sizes="(max-width: 1280px) 94vw, 1160px"
-              src="/images/figma/asaya-6139.png"
+              src={assetPath("/images/figma/asaya-6139.png")}
             />
             <p>
               Для ASAYA уход — это сочетание результата и эмоций. Мы создаём
@@ -169,7 +170,7 @@ export default function Home() {
                 className={styles.careImage}
                 fill
                 sizes="(max-width: 760px) 92vw, 580px"
-                src="/images/figma/asaya-6459.png"
+                src={assetPath("/images/figma/asaya-6459.png")}
               />
             </div>
             <div className={styles.careCopy}>
