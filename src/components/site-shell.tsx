@@ -1,26 +1,37 @@
+import Image from "next/image";
 import Link from "next/link";
 import styles from "./site-shell.module.css";
 
-export function SiteHeader() {
+export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   return (
-    <header className={styles.header}>
+    <header className={`${styles.header} ${overlay ? styles.overlay : ""}`}>
       <nav aria-label="Основная навигация" className={styles.navigation}>
         <div className={styles.navigationSide}>
           <Link href="/catalog">Каталог</Link>
-          <a
-            href="https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=1-2"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Page 2
-          </a>
+          <Link href="/#about">О нас</Link>
         </div>
         <Link className={styles.wordmark} href="/" aria-label="ASAYA — главная">
-          ASAYA
+          {overlay ? (
+            <Image alt="ASAYA" height={26} priority src="/images/figma/header-logo.svg" width={114} />
+          ) : (
+            "ASAYA"
+          )}
         </Link>
         <div className={`${styles.navigationSide} ${styles.navigationEnd}`}>
-          <Link href="/checkout">Checkout</Link>
-          <span aria-label="Корзина пока пуста">Корзина (0)</span>
+          {overlay ? (
+            <Image
+              alt="Аккаунт, избранное, корзина и поиск"
+              height={22}
+              priority
+              src="/images/figma/header-actions.svg"
+              width={155}
+            />
+          ) : (
+            <>
+              <Link href="/checkout">Checkout</Link>
+              <span aria-label="Корзина пока пуста">Корзина (0)</span>
+            </>
+          )}
         </div>
       </nav>
     </header>
@@ -29,15 +40,31 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className={styles.footer}>
+    <footer className={styles.footer} id="about">
       <div className={styles.footerInner}>
-        <p className={styles.footerWordmark}>ASAYA</p>
-        <div className={styles.footerLinks}>
-          <Link href="/catalog">Каталог</Link>
-          <Link href="/checkout">Оформление заказа</Link>
-          <a href="mailto:hello@asaya.ru">hello@asaya.ru</a>
+        <div className={styles.footerWordmark}>
+          <Image alt="ASAYA" fill sizes="(max-width: 1200px) 86vw, 1040px" src="/images/figma/footer-wordmark.svg" />
         </div>
-        <p className={styles.footerNote}>Хорошее может быть уже сегодня.</p>
+        <div className={styles.footerColumns}>
+          <div>
+            <p className={styles.footerLead}>
+              Присоединяйтесь к нам на пути к естественному сиянию
+            </p>
+            <form className={styles.subscribe}>
+              <label>
+                <span className={styles.srOnly}>Email</span>
+                <input aria-label="Email" placeholder="Email" type="email" />
+              </label>
+              <button type="button">Подписаться</button>
+            </form>
+          </div>
+          <div className={styles.footerLinks}>
+            <Link href="/">О нас</Link>
+            <Link href="/catalog">Каталог</Link>
+            <Link href="/checkout">Доставка и оплата</Link>
+            <a href="mailto:hello@asaya.ru">hello@asaya.ru</a>
+          </div>
+        </div>
       </div>
     </footer>
   );
