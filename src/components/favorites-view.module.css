@@ -1,0 +1,101 @@
+.main {
+  min-height: 560px;
+  padding: 24px 0 clamp(60px, 9vw, 120px);
+}
+
+.saved > h1,
+.empty h1 {
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  text-align: center;
+}
+
+.saved > h1 {
+  padding: 24px 0 30px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.empty {
+  display: grid;
+  min-height: 250px;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+}
+
+.empty a {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  padding: 0 15px;
+  border-radius: 999px;
+  color: white;
+  background: var(--color-foreground);
+  font-size: 12px;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.empty a:hover,
+.empty a:focus-visible {
+  color: var(--color-foreground);
+  background: var(--color-pink);
+}
+
+.empty a:active {
+  transform: scale(0.95);
+}
+
+.recent {
+  padding-top: 18px;
+}
+
+.recent h2 {
+  margin-bottom: 14px;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.recentGrid {
+  width: min(100%, 360px);
+}
+
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .main {
+    min-height: 470px;
+    padding-top: 12px;
+  }
+
+  .saved > h1 {
+    padding: 22px 0;
+    font-size: 30px;
+  }
+
+  .grid {
+    gap: 8px;
+  }
+
+  .empty {
+    min-height: 230px;
+    padding-inline: 20px;
+  }
+
+  .empty h1 {
+    font-size: 28px;
+  }
+
+  .recentGrid {
+    width: min(100%, 190px);
+  }
+}

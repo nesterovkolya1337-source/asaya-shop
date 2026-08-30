@@ -1,0 +1,17 @@
+.page {
+  width: min(100%, calc(var(--content-width) + (var(--page-gutter) * 2)));
+  margin: 0 auto;
+  padding: 0 var(--page-gutter) 24px;
+}
+
+@media (max-width: 620px) {
+  .page {
+    padding: 8px 10px 20px;
+  }
+
+  .page > header {
+    position: sticky;
+    top: 8px;
+    margin-bottom: 8px;
+  }
+}

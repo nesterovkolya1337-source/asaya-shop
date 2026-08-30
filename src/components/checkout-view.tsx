@@ -8,13 +8,14 @@ import { formatPrice } from "@/lib/store-data";
 import styles from "./checkout-view.module.css";
 
 export function CheckoutView() {
-  const { cart, changeQuantity, clearCart, products } = useShop();
+  const { cart, changeQuantity, clearCart, products, promoCode } = useShop();
   const [delivery, setDelivery] = useState<"pickup" | "courier">("pickup");
   const [placed, setPlaced] = useState(false);
   const cartProducts = products.filter((product) => cart[product.id]);
   const subtotal = useMemo(() => cartProducts.reduce((sum, product) => sum + product.price * cart[product.id], 0), [cart, cartProducts]);
   const deliveryPrice = delivery === "courier" && subtotal > 0 && subtotal < 1500 ? 300 : 0;
-  const total = subtotal + deliveryPrice;
+  const promoDiscount = promoCode === "ASAYA10" ? Math.round(subtotal * 0.1) : 0;
+  const total = subtotal + deliveryPrice - promoDiscount;
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -111,6 +112,7 @@ export function CheckoutView() {
           <h2 id="summary-heading">{formatPrice(total)}</h2>
           <div className={styles.summaryRows}>
             <div><span>Товары</span><strong>{formatPrice(subtotal)}</strong></div>
+            {promoDiscount > 0 && <div><span>Промокод ASAYA10</span><strong>−{formatPrice(promoDiscount)}</strong></div>}
             <div><span>Доставка</span><strong>{deliveryPrice ? formatPrice(deliveryPrice) : "Бесплатно"}</strong></div>
           </div>
           <button disabled={!cartProducts.length} type="submit">Оформить заказ</button>

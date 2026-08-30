@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
 import { formatPrice, type Product } from "@/lib/store-data";
@@ -16,13 +17,15 @@ export function ProductCard({ product }: { product: Product }) {
       <div className={styles.badges}>
         {product.badge && <span>{product.badge}</span>}
       </div>
-      <Image
-        alt={product.name}
-        className={styles.image}
-        fill
-        sizes="(max-width: 520px) 46vw, (max-width: 900px) 44vw, 370px"
-        src={product.image}
-      />
+      <Link className={styles.visualLink} href={`/product/${product.id}`} aria-label={`Открыть ${product.name}`}>
+        <Image
+          alt={product.name}
+          className={styles.image}
+          fill
+          sizes="(max-width: 520px) 46vw, (max-width: 900px) 44vw, 370px"
+          src={product.image}
+        />
+      </Link>
       <button
         aria-label={isFavorite ? `Убрать ${product.name} из избранного` : `Добавить ${product.name} в избранное`}
         aria-pressed={isFavorite}
@@ -38,7 +41,7 @@ export function ProductCard({ product }: { product: Product }) {
             <Image alt={`${product.rating} из 5`} height={12} src={assetPath("/images/figma/stars.svg")} width={58} />
             <span>({product.reviews})</span>
           </div>
-          <h3>{product.name}</h3>
+          <h3><Link href={`/product/${product.id}`}>{product.name}</Link></h3>
         </div>
         <div className={styles.price}>
           <strong>{formatPrice(product.price)}</strong>

@@ -28,9 +28,21 @@
   font-size: 14px;
 }
 
+.visualLink {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+}
+
 .image {
   object-fit: contain;
   padding: 38px 54px 108px;
+  transition: transform 240ms ease;
+}
+
+.visualLink:hover .image,
+.visualLink:focus-visible .image {
+  transform: scale(1.025);
 }
 
 .favorite {
@@ -87,6 +99,15 @@
   font-size: 16px;
   font-weight: 400;
   line-height: 1.1;
+}
+
+.meta h3 a {
+  transition: opacity 160ms ease;
+}
+
+.meta h3 a:hover,
+.meta h3 a:focus-visible {
+  opacity: 0.58;
 }
 
 .price {

@@ -25,6 +25,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           </summary>
           <div className={styles.mobileMenuPanel}>
             <Link href="/catalog">Каталог</Link>
+            <Link href="/favorites">Избранное</Link>
             <Link href="/about">О бренде</Link>
             <Link href="/delivery">Доставка и оплата</Link>
             <Link href="/stores">Где нас найти</Link>
@@ -46,14 +47,14 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           <Link className={`${styles.iconLink} ${styles.mobileOptional}`} href="/catalog#search" aria-label="Поиск">
             <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg>
           </Link>
-          <Link className={`${styles.iconLink} ${styles.mobileOptional}`} href="/account#favorites" aria-label={`Избранное: ${favorites.length}`}>
+          <Link className={`${styles.iconLink} ${styles.mobileOptional}`} href="/favorites" aria-label={`Избранное: ${favorites.length}`}>
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6a5.4 5.4 0 0 0-7.6 0L12 5.8l-1.2-1.2a5.4 5.4 0 0 0-7.6 7.6l1.2 1.2L12 21l7.6-7.6 1.2-1.2a5.4 5.4 0 0 0 0-7.6Z"/></svg>
             {favorites.length > 0 && <span className={styles.counter}>{favorites.length}</span>}
           </Link>
           <Link className={styles.iconLink} href="/account" aria-label="Личный кабинет">
             <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
           </Link>
-          <Link className={styles.iconLink} href="/checkout" aria-label={`Корзина: ${cartCount}`}>
+          <Link className={styles.iconLink} href="/cart" aria-label={`Корзина: ${cartCount}`}>
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 8h14l-1 13H6L5 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></svg>
             {cartCount > 0 && <span className={styles.counter}>{cartCount}</span>}
           </Link>

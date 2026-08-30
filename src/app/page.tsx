@@ -8,19 +8,19 @@ import styles from "./page.module.css";
 const categories = [
   {
     name: "Волосы",
-    href: "/catalog?category=hair",
+    href: "/catalog/hair",
     image: assetPath("/images/figma/asaya-6205.webp"),
     position: "hair",
   },
   {
     name: "Тело",
-    href: "/catalog?category=body",
+    href: "/catalog/body",
     image: assetPath("/images/figma/asaya-6691.webp"),
     position: "body",
   },
   {
     name: "Лицо",
-    href: "/catalog?category=face",
+    href: "/catalog/face",
     image: assetPath("/images/figma/asaya-6629.webp"),
     position: "face",
   },
@@ -63,7 +63,7 @@ export default function Home() {
             />
             <div className={styles.heroCopy}>
               <h1>Уходовая косметика для волос</h1>
-              <Link className={styles.lightButton} href="/catalog?category=hair">
+              <Link className={styles.lightButton} href="/catalog/hair">
                 Узнать больше
               </Link>
             </div>
@@ -119,7 +119,7 @@ export default function Home() {
                 Мульти спрей для волос удобно взять с собой в спортзал. Без него
                 тренировка и свежесть причёски в любое время сложнее.
               </p>
-              <Link className={styles.darkButton} href="/catalog?category=hair">
+              <Link className={styles.darkButton} href="/catalog/hair">
                 К продуктам
               </Link>
             </div>

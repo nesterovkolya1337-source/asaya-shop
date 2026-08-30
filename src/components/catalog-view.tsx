@@ -13,9 +13,9 @@ const filters: { id: Filter; label: string }[] = [
   ...Object.entries(categoryLabels).map(([id, label]) => ({ id: id as ProductCategory, label })),
 ];
 
-export function CatalogView() {
+export function CatalogView({ initialFilter = "all" }: { initialFilter?: Filter }) {
   const { products } = useShop();
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>(initialFilter);
   const [search, setSearch] = useState("");
 
   useEffect(() => {

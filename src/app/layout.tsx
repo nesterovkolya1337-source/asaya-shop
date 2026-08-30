@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ru">
+    <html data-scroll-behavior="smooth" lang="ru">
       <body>
         <ShopProvider>{children}</ShopProvider>
       </body>
