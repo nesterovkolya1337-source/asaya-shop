@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
 import styles from "./site-shell.module.css";
@@ -28,20 +27,14 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
             <Link href="/favorites">Избранное</Link>
             <Link href="/about">О бренде</Link>
             <Link href="/delivery">Доставка и оплата</Link>
-            <Link href="/stores">Где нас найти</Link>
+            <Link href="/where-to-buy">Где купить</Link>
+            <Link href="/instructions">Инструкции</Link>
+            <Link href="/faq">Вопросы и ответы</Link>
             <Link href="/support">Служба заботы</Link>
-            <Link href="/order-status">Статус заказа</Link>
           </div>
         </details>
         <Link className={styles.wordmark} href="/" aria-label="ASAYA — главная">
-          {overlay ? (
-            <>
-              <Image className={styles.desktopLogo} alt="ASAYA" height={26} priority src={assetPath("/images/figma/header-logo.svg")} width={114} />
-              <span className={styles.mobileWordmark}>ASAYA</span>
-            </>
-          ) : (
-            "ASAYA"
-          )}
+          <Image className={styles.brandLogo} alt="ASAYA" height={28} priority src={assetPath("/images/figma/footer-wordmark.svg")} width={114} />
         </Link>
         <div className={`${styles.navigationSide} ${styles.navigationEnd}`}>
           <Link className={`${styles.iconLink} ${styles.mobileOptional}`} href="/catalog#search" aria-label="Поиск">
@@ -74,8 +67,6 @@ export function SiteChrome({ overlay = false }: { overlay?: boolean }) {
 }
 
 export function SiteFooter() {
-  const [subscribed, setSubscribed] = useState(false);
-
   return (
     <footer className={styles.footer} id="about">
       <div className={styles.footerInner}>
@@ -83,29 +74,55 @@ export function SiteFooter() {
           <Image alt="ASAYA" fill sizes="(max-width: 1200px) 86vw, 1040px" src={assetPath("/images/figma/footer-wordmark.svg")} />
         </div>
         <div className={styles.footerColumns}>
-          <div>
-            <p className={styles.footerLead}>
-              Присоединяйтесь к нам на пути к естественному сиянию
-            </p>
-            <form className={styles.subscribe} onSubmit={(event) => { event.preventDefault(); setSubscribed(true); }}>
-              <label>
-                <span className={styles.srOnly}>Email</span>
-                <input aria-label="Email" disabled={subscribed} placeholder="Email" required type="email" />
-              </label>
-              <button type="submit">{subscribed ? "Готово ✓" : "Подписаться"}</button>
-            </form>
+          <div className={styles.footerIntro}>
+            <p className={styles.footerLead}>Косметика под настроение — для ухода, который хочется повторять.</p>
+            <a className={styles.telegramButton} href="https://t.me/asayabeauty" rel="noreferrer" target="_blank">Читать ASAYA в Telegram</a>
+            <div className={styles.socials} aria-label="Социальные сети ASAYA">
+              <a aria-label="Telegram" href="https://t.me/asayabeauty" rel="noreferrer" target="_blank">TG</a>
+              <a aria-label="ВКонтакте" href="https://vk.com/asaya.beauty" rel="noreferrer" target="_blank">VK</a>
+              <a aria-label="Instagram" href="https://instagram.com/asaya.beauty" rel="noreferrer" target="_blank">IG</a>
+              <a aria-label="Email" href="mailto:globalcos@yandex.ru">@</a>
+            </div>
           </div>
-          <div className={styles.footerLinks}>
-            <Link href="/about">О бренде</Link>
-            <Link href="/catalog">Каталог</Link>
-            <Link href="/delivery">Доставка и оплата</Link>
-            <Link href="/stores">Где нас найти</Link>
-            <Link href="/support">Служба заботы</Link>
-            <Link href="/order-status">Статус заказа</Link>
-            <a href="mailto:hello@asaya.ru">hello@asaya.ru</a>
+
+          <nav className={styles.footerNav} aria-label="Навигация в подвале">
+            <div>
+              <p>Покупателям</p>
+              <Link href="/catalog">Каталог</Link>
+              <Link href="/delivery">Доставка и оплата</Link>
+              <Link href="/instructions">Инструкции</Link>
+              <Link href="/faq">Вопросы и ответы</Link>
+              <Link href="/returns">Возврат и претензии</Link>
+            </div>
+            <div>
+              <p>ASAYA</p>
+              <Link href="/about">О бренде</Link>
+              <Link href="/where-to-buy">Где купить</Link>
+              <Link href="/support">Служба заботы</Link>
+              <a href="https://t.me/asayahelp" rel="noreferrer" target="_blank">Поддержка в Telegram</a>
+            </div>
+          </nav>
+        </div>
+        <div className={styles.legalRow}>
+          <span>© ASAYA</span>
+          <div>
+            <Link href="/legal/privacy">Политика конфиденциальности</Link>
+            <Link href="/legal/personal-data">Согласие на обработку данных</Link>
+            <Link href="/legal/offer">Публичная оферта</Link>
+            <Link href="/legal/cookies">Файлы cookie</Link>
           </div>
         </div>
       </div>
+      <details className={styles.supportBubble}>
+        <summary>Помощь</summary>
+        <div>
+          <strong>Служба заботы</strong>
+          <span>Подбор ухода, вопросы по применению, заказу или повреждённому товару.</span>
+          <a href="https://t.me/asayahelp" rel="noreferrer" target="_blank">Написать в Telegram</a>
+          <a href="mailto:globalcos@yandex.ru">Написать на email</a>
+          <small>MAX — после подтверждения официальной ссылки</small>
+        </div>
+      </details>
     </footer>
   );
 }

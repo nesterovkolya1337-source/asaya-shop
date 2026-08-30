@@ -1,0 +1,12 @@
+.page { width: min(100%, calc(var(--content-width) + (var(--page-gutter) * 2))); margin: 0 auto; padding: 0 var(--page-gutter) 34px; }
+.page main { padding: 70px 0; }
+.page header p { color: var(--color-gray); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+.page h1 { max-width: 1000px; margin-top: 12px; font-size: clamp(48px, 7vw, 88px); font-weight: 500; line-height: .94; letter-spacing: -.055em; }
+.page aside { display: grid; max-width: 850px; gap: 8px; margin-top: 40px; padding: 24px; border-radius: var(--radius-card); background: var(--color-pink); line-height: 1.45; }
+.page section { display: grid; gap: 8px; margin-top: 40px; }
+.page article { display: grid; grid-template-columns: 50px 1fr 1fr; gap: 20px; padding: 26px; border-radius: var(--radius-card); background: var(--color-light-gray); }
+.page article > span { color: var(--color-gray); }
+.page article h2 { font-size: 22px; font-weight: 500; }
+.page article p { color: #666; line-height: 1.45; }
+.page main > a { display: inline-flex; margin-top: 32px; padding-bottom: 4px; border-bottom: 1px solid; }
+@media (max-width: 700px) { .page { padding: 8px 10px 24px; } .page main { padding: 48px 0; } .page article { grid-template-columns: 34px 1fr; } .page article p { grid-column: 2; } }

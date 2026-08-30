@@ -14,6 +14,8 @@
   top: 11px;
   left: 11px;
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
 }
 
@@ -26,6 +28,11 @@
   color: white;
   background: var(--color-foreground);
   font-size: 14px;
+}
+
+.badges .discountBadge {
+  color: var(--color-foreground);
+  background: var(--color-pink);
 }
 
 .visualLink {
@@ -128,19 +135,6 @@
 .price span {
   color: var(--color-gray);
   text-decoration: line-through;
-}
-
-.price em {
-  display: inline-flex;
-  min-height: 20px;
-  align-items: center;
-  padding: 0 7px;
-  border-radius: 999px;
-  color: var(--color-foreground);
-  background: var(--color-pink);
-  font-size: 11px;
-  font-style: normal;
-  text-decoration: none;
 }
 
 .addButton,
@@ -290,12 +284,6 @@
 
   .price > div {
     gap: 4px;
-  }
-
-  .price em {
-    min-height: 17px;
-    padding-inline: 5px;
-    font-size: 9px;
   }
 
   .addButton,

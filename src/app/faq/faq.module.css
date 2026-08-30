@@ -1,0 +1,15 @@
+.page { width: min(100%, calc(var(--content-width) + (var(--page-gutter) * 2))); margin: 0 auto; padding: 0 var(--page-gutter) 34px; }
+.heading { display: grid; min-height: 430px; align-content: center; }
+.heading p { color: var(--color-gray); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+.heading h1 { margin-top: 12px; font-size: clamp(58px, 9vw, 112px); font-weight: 500; line-height: .88; letter-spacing: -.065em; }
+.heading span { margin-top: 24px; color: #666; font-size: 18px; }
+.questions { display: grid; gap: 8px; }
+.questions details { border-radius: var(--radius-card); background: var(--color-light-gray); }
+.questions summary { display: flex; min-height: 86px; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 28px; cursor: pointer; font-size: clamp(20px, 2.3vw, 30px); list-style: none; }
+.questions summary::-webkit-details-marker { display: none; }
+.questions summary span { display: grid; width: 36px; height: 36px; flex: none; place-items: center; border-radius: 50%; background: white; transition: transform 180ms ease; }
+.questions details[open] summary span { transform: rotate(45deg); }
+.questions details p { max-width: 800px; padding: 0 28px 28px; color: #555; line-height: 1.55; }
+.contact { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 10px; padding: 28px; border-radius: var(--radius-card); background: var(--color-pink); font-size: 20px; }
+.contact a { padding: 12px 20px; border-radius: 999px; color: white; background: var(--color-foreground); font-size: 15px; }
+@media (max-width: 620px) { .page { padding: 8px 10px 24px; } .heading { min-height: 350px; } .heading h1 { font-size: 55px; } .contact { align-items: flex-start; flex-direction: column; } .questions summary { min-height: 74px; padding: 18px; } .questions details p { padding: 0 18px 22px; } }

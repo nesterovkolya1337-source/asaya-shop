@@ -16,6 +16,7 @@ export function ProductCard({ product }: { product: Product }) {
     <article className={styles.card} id={product.id}>
       <div className={styles.badges}>
         {product.badge && <span>{product.badge}</span>}
+        {product.discount > 0 && <span className={styles.discountBadge}>−{product.discount}%</span>}
       </div>
       <Link className={styles.visualLink} href={`/product/${product.id}`} aria-label={`Открыть ${product.name}`}>
         <Image
@@ -47,7 +48,6 @@ export function ProductCard({ product }: { product: Product }) {
           <strong>{formatPrice(product.price)}</strong>
           <div>
             {product.oldPrice > product.price && <span>{formatPrice(product.oldPrice)}</span>}
-            {product.discount > 0 && <em>-{product.discount}%</em>}
           </div>
         </div>
       </div>

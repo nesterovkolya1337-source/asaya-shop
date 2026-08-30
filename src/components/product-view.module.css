@@ -35,6 +35,12 @@
   background: var(--color-light-gray);
 }
 
+.galleryColumn {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
 .gallery {
   position: relative;
   min-height: 680px;
@@ -46,10 +52,24 @@
   padding: 70px 16%;
 }
 
-.badge,
-.volume {
+.lifestyleImage {
+  object-fit: cover;
+  padding: 0;
+}
+
+.productBadges {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
+  top: 18px;
+  left: 18px;
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+}
+
+.badge,
+.discountBadge,
+.volume {
   display: inline-flex;
   min-height: 30px;
   align-items: center;
@@ -58,18 +78,58 @@
 }
 
 .badge {
-  top: 18px;
-  left: 18px;
   color: white;
   background: var(--color-foreground);
 }
 
+.discountBadge {
+  background: var(--color-pink);
+}
+
 .volume {
+  position: absolute;
+  z-index: 2;
   right: 18px;
   bottom: 18px;
   border: 1px solid rgb(32 32 32 / 20%);
   background: rgb(255 255 255 / 70%);
   font-size: 13px;
+}
+
+.thumbnails {
+  display: grid;
+  grid-auto-columns: 104px;
+  grid-auto-flow: column;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.thumbnails::-webkit-scrollbar {
+  display: none;
+}
+
+.thumbnails button {
+  position: relative;
+  height: 112px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--color-light-gray);
+  cursor: pointer;
+}
+
+.thumbnails button img {
+  object-fit: cover;
+}
+
+.thumbnails button:first-child img {
+  object-fit: contain;
+  padding: 10px;
+}
+
+.thumbnails .activeThumbnail {
+  border-color: var(--color-foreground);
 }
 
 .details {
@@ -149,17 +209,6 @@
   color: var(--color-gray);
   font-size: 17px;
   text-decoration: line-through;
-}
-
-.priceBlock em {
-  display: inline-flex;
-  min-height: 24px;
-  align-items: center;
-  padding: 0 9px;
-  border-radius: 999px;
-  background: var(--color-pink);
-  font-size: 12px;
-  font-style: normal;
 }
 
 .stock {
@@ -314,6 +363,192 @@
   line-height: 1.45;
 }
 
+.instructionLink {
+  display: inline-flex;
+  margin: 0 0 18px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid;
+  font-size: 13px;
+}
+
+.sensory {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.8fr);
+  gap: clamp(36px, 8vw, 120px);
+  margin-top: 10px;
+  padding: clamp(34px, 6vw, 72px);
+  border-radius: var(--radius-card);
+  background: var(--color-pink);
+}
+
+.sensory > div:first-child > p,
+.ugc .sectionHeading p,
+.reviewSummary > p {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sensory h2 {
+  max-width: 650px;
+  margin-top: 10px;
+  font-size: clamp(42px, 6vw, 76px);
+  font-weight: 400;
+  line-height: 0.94;
+  letter-spacing: -0.055em;
+}
+
+.sensory > div:first-child > span {
+  display: block;
+  max-width: 560px;
+  margin-top: 24px;
+  color: #4b4b4b;
+  line-height: 1.4;
+}
+
+.sensoryMetrics {
+  display: grid;
+  align-content: center;
+  gap: 22px;
+}
+
+.sensoryMetrics > div {
+  display: grid;
+  gap: 9px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgb(32 32 32 / 28%);
+}
+
+.sensoryMetrics > div > span {
+  font-size: 18px;
+}
+
+.sensoryDots {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+}
+
+.sensoryDots i {
+  height: 9px;
+  border: 1px solid rgb(32 32 32 / 40%);
+  border-radius: 999px;
+}
+
+.sensoryDots .filledDot {
+  border-color: var(--color-foreground);
+  background: var(--color-foreground);
+}
+
+.sensoryMetrics small {
+  color: #575757;
+  font-size: 11px;
+}
+
+.ugc {
+  padding: 54px 0 16px;
+}
+
+.ugc .sectionHeading {
+  align-items: start;
+}
+
+.ugcGrid {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr 1fr 0.72fr;
+  gap: 10px;
+}
+
+.ugcImage {
+  position: relative;
+  min-height: 420px;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--color-light-gray);
+}
+
+.ugcImage img {
+  object-fit: cover;
+}
+
+.reviews {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.65fr) minmax(0, 1.35fr);
+  gap: 10px;
+  padding-top: 42px;
+}
+
+.reviewSummary,
+.reviewState {
+  padding: clamp(26px, 4vw, 48px);
+  border-radius: var(--radius-card);
+  background: var(--color-light-gray);
+}
+
+.reviewSummary h2 {
+  margin-top: 12px;
+  font-size: clamp(68px, 9vw, 110px);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+}
+
+.reviewSummary > div {
+  display: grid;
+  gap: 9px;
+  margin-top: 24px;
+  color: var(--color-gray);
+  font-size: 12px;
+}
+
+.reviewState {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  background: white;
+  box-shadow: inset 0 0 0 1px #e6e6e6;
+}
+
+.reviewState h3 {
+  max-width: 720px;
+  font-size: clamp(26px, 3.5vw, 44px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.reviewState p {
+  max-width: 720px;
+  margin-top: 18px;
+  color: #555;
+  line-height: 1.45;
+}
+
+.reviewState a {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  margin-top: 24px;
+  padding: 0 20px;
+  border-radius: 999px;
+  color: white;
+  background: var(--color-foreground);
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.reviewState a:hover,
+.reviewState a:focus-visible {
+  color: var(--color-foreground);
+  background: var(--color-pink);
+}
+
+.reviewState small {
+  display: block;
+  margin-top: 14px;
+  color: var(--color-gray);
+  font-size: 11px;
+}
+
 .recommendations {
   padding: 50px 0 16px;
 }
@@ -384,6 +619,15 @@
   .recommendationGrid > :last-child:nth-child(odd) {
     grid-column: 1 / -1;
   }
+
+  .ugcGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sensory,
+  .reviews {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 620px) {
@@ -409,9 +653,13 @@
     padding: 50px 13%;
   }
 
-  .badge {
+  .productBadges {
     top: 12px;
     left: 12px;
+  }
+
+  .badge,
+  .discountBadge {
     min-height: 25px;
     padding-inline: 12px;
     font-size: 11px;
@@ -473,5 +721,43 @@
 
   .recommendationGrid {
     gap: 8px;
+  }
+
+  .thumbnails {
+    grid-auto-columns: 80px;
+  }
+
+  .thumbnails button {
+    height: 88px;
+  }
+
+  .sensory {
+    gap: 34px;
+    padding: 34px 22px;
+  }
+
+  .sensory h2 {
+    font-size: 44px;
+  }
+
+  .ugc {
+    padding-top: 40px;
+  }
+
+  .ugcGrid {
+    gap: 8px;
+  }
+
+  .ugcImage {
+    min-height: 270px;
+  }
+
+  .reviews {
+    padding-top: 30px;
+  }
+
+  .reviewSummary,
+  .reviewState {
+    padding: 26px 20px;
   }
 }
