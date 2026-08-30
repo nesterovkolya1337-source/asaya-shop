@@ -8,13 +8,15 @@ import { formatPrice } from "@/lib/store-data";
 import styles from "./checkout-view.module.css";
 
 export function CheckoutView() {
-  const { cart, changeQuantity, clearCart, products, promoCode } = useShop();
-  const [delivery, setDelivery] = useState<"pickup" | "courier">("pickup");
+  const { cart, clearCart, products, promoCode } = useShop();
   const [placed, setPlaced] = useState(false);
   const cartProducts = products.filter((product) => cart[product.id]);
+  const itemCount = cartProducts.reduce((sum, product) => sum + cart[product.id], 0);
+  const oldSubtotal = useMemo(() => cartProducts.reduce((sum, product) => sum + product.oldPrice * cart[product.id], 0), [cart, cartProducts]);
   const subtotal = useMemo(() => cartProducts.reduce((sum, product) => sum + product.price * cart[product.id], 0), [cart, cartProducts]);
-  const deliveryPrice = delivery === "courier" && subtotal > 0 && subtotal < 1500 ? 300 : 0;
+  const deliveryPrice = 0;
   const promoDiscount = promoCode === "ASAYA10" ? Math.round(subtotal * 0.1) : 0;
+  const productDiscount = oldSubtotal - subtotal;
   const total = subtotal + deliveryPrice - promoDiscount;
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -38,7 +40,6 @@ export function CheckoutView() {
   return (
     <main>
       <header className={styles.heading}>
-        <p>ASAYA / Checkout</p>
         <h1>Оформление заказа</h1>
       </header>
 
@@ -46,24 +47,15 @@ export function CheckoutView() {
         <div className={styles.leftColumn}>
           <section className={styles.block} aria-labelledby="cart-heading">
             <div className={styles.blockHeading}>
-              <h2 id="cart-heading">Ваш заказ</h2>
-              <span>{cartProducts.length} поз.</span>
+              <h2 id="cart-heading">Товары в заказе</h2>
+              <Link href="/cart">Изменить</Link>
             </div>
             {cartProducts.length ? (
               <div className={styles.cartList}>
                 {cartProducts.map((product) => (
                   <article className={styles.cartItem} key={product.id}>
-                    <div className={styles.cartImage}><Image alt={product.name} fill sizes="96px" src={product.image} /></div>
-                    <div className={styles.cartInfo}>
-                      <h3>{product.name}</h3>
-                      <span>{formatPrice(product.price)}</span>
-                      <div className={styles.quantity}>
-                        <button aria-label={"Уменьшить количество " + product.name} onClick={() => changeQuantity(product.id, cart[product.id] - 1)} type="button">−</button>
-                        <strong>{cart[product.id]}</strong>
-                        <button aria-label={"Увеличить количество " + product.name} onClick={() => changeQuantity(product.id, cart[product.id] + 1)} type="button">+</button>
-                      </div>
-                    </div>
-                    <button className={styles.remove} onClick={() => changeQuantity(product.id, 0)} type="button">Удалить</button>
+                    <Link className={styles.cartImage} href={`/product/${product.id}`}><Image alt={product.name} fill sizes="120px" src={product.image} /></Link>
+                    <span>{cart[product.id]} шт.</span>
                   </article>
                 ))}
               </div>
@@ -76,47 +68,48 @@ export function CheckoutView() {
           </section>
 
           <section className={styles.block} aria-labelledby="delivery-heading">
-            <h2 id="delivery-heading">Доставка</h2>
-            <div className={styles.choiceGrid}>
-              <label className={delivery === "pickup" ? styles.selectedChoice : ""}>
-                <input checked={delivery === "pickup"} name="delivery" onChange={() => setDelivery("pickup")} type="radio" />
-                <strong>Пункт выдачи</strong>
-                <span>Бесплатно от 1 500 ₽</span>
-              </label>
-              <label className={delivery === "courier" ? styles.selectedChoice : ""}>
-                <input checked={delivery === "courier"} name="delivery" onChange={() => setDelivery("courier")} type="radio" />
-                <strong>Курьер</strong>
-                <span>300 ₽ · 1–3 дня</span>
-              </label>
+            <label className={styles.city} htmlFor="city"><strong id="delivery-heading">Ваш город</strong><span><b aria-hidden="true">⌕</b><input defaultValue="Москва, Россия" id="city" required={cartProducts.length > 0} /></span></label>
+            <div className={styles.deliveryHeading}>
+              <h2>Выберите способ доставки</h2>
+              <p>Сборка заказа занимает 1–2 дня, скорость доставки зависит от выбранной логистической службы.</p>
             </div>
-            <label className={styles.address}>{delivery === "pickup" ? "Адрес или метро" : "Адрес доставки"}<input placeholder={delivery === "pickup" ? "Найти ближайший пункт" : "Город, улица, дом, квартира"} required={cartProducts.length > 0} /></label>
+            <div className={styles.deliveryCard}>
+              <label className={styles.deliveryChoice}><input defaultChecked name="delivery" type="radio" /><span><strong>Доставка (ПВЗ)</strong><b>ПВЗ Metaship</b></span></label>
+              <small>5Post бесплатно · 2–3 дня<br />Почта России бесплатно · 4 дня<br />Яндекс Доставка бесплатно · 4 дня<br />СДЭК бесплатно · 3–4 дня</small>
+              <button onClick={(event) => { event.preventDefault(); document.getElementById("pickup")?.focus(); }} type="button">Выбрать на карте</button>
+              <label className={styles.pickupField} htmlFor="pickup">Пункт выдачи<input id="pickup" placeholder="Адрес или метро" required={cartProducts.length > 0} /></label>
+              <em>Срок доставки: 2–3 дня</em>
+            </div>
           </section>
 
           <section className={styles.block} aria-labelledby="customer-heading">
-            <h2 id="customer-heading">Получатель</h2>
+            <h2 id="customer-heading">Заполните информацию о себе</h2>
             <div className={styles.fieldGrid}>
-              <label>Имя<input placeholder="Ваше имя" required={cartProducts.length > 0} /></label>
+              <label>Фамилия<input required={cartProducts.length > 0} /></label>
+              <label>Имя<input required={cartProducts.length > 0} /></label>
               <label>Телефон<input placeholder="+7 000 000-00-00" required={cartProducts.length > 0} type="tel" /></label>
-              <label className={styles.fullWidth}>Почта<input placeholder="name@example.com" required={cartProducts.length > 0} type="email" /></label>
+              <label>Email<input placeholder="name@example.com" required={cartProducts.length > 0} type="email" /></label>
+              <label className={styles.fullWidth}>Адрес доставки (если ПВЗ не выбран)<input /></label>
             </div>
           </section>
 
           <section className={styles.block} aria-labelledby="payment-heading">
             <h2 id="payment-heading">Оплата</h2>
-            <label className={[styles.payment, styles.selectedChoice].join(" ")}><input defaultChecked name="payment" type="radio" /><span><strong>Банковской картой онлайн</strong><small>МИР · Visa · Mastercard</small></span></label>
+            <label className={styles.payment}><input defaultChecked name="payment" type="radio" /><span><strong>Банковской картой на сайте</strong><small>МИР · Visa · Mastercard</small></span></label>
           </section>
         </div>
 
         <aside className={styles.summary} aria-labelledby="summary-heading">
-          <p>Итого</p>
-          <h2 id="summary-heading">{formatPrice(total)}</h2>
           <div className={styles.summaryRows}>
-            <div><span>Товары</span><strong>{formatPrice(subtotal)}</strong></div>
-            {promoDiscount > 0 && <div><span>Промокод ASAYA10</span><strong>−{formatPrice(promoDiscount)}</strong></div>}
+            <div><span>Всего {itemCount} товар(а) на сумму</span><strong>{formatPrice(oldSubtotal)}</strong></div>
             <div><span>Доставка</span><strong>{deliveryPrice ? formatPrice(deliveryPrice) : "Бесплатно"}</strong></div>
+            {(productDiscount + promoDiscount) > 0 && <div><span>Скидка{promoDiscount ? " + промокод" : ""}</span><strong>−{formatPrice(productDiscount + promoDiscount)}</strong></div>}
           </div>
-          <button disabled={!cartProducts.length} type="submit">Оформить заказ</button>
-          <span className={styles.note}>Демо-режим: данные не отправляются и не сохраняются. Реальные заказы появятся только после подключения защищённого сервера.</span>
+          <div className={styles.summaryTotal}><h2 id="summary-heading">Итого к оплате</h2><strong>{formatPrice(total)}</strong></div>
+          <button disabled={!cartProducts.length} type="submit"><span>Оформить заказ</span><strong>{formatPrice(total)}</strong></button>
+          <label className={styles.agreement}><input required type="checkbox" />Я согласен с условиями оферты и политикой конфиденциальности сайта</label>
+          <label className={styles.agreement}><input type="checkbox" />Я согласен получать рекламные и информационные материалы</label>
+          <span className={styles.note}>Демо-режим: заказ не отправляется без подключения защищённого сервера.</span>
         </aside>
       </form>
     </main>
