@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteChrome } from "@/components/site-shell";
+import { ProductEditor } from "./product-editor";
 import styles from "./admin.module.css";
 
 export const metadata: Metadata = {
@@ -45,6 +46,7 @@ export default function AdminPage() {
           </div>
           <aside><strong>Принцип безопасности</strong><span>Покупатели никогда не получают доступ к этим разделам. Каждое изменение цены, скидки или карточки товара сохраняется с автором и временем.</span></aside>
         </section>
+        <ProductEditor />
       </main>
     </div>
   );
