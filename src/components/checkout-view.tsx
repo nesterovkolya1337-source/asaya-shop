@@ -15,10 +15,10 @@ export function CheckoutView() {
   const oldSubtotal = useMemo(() => cartProducts.reduce((sum, product) => sum + product.oldPrice * cart[product.id], 0), [cart, cartProducts]);
   const subtotal = useMemo(() => cartProducts.reduce((sum, product) => sum + product.price * cart[product.id], 0), [cart, cartProducts]);
   const deliveryPrice = 0;
-  const hasFreeDelivery = subtotal >= 1500;
   const promoDiscount = promoCode === "ASAYA10" ? Math.round(subtotal * 0.1) : 0;
   const productDiscount = oldSubtotal - subtotal;
   const total = subtotal + deliveryPrice - promoDiscount;
+  const hasFreeDelivery = total >= 1500;
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
