@@ -87,7 +87,7 @@ export const defaultProducts: Product[] = [
     instruction: bodyInstruction,
     category: "body",
     badge: "Новинка",
-    image: assetPath("/images/figma/catalog-products/body-avocado.webp"),
+    image: assetPath("/images/figma/page2-packshots/avocado-body-cream.webp"),
   }),
   createProduct({
     id: "multi-hair-spray",
@@ -105,7 +105,7 @@ export const defaultProducts: Product[] = [
     },
     category: "hair",
     badge: "Бестселлер",
-    image: assetPath("/images/figma/product-spray.webp"),
+    image: assetPath("/images/figma/page2-packshots/multi-hair-spray.webp"),
   }),
   createProduct({
     id: "strawberry-shower-gel",
@@ -120,7 +120,7 @@ export const defaultProducts: Product[] = [
     category: "body",
     badge: "Бестселлер",
     discount: 10,
-    image: assetPath("/images/figma/catalog-products/gel-strawberry.webp"),
+    image: assetPath("/images/figma/page2-packshots/strawberry-shower-gel.webp"),
   }),
   createProduct({
     id: "coconut-body-cream",
@@ -135,7 +135,7 @@ export const defaultProducts: Product[] = [
     category: "body",
     badge: "Бестселлер",
     discount: 10,
-    image: assetPath("/images/figma/product-cream-coconut-page2.webp"),
+    image: assetPath("/images/figma/page2-packshots/coconut-body-cream.webp"),
   }),
   createProduct({
     id: "hair-balm",
@@ -154,7 +154,7 @@ export const defaultProducts: Product[] = [
     category: "hair",
     badge: "Бестселлер",
     discount: 10,
-    image: assetPath("/images/figma/catalog-products/hair-balm.webp"),
+    image: assetPath("/images/figma/page2-packshots/hair-balm.webp"),
   }),
   createProduct({
     id: "restoring-face-cream",
@@ -174,7 +174,7 @@ export const defaultProducts: Product[] = [
     badge: "Новинка",
     discount: 0,
     oldPrice: 500,
-    image: assetPath("/images/figma/catalog-products/face-restoring.webp"),
+    image: assetPath("/images/figma/page2-packshots/restoring-face-cream.webp"),
   }),
   createProduct({
     id: "hair-shampoo",
@@ -193,7 +193,7 @@ export const defaultProducts: Product[] = [
     category: "hair",
     badge: "Бестселлер",
     discount: 10,
-    image: assetPath("/images/figma/catalog-products/hair-shampoo.webp"),
+    image: assetPath("/images/figma/page2-packshots/hair-shampoo.webp"),
   }),
   createProduct({
     id: "kiwi-shower-gel",
@@ -207,7 +207,7 @@ export const defaultProducts: Product[] = [
     instruction: gelInstruction,
     category: "body",
     badge: "Бестселлер",
-    image: assetPath("/images/figma/product-gel-kiwi-page2.webp"),
+    image: assetPath("/images/figma/page2-packshots/kiwi-shower-gel.webp"),
   }),
   createProduct({
     id: "hair-mask",
@@ -224,7 +224,7 @@ export const defaultProducts: Product[] = [
       tip: "Не наносите маску на корни, если волосы склонны быстро терять объём.",
     },
     category: "hair",
-    image: assetPath("/images/figma/catalog-products/hair-mask.webp"),
+    image: assetPath("/images/figma/page2-packshots/hair-mask.webp"),
   }),
   createProduct({
     id: "guava-shower-gel",
@@ -237,7 +237,7 @@ export const defaultProducts: Product[] = [
     aroma: "Освежающая кислинка лимонада и сочного лимона раскрываются сладкой гуавой и красными ягодами с лёгкими древесными нотами.",
     instruction: gelInstruction,
     category: "body",
-    image: assetPath("/images/figma/catalog-products/gel-guava.webp"),
+    image: assetPath("/images/figma/page2-packshots/guava-shower-gel.webp"),
   }),
   createProduct({
     id: "hair-cream-spray",
@@ -255,7 +255,7 @@ export const defaultProducts: Product[] = [
     },
     category: "hair",
     discount: 10,
-    image: assetPath("/images/figma/catalog-products/hair-cream-spray.webp"),
+    image: assetPath("/images/figma/page2-packshots/hair-cream-spray.webp"),
   }),
   createProduct({
     id: "yuzu-shower-gel",
@@ -268,7 +268,7 @@ export const defaultProducts: Product[] = [
     aroma: "Освежающая цедра юдзу и искрящиеся нотки бергамота раскрываются нежным флёром цветков юдзу и сочными аккордами мандарина, переходящими в тёплую амбру и бархатистую древесину сандала.",
     instruction: gelInstruction,
     category: "body",
-    image: assetPath("/images/figma/catalog-products/gel-yuzu.webp"),
+    image: assetPath("/images/figma/page2-packshots/yuzu-shower-gel.webp"),
   }),
   createProduct({
     id: "lifting-face-cream",
@@ -288,7 +288,7 @@ export const defaultProducts: Product[] = [
     badge: "Новинка",
     discount: 0,
     oldPrice: 500,
-    image: assetPath("/images/figma/catalog-products/face-lifting.webp"),
+    image: assetPath("/images/figma/page2-packshots/lifting-face-cream.webp"),
   }),
   createProduct({
     id: "blueberry-shower-gel",
@@ -301,7 +301,7 @@ export const defaultProducts: Product[] = [
     aroma: "Сочная лесная черника с яркой кислинкой раскрывается нежным цветочным аккордом василька и мягкими нотами сливочного йогурта.",
     instruction: gelInstruction,
     category: "body",
-    image: assetPath("/images/figma/catalog-products/gel-blueberry.webp"),
+    image: assetPath("/images/figma/page2-packshots/blueberry-shower-gel.webp"),
   }),
 ];
 
