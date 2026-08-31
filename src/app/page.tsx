@@ -62,9 +62,10 @@ export default function Home() {
               src={assetPath("/images/figma/hero.webp")}
             />
             <div className={styles.heroCopy}>
-              <h1>Уходовая косметика для волос</h1>
-              <Link className={styles.lightButton} href="/catalog/hair">
-                Узнать больше
+              <p>ASAYA — косметика под настроение</p>
+              <h1>Выбери своё настроение</h1>
+              <Link className={styles.lightButton} href="/catalog">
+                Выбрать уход
               </Link>
             </div>
           </section>
@@ -83,8 +84,8 @@ export default function Home() {
               src={assetPath("/images/figma/asaya-6139.webp")}
             />
             <p>
-              <span className={styles.manifestoDesktop}>Для ASAYA уход — это сочетание результата и эмоций. Мы создаём профессиональные продукты, которые дарят видимый эффект и превращают ежедневный уход в маленький ритуал любви к себе.</span>
-              <span className={styles.manifestoMobile}>Видимый результат и маленький ритуал любви к себе — каждый день.</span>
+              <span className={styles.manifestoDesktop}>Выбирай не только по функции, но и по тому, как хочется себя чувствовать сегодня. Эмоция помогает влюбиться. Эстетика помогает захотеть. Качество заставляет купить повторно.</span>
+              <span className={styles.manifestoMobile}>Жизнь уже происходит сейчас. Выбирай, как хочется себя чувствовать сегодня.</span>
             </p>
           </section>
 

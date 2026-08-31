@@ -7,6 +7,57 @@ import styles from "./about.module.css";
 
 export const metadata: Metadata = { title: "О бренде" };
 
+const moods = [
+  {
+    number: "01",
+    name: "Расслабление",
+    meaning: "Мне можно выдохнуть",
+    aroma: "Липовый цвет, светлый мёд, зелень, белый мускус и светлая древесина.",
+    image: "/images/figma/page2-packshots/avocado-body-cream.webp",
+    tone: "relaxation",
+  },
+  {
+    number: "02",
+    name: "Сексуальность",
+    meaning: "Мне нравится чувствовать себя сексуальной",
+    aroma: "Белый персик, нероли, розовый перец, белые цветы, чистый мускус и сандал.",
+    image: "/images/figma/page2-packshots/strawberry-shower-gel.webp",
+    tone: "sensuality",
+  },
+  {
+    number: "03",
+    name: "Уверенность",
+    meaning: "Я всё смогу. Я знаю себе цену",
+    aroma: "Сухой бергамот, чёрный чай, кардамон, ирис, кедр и мускус.",
+    image: "/images/figma/page2-packshots/coconut-body-cream.webp",
+    tone: "confidence",
+  },
+  {
+    number: "04",
+    name: "Свобода",
+    meaning: "Мне можно делать по-своему",
+    aroma: "Зелёный мандарин, петитгрейн, лист инжира, базилик, морская соль и светлая древесина.",
+    image: "/images/figma/page2-packshots/blueberry-shower-gel.webp",
+    tone: "freedom",
+  },
+  {
+    number: "05",
+    name: "Перемены",
+    meaning: "Я готова к новому",
+    aroma: "Зелёная груша, имбирь, матча, рисовый аккорд, белый чай и прозрачная древесность.",
+    image: "/images/figma/page2-packshots/kiwi-shower-gel.webp",
+    tone: "change",
+  },
+  {
+    number: "06",
+    name: "Индивидуальность",
+    meaning: "У меня свой вкус",
+    aroma: "Чёрная смородина, фиалковый лист, ирис, мягкая замша и сухая древесина.",
+    image: "/images/figma/page2-packshots/lifting-face-cream.webp",
+    tone: "individuality",
+  },
+] as const;
+
 export default function AboutPage() {
   return (
     <>
@@ -17,7 +68,7 @@ export default function AboutPage() {
             <div className={styles.heroCopy}>
               <p>ASAYA / О бренде</p>
               <h1>Выбери своё настроение</h1>
-              <span>Косметика для настоящего момента: работающие формулы, приятные текстуры и аромат, к которому хочется возвращаться.</span>
+              <span>ASAYA — российский бренд косметики про настроение. Каждый продукт сохраняет понятную функцию, а аромат, цвет и ритуал помогают выбрать, как хочется себя чувствовать сегодня.</span>
               <Link href="/catalog">Выбрать уход</Link>
             </div>
             <div className={styles.heroVisual}>
@@ -28,6 +79,27 @@ export default function AboutPage() {
           <section className={styles.statement}>
             <p>Жизнь уже происходит сейчас</p>
             <h2>Уход — не подготовка к какому-то идеальному дню. Это способ почувствовать себя здесь и сейчас.</h2>
+          </section>
+
+          <section className={styles.moods} aria-labelledby="moods-title">
+            <header>
+              <p>Эмоциональная система ASAYA</p>
+              <h2 id="moods-title">Шесть состояний. Одно право — быть разной.</h2>
+              <span>Это рабочие направления бренд-платформы. Финальные названия коллекций появятся после продуктового распределения и ароматических тестов.</span>
+            </header>
+            <div className={styles.moodGrid}>
+              {moods.map((mood) => (
+                <article className={`${styles.moodCard} ${styles[mood.tone]}`} key={mood.name}>
+                  <div className={styles.moodCopy}>
+                    <span>{mood.number}</span>
+                    <p>{mood.name}</p>
+                    <h3>{mood.meaning}</h3>
+                    <small>{mood.aroma}</small>
+                  </div>
+                  <Image alt="" className={styles.moodProduct} height={420} src={assetPath(mood.image)} width={252} />
+                </article>
+              ))}
+            </div>
           </section>
 
           <section className={styles.story}>
@@ -49,6 +121,12 @@ export default function AboutPage() {
               <h2>Честный российский бренд</h2>
               <p>Без выдуманной иностранной легенды и громких обещаний. Мы говорим понятно, современно и только о том, что действительно есть в продукте.</p>
             </article>
+          </section>
+
+          <section className={styles.formula}>
+            <p>Формула продукта ASAYA</p>
+            <h2>Доказуемая функция <span>+</span> приятный опыт <span>+</span> характерный аромат <span>+</span> сильная эстетика <span>+</span> эмоциональный мир.</h2>
+            <div><strong>Эмоция помогает влюбиться.</strong><strong>Эстетика помогает захотеть.</strong><strong>Качество заставляет купить повторно.</strong></div>
           </section>
         </main>
       </div>

@@ -45,7 +45,15 @@
   color: white;
 }
 
+.heroCopy > p {
+  margin-bottom: 14px;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
 .heroCopy h1 {
+  max-width: 520px;
   font-size: clamp(40px, 4.5vw, 54px);
   font-weight: 500;
   line-height: 0.93;

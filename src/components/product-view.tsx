@@ -34,6 +34,8 @@ export function ProductView({ productId }: { productId: string }) {
     assetPath("/images/figma/ugc-img5872.webp"),
     assetPath("/images/figma/ugc-red-product.webp"),
   ];
+  const hasReviews = product.reviews > 0;
+  const ratingRows = [5, 4, 3, 2, 1];
 
   return (
     <main className={styles.main}>
@@ -71,8 +73,8 @@ export function ProductView({ productId }: { productId: string }) {
 
         <div className={styles.details}>
           <div className={styles.rating}>
-            <Image alt={`${product.rating} из 5`} height={14} src={assetPath("/images/figma/stars.svg")} width={68} />
-            <span>{product.reviews} отзывов</span>
+            {hasReviews && <Image alt={`${product.rating} из 5`} height={14} src={assetPath("/images/figma/stars.svg")} width={68} />}
+            <span>{hasReviews ? `${product.reviews} отзывов` : "Пока без отзывов"}</span>
           </div>
           <div className={styles.titleRow}>
             <h1 id="product-title">{product.name}</h1>
@@ -168,12 +170,25 @@ export function ProductView({ productId }: { productId: string }) {
       <section className={styles.reviews} aria-labelledby="reviews-title">
         <div className={styles.reviewSummary}>
           <p>Отзывы</p>
-          <h2 id="reviews-title">{product.rating.toFixed(1)}</h2>
-          <div><Image alt={`${product.rating} из 5`} height={16} src={assetPath("/images/figma/stars.svg")} width={78} /><span>{product.reviews} оценок в текущей карточке товара</span></div>
+          <h2 id="reviews-title">{hasReviews ? product.rating.toFixed(1) : "—"}</h2>
+          <div className={styles.reviewMeta}>
+            {hasReviews && <Image alt={`${product.rating} из 5`} height={16} src={assetPath("/images/figma/stars.svg")} width={78} />}
+            <span>{hasReviews ? `${product.reviews} оценок` : "Оценок пока нет"}</span>
+          </div>
+          <div className={styles.ratingBreakdown} aria-label="Распределение оценок">
+            {ratingRows.map((rating) => (
+              <div key={rating}>
+                <span>{rating}</span>
+                <i><b /></i>
+                <small>0</small>
+              </div>
+            ))}
+          </div>
         </div>
         <div className={styles.reviewState}>
-          <h3>Тексты отзывов появятся здесь после подключения защищённого кабинета</h3>
-          <p>Пользователь сможет поставить 1–5 звёзд, написать текст и приложить фотографии. Отзыв с заказом получит отметку «Покупка подтверждена».</p>
+          <span className={styles.reviewEyebrow}>Ваше мнение важно</span>
+          <h3>Будьте первым, кто поделится впечатлением</h3>
+          <p>После запуска личного кабинета покупатель сможет поставить 1–5 звёзд, написать текст и приложить фотографии. Отзыв с заказом получит отметку «Покупка подтверждена».</p>
           <Link href="/account">Войти, чтобы оставить отзыв</Link>
           <small>Мы не публикуем рекламные тексты под видом отзывов покупателей.</small>
         </div>
