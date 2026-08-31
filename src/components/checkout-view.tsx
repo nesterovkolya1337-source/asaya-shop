@@ -107,7 +107,7 @@ export function CheckoutView() {
           </div>
           <div className={styles.summaryTotal}><h2 id="summary-heading">Итого к оплате</h2><strong>{formatPrice(total)}</strong></div>
           <button disabled={!cartProducts.length} type="submit"><span>Оформить заказ</span><strong>{formatPrice(total)}</strong></button>
-          <label className={styles.agreement}><input required type="checkbox" />Я согласен с условиями оферты и политикой конфиденциальности сайта</label>
+          <label className={styles.agreement}><input required type="checkbox" /><span>Я согласен с <Link href="/legal/offer">условиями оферты</Link>, <Link href="/legal/privacy">политикой конфиденциальности</Link> и <Link href="/legal/personal-data">обработкой персональных данных</Link></span></label>
           <label className={styles.agreement}><input type="checkbox" />Я согласен получать рекламные и информационные материалы</label>
           <span className={styles.note}>Демо-режим: заказ не отправляется без подключения защищённого сервера.</span>
         </aside>

@@ -42,7 +42,10 @@ export function AccountView() {
           <p>История заказов</p>
           <h2>Заказов пока нет</h2>
           <span>После подключения защищённого кабинета здесь появятся состав заказа и его статус.</span>
-          <Link href="/catalog">Перейти в каталог</Link>
+          <div className={styles.orderActions}>
+            <Link href="/order-status">Проверить статус</Link>
+            <Link href="/catalog">Перейти в каталог</Link>
+          </div>
         </section>
       </div>
 

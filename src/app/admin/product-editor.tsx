@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useShop, type ProductAdminUpdate } from "@/components/shop-provider";
-import { categoryLabels, formatPrice, type Product } from "@/lib/store-data";
+import { categoryLabels, formatPrice, type Product, type ProductCategory } from "@/lib/store-data";
 import styles from "./admin.module.css";
 
 type NumberField = "price" | "oldPrice" | "discount" | "stock";
@@ -46,6 +46,19 @@ function ProductRow({ product, updateProduct }: { product: Product; updateProduc
         <strong>{formatPrice(product.price)}</strong>
         {product.oldPrice > product.price && <small>{formatPrice(product.oldPrice)}</small>}
       </div>
+
+      <details className={styles.contentEditor}>
+        <summary>Описание, состав и применение</summary>
+        <div>
+          <label>Название<input onChange={(event) => updateProduct(product.id, { name: event.target.value })} type="text" value={product.name} /></label>
+          <label>Объём<input onChange={(event) => updateProduct(product.id, { volume: event.target.value })} type="text" value={product.volume} /></label>
+          <label>Категория<select onChange={(event) => updateProduct(product.id, { category: event.target.value as ProductCategory })} value={product.category}>{Object.entries(categoryLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <label className={styles.wideField}>Описание<textarea onChange={(event) => updateProduct(product.id, { description: event.target.value })} rows={4} value={product.description} /></label>
+          <label className={styles.wideField}>Способ применения<textarea onChange={(event) => updateProduct(product.id, { usage: event.target.value })} rows={4} value={product.usage} /></label>
+          <label className={styles.wideField}>Аромат<textarea onChange={(event) => updateProduct(product.id, { aroma: event.target.value })} rows={3} value={product.aroma} /></label>
+          <label className={styles.wideField}>Состав<textarea onChange={(event) => updateProduct(product.id, { ingredients: event.target.value })} rows={5} value={product.ingredients} /></label>
+        </div>
+      </details>
     </article>
   );
 }

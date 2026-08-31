@@ -12,48 +12,36 @@ const moods = [
     number: "01",
     name: "Расслабление",
     meaning: "Мне можно выдохнуть",
-    aroma: "Липовый цвет, светлый мёд, зелень, белый мускус и светлая древесина.",
-    image: "/images/figma/page2-packshots/avocado-body-cream.webp",
     tone: "relaxation",
   },
   {
     number: "02",
     name: "Сексуальность",
     meaning: "Мне нравится чувствовать себя сексуальной",
-    aroma: "Белый персик, нероли, розовый перец, белые цветы, чистый мускус и сандал.",
-    image: "/images/figma/page2-packshots/strawberry-shower-gel.webp",
     tone: "sensuality",
   },
   {
     number: "03",
     name: "Уверенность",
     meaning: "Я всё смогу. Я знаю себе цену",
-    aroma: "Сухой бергамот, чёрный чай, кардамон, ирис, кедр и мускус.",
-    image: "/images/figma/page2-packshots/coconut-body-cream.webp",
     tone: "confidence",
   },
   {
     number: "04",
     name: "Свобода",
     meaning: "Мне можно делать по-своему",
-    aroma: "Зелёный мандарин, петитгрейн, лист инжира, базилик, морская соль и светлая древесина.",
-    image: "/images/figma/page2-packshots/blueberry-shower-gel.webp",
     tone: "freedom",
   },
   {
     number: "05",
     name: "Перемены",
     meaning: "Я готова к новому",
-    aroma: "Зелёная груша, имбирь, матча, рисовый аккорд, белый чай и прозрачная древесность.",
-    image: "/images/figma/page2-packshots/kiwi-shower-gel.webp",
     tone: "change",
   },
   {
     number: "06",
     name: "Индивидуальность",
     meaning: "У меня свой вкус",
-    aroma: "Чёрная смородина, фиалковый лист, ирис, мягкая замша и сухая древесина.",
-    image: "/images/figma/page2-packshots/lifting-face-cream.webp",
     tone: "individuality",
   },
 ] as const;
@@ -85,7 +73,7 @@ export default function AboutPage() {
             <header>
               <p>Эмоциональная система ASAYA</p>
               <h2 id="moods-title">Шесть состояний. Одно право — быть разной.</h2>
-              <span>Это рабочие направления бренд-платформы. Финальные названия коллекций появятся после продуктового распределения и ароматических тестов.</span>
+              <span>ASAYA развивается к системе шести эмоциональных состояний. Пока коллекции не распределены по ним, мы не приписываем нынешним ароматам и флаконам несуществующие смыслы.</span>
             </header>
             <div className={styles.moodGrid}>
               {moods.map((mood) => (
@@ -94,9 +82,7 @@ export default function AboutPage() {
                     <span>{mood.number}</span>
                     <p>{mood.name}</p>
                     <h3>{mood.meaning}</h3>
-                    <small>{mood.aroma}</small>
                   </div>
-                  <Image alt="" className={styles.moodProduct} height={420} src={assetPath(mood.image)} width={252} />
                 </article>
               ))}
             </div>

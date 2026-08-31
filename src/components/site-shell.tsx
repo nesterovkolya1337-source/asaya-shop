@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { CookieConsent } from "@/components/cookie-consent";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
 import styles from "./site-shell.module.css";
@@ -30,6 +31,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
             <Link href="/where-to-buy">Где купить</Link>
             <Link href="/instructions">Инструкции</Link>
             <Link href="/faq">Вопросы и ответы</Link>
+            <Link href="/order-status">Статус заказа</Link>
             <Link href="/support">Служба заботы</Link>
           </div>
         </details>
@@ -93,6 +95,7 @@ export function SiteFooter() {
               <Link href="/instructions">Инструкции</Link>
               <Link href="/faq">Вопросы и ответы</Link>
               <Link href="/returns">Возврат и претензии</Link>
+              <Link href="/order-status">Статус заказа</Link>
             </div>
             <div>
               <p>ASAYA</p>
@@ -123,6 +126,7 @@ export function SiteFooter() {
           <small>MAX — после подтверждения официальной ссылки</small>
         </div>
       </details>
+      <CookieConsent />
     </footer>
   );
 }

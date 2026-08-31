@@ -21,7 +21,21 @@ type ShopState = {
 const STORAGE_KEY = "asaya-shop-state-v1";
 const ShopContext = createContext<ShopState | null>(null);
 
-export type ProductAdminUpdate = Partial<Pick<Product, "price" | "oldPrice" | "discount" | "stock" | "active" | "badge">>;
+export type ProductAdminUpdate = Partial<Pick<Product,
+  | "name"
+  | "description"
+  | "volume"
+  | "usage"
+  | "ingredients"
+  | "aroma"
+  | "category"
+  | "price"
+  | "oldPrice"
+  | "discount"
+  | "stock"
+  | "active"
+  | "badge"
+>>;
 
 type SavedShopState = Partial<Pick<ShopState, "cart" | "favorites" | "promoCode">> & {
   productOverrides?: Record<string, ProductAdminUpdate>;
@@ -62,6 +76,13 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!ready) return;
     const productOverrides = Object.fromEntries(products.map((product) => [product.id, {
+      name: product.name,
+      description: product.description,
+      volume: product.volume,
+      usage: product.usage,
+      ingredients: product.ingredients,
+      aroma: product.aroma,
+      category: product.category,
       price: product.price,
       oldPrice: product.oldPrice,
       discount: product.discount,

@@ -158,7 +158,18 @@
 
 .orders a {
   min-height: 42px;
+}
+
+.orderActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: auto;
+}
+
+.orderActions a + a {
+  color: var(--color-foreground);
+  background: transparent;
 }
 
 .favorites {

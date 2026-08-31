@@ -83,8 +83,7 @@
 .moodCard {
   position: relative;
   display: grid;
-  min-height: 460px;
-  grid-template-columns: 1fr 42%;
+  min-height: 390px;
   overflow: hidden;
   border-radius: var(--radius-card);
   color: #202020;
@@ -110,28 +109,12 @@
 }
 
 .moodCopy h3 {
-  max-width: 410px;
+  max-width: 520px;
   margin-top: auto;
   font-size: clamp(30px, 3.4vw, 48px);
   font-weight: 500;
   line-height: .96;
   letter-spacing: -.045em;
-}
-
-.moodCopy small {
-  max-width: 390px;
-  margin-top: 20px;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.moodProduct {
-  position: absolute;
-  right: -8px;
-  bottom: -70px;
-  width: 42%;
-  height: auto;
-  object-fit: contain;
 }
 
 .relaxation { background: #e2dfd7; }
@@ -281,11 +264,9 @@
   .moods header { grid-template-columns: 1fr; margin-bottom: 28px; }
   .moods header > p { grid-column: auto; }
   .moodGrid { grid-template-columns: 1fr; }
-  .moodCard { min-height: 410px; grid-template-columns: 1fr 40%; }
-  .moodProduct { right: -24px; bottom: -46px; width: 48%; }
+  .moodCard { min-height: 330px; }
   .moodCopy { padding: 24px; }
-  .moodCopy h3 { max-width: 72%; font-size: 34px; }
-  .moodCopy small { max-width: 70%; }
+  .moodCopy h3 { max-width: 90%; font-size: 36px; }
   .formula { padding: 42px 24px; }
   .formula > div { grid-template-columns: 1fr; margin-top: 36px; }
 }
