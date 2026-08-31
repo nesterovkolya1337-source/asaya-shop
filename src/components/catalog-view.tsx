@@ -7,6 +7,7 @@ import { categoryLabels, type ProductCategory } from "@/lib/store-data";
 import styles from "./catalog-view.module.css";
 
 type Filter = "all" | ProductCategory;
+type Sort = "featured" | "price-asc" | "price-desc" | "name";
 
 const filters: { id: Filter; label: string }[] = [
   { id: "all", label: "Все продукты" },
@@ -17,6 +18,7 @@ export function CatalogView({ initialFilter = "all" }: { initialFilter?: Filter 
   const { products } = useShop();
   const [filter, setFilter] = useState<Filter>(initialFilter);
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<Sort>("featured");
 
   useEffect(() => {
     const category = new URLSearchParams(window.location.search).get("category");
@@ -29,7 +31,12 @@ export function CatalogView({ initialFilter = "all" }: { initialFilter?: Filter 
     const matchesFilter = filter === "all" || product.category === filter;
     const matchesSearch = product.name.toLocaleLowerCase("ru").includes(search.trim().toLocaleLowerCase("ru"));
     return product.active && matchesFilter && matchesSearch;
-  }), [filter, products, search]);
+  }).sort((first, second) => {
+    if (sort === "price-asc") return first.price - second.price;
+    if (sort === "price-desc") return second.price - first.price;
+    if (sort === "name") return first.name.localeCompare(second.name, "ru");
+    return 0;
+  }), [filter, products, search, sort]);
 
   return (
     <main>
@@ -51,18 +58,21 @@ export function CatalogView({ initialFilter = "all" }: { initialFilter?: Filter 
           </label>
         </div>
 
-        <div className={styles.filters} aria-label="Фильтр по категориям">
-          {filters.map((item) => (
-            <button
-              aria-pressed={filter === item.id}
-              className={filter === item.id ? styles.activeFilter : ""}
-              key={item.id}
-              onClick={() => setFilter(item.id)}
-              type="button"
-            >
-              {item.label}
-            </button>
-          ))}
+        <div className={styles.controls}>
+          <div className={styles.filters} aria-label="Фильтр по категориям">
+            {filters.map((item) => (
+              <button
+                aria-pressed={filter === item.id}
+                className={filter === item.id ? styles.activeFilter : ""}
+                key={item.id}
+                onClick={() => setFilter(item.id)}
+                type="button"
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <label className={styles.sort}>Сортировка<select onChange={(event) => setSort(event.target.value as Sort)} value={sort}><option value="featured">По умолчанию</option><option value="price-asc">Сначала дешевле</option><option value="price-desc">Сначала дороже</option><option value="name">По названию</option></select></label>
         </div>
 
         {visibleProducts.length ? (

@@ -15,6 +15,7 @@ export function CheckoutView() {
   const oldSubtotal = useMemo(() => cartProducts.reduce((sum, product) => sum + product.oldPrice * cart[product.id], 0), [cart, cartProducts]);
   const subtotal = useMemo(() => cartProducts.reduce((sum, product) => sum + product.price * cart[product.id], 0), [cart, cartProducts]);
   const deliveryPrice = 0;
+  const hasFreeDelivery = subtotal >= 1500;
   const promoDiscount = promoCode === "ASAYA10" ? Math.round(subtotal * 0.1) : 0;
   const productDiscount = oldSubtotal - subtotal;
   const total = subtotal + deliveryPrice - promoDiscount;
@@ -74,11 +75,11 @@ export function CheckoutView() {
               <p>Сборка заказа занимает 1–2 дня, скорость доставки зависит от выбранной логистической службы.</p>
             </div>
             <div className={styles.deliveryCard}>
-              <label className={styles.deliveryChoice}><input defaultChecked name="delivery" type="radio" /><span><strong>Доставка (ПВЗ)</strong><b>ПВЗ Metaship</b></span></label>
-              <small>5Post бесплатно · 2–3 дня<br />Почта России бесплатно · 4 дня<br />Яндекс Доставка бесплатно · 4 дня<br />СДЭК бесплатно · 3–4 дня</small>
-              <button onClick={(event) => { event.preventDefault(); document.getElementById("pickup")?.focus(); }} type="button">Выбрать на карте</button>
-              <label className={styles.pickupField} htmlFor="pickup">Пункт выдачи<input id="pickup" placeholder="Адрес или метро" required={cartProducts.length > 0} /></label>
-              <em>Срок доставки: 2–3 дня</em>
+              <label className={styles.deliveryChoice}><input defaultChecked name="delivery" type="radio" /><span><strong>Пункт выдачи или курьер</strong><b>Готовим подключение Ozon Доставки и СДЭК</b></span></label>
+              <small>После подключения службы здесь появятся доступные ПВЗ, курьерские интервалы, точный срок и стоимость. Мы не показываем выдуманные варианты доставки до ответа логистического сервиса.</small>
+              <button onClick={(event) => { event.preventDefault(); document.getElementById("pickup")?.focus(); }} type="button">Указать желаемый ПВЗ</button>
+              <label className={styles.pickupField} htmlFor="pickup">Пункт выдачи<input id="pickup" placeholder="Адрес, метро или район" required={cartProducts.length > 0} /></label>
+              <em>{hasFreeDelivery ? "Доставка будет бесплатной: сумма товаров от 1 500 ₽" : "Точную стоимость рассчитает служба доставки"}</em>
             </div>
           </section>
 
@@ -102,14 +103,14 @@ export function CheckoutView() {
         <aside className={styles.summary} aria-labelledby="summary-heading">
           <div className={styles.summaryRows}>
             <div><span>Всего {itemCount} товар(а) на сумму</span><strong>{formatPrice(oldSubtotal)}</strong></div>
-            <div><span>Доставка</span><strong>{deliveryPrice ? formatPrice(deliveryPrice) : "Бесплатно"}</strong></div>
+            <div><span>Доставка</span><strong>{hasFreeDelivery ? "Бесплатно" : "После выбора ПВЗ"}</strong></div>
             {(productDiscount + promoDiscount) > 0 && <div><span>Скидка{promoDiscount ? " + промокод" : ""}</span><strong>−{formatPrice(productDiscount + promoDiscount)}</strong></div>}
           </div>
           <div className={styles.summaryTotal}><h2 id="summary-heading">Итого к оплате</h2><strong>{formatPrice(total)}</strong></div>
           <button disabled={!cartProducts.length} type="submit"><span>Оформить заказ</span><strong>{formatPrice(total)}</strong></button>
           <label className={styles.agreement}><input required type="checkbox" /><span>Я согласен с <Link href="/legal/offer">условиями оферты</Link>, <Link href="/legal/privacy">политикой конфиденциальности</Link> и <Link href="/legal/personal-data">обработкой персональных данных</Link></span></label>
           <label className={styles.agreement}><input type="checkbox" />Я согласен получать рекламные и информационные материалы</label>
-          <span className={styles.note}>Демо-режим: заказ не отправляется без подключения защищённого сервера.</span>
+          <span className={styles.note}>Демо-режим: заказ не отправляется без подключения защищённого сервера. {hasFreeDelivery ? "Доставка включена в итог." : "Итог пока указан без доставки."}</span>
         </aside>
       </form>
     </main>

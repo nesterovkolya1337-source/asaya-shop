@@ -29,6 +29,7 @@ export type ProductAdminUpdate = Partial<Pick<Product,
   | "ingredients"
   | "aroma"
   | "category"
+  | "instruction"
   | "price"
   | "oldPrice"
   | "discount"
@@ -83,6 +84,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       ingredients: product.ingredients,
       aroma: product.aroma,
       category: product.category,
+      instruction: product.instruction,
       price: product.price,
       oldPrice: product.oldPrice,
       discount: product.discount,

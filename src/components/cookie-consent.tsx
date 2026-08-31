@@ -13,7 +13,12 @@ export function CookieConsent() {
   const [choice, setChoice] = useState<CookieChoice | null>(null);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(COOKIE_CHOICE_KEY);
+    let saved: string | null = null;
+    try {
+      saved = window.localStorage.getItem(COOKIE_CHOICE_KEY);
+    } catch {
+      saved = null;
+    }
     queueMicrotask(() => {
       if (saved === "essential" || saved === "analytics") setChoice(saved);
       setReady(true);
@@ -21,7 +26,11 @@ export function CookieConsent() {
   }, []);
 
   function choose(nextChoice: CookieChoice) {
-    window.localStorage.setItem(COOKIE_CHOICE_KEY, nextChoice);
+    try {
+      window.localStorage.setItem(COOKIE_CHOICE_KEY, nextChoice);
+    } catch {
+      // The visible choice still closes the banner when storage is unavailable.
+    }
     setChoice(nextChoice);
   }
 

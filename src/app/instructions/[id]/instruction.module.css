@@ -130,6 +130,54 @@
   font-size: 19px;
 }
 
+.safety {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: clamp(22px, 4vw, 50px);
+  align-items: start;
+  margin-top: 10px;
+  padding: clamp(30px, 5vw, 58px);
+  border-radius: var(--radius-card);
+  color: white;
+  background: var(--color-foreground);
+}
+
+.safety > span {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--color-foreground);
+  background: var(--color-pink);
+  font-size: 34px;
+}
+
+.safety p {
+  color: #aaa;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.safety h2 {
+  max-width: 780px;
+  margin-top: 10px;
+  font-size: clamp(38px, 5vw, 64px);
+  font-weight: 400;
+  line-height: .96;
+  letter-spacing: -.05em;
+}
+
+.safety small {
+  display: block;
+  max-width: 760px;
+  margin-top: 20px;
+  color: #ccc;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
 .notes {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -201,5 +249,20 @@
 
   .notes .aroma {
     grid-column: auto;
+  }
+
+  .safety {
+    grid-template-columns: 1fr;
+    padding: 28px 22px;
+  }
+
+  .safety > span {
+    width: 58px;
+    height: 58px;
+    font-size: 28px;
+  }
+
+  .safety h2 {
+    font-size: 40px;
   }
 }

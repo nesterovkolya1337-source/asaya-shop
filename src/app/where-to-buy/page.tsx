@@ -9,7 +9,7 @@ const stores = [
   { name: "ASAYA", note: "Официальный сайт", href: "/catalog", external: false },
   { name: "Ozon", note: "Официальная витрина бренда", href: "https://asaya.mobz.click/mrh3", external: true },
   { name: "Wildberries", note: "Официальная витрина бренда", href: "https://asaya.mobz.click/fp0uu", external: true },
-  { name: "Золотое Яблоко", note: "Онлайн и в выбранных магазинах", href: "https://goldapple.ru/", external: true },
+  { name: "Золотое Яблоко", note: "Страница бренда ASAYA", href: "https://goldapple.ru/brands/asaya", external: true },
 ];
 
 export default function WhereToBuyPage() {

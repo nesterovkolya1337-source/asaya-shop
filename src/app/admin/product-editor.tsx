@@ -55,6 +55,11 @@ function ProductRow({ product, updateProduct }: { product: Product; updateProduc
           <label>Категория<select onChange={(event) => updateProduct(product.id, { category: event.target.value as ProductCategory })} value={product.category}>{Object.entries(categoryLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <label className={styles.wideField}>Описание<textarea onChange={(event) => updateProduct(product.id, { description: event.target.value })} rows={4} value={product.description} /></label>
           <label className={styles.wideField}>Способ применения<textarea onChange={(event) => updateProduct(product.id, { usage: event.target.value })} rows={4} value={product.usage} /></label>
+          {product.instruction.steps.map((step, index) => (
+            <label className={styles.wideField} key={`${product.id}-step-${index}`}>Шаг {index + 1}<input onChange={(event) => updateProduct(product.id, { instruction: { ...product.instruction, steps: product.instruction.steps.map((currentStep, stepIndex) => stepIndex === index ? event.target.value : currentStep) } })} type="text" value={step} /></label>
+          ))}
+          <label className={styles.wideField}>Количество средства<textarea onChange={(event) => updateProduct(product.id, { instruction: { ...product.instruction, amount: event.target.value } })} rows={2} value={product.instruction.amount} /></label>
+          <label className={styles.wideField}>Полезный совет<textarea onChange={(event) => updateProduct(product.id, { instruction: { ...product.instruction, tip: event.target.value } })} rows={2} value={product.instruction.tip} /></label>
           <label className={styles.wideField}>Аромат<textarea onChange={(event) => updateProduct(product.id, { aroma: event.target.value })} rows={3} value={product.aroma} /></label>
           <label className={styles.wideField}>Состав<textarea onChange={(event) => updateProduct(product.id, { ingredients: event.target.value })} rows={5} value={product.ingredients} /></label>
         </div>
@@ -65,6 +70,12 @@ function ProductRow({ product, updateProduct }: { product: Product; updateProduc
 
 export function ProductEditor() {
   const { products, resetProducts, updateProduct } = useShop();
+  const stats = [
+    ["Всего товаров", products.length],
+    ["Опубликовано", products.filter((product) => product.active).length],
+    ["Единиц на складе", products.reduce((sum, product) => sum + product.stock, 0)],
+    ["Со скидкой", products.filter((product) => product.discount > 0).length],
+  ];
 
   return (
     <section className={styles.editor} aria-labelledby="product-editor-title">
@@ -79,6 +90,10 @@ export function ProductEditor() {
       <div className={styles.localNotice}>
         <strong>Изменения применяются сразу.</strong>
         <span>Они сохраняются только в этом браузере и видны в каталоге, корзине и карточках товаров. Общую базу и защищённый вход подключим на серверном этапе.</span>
+      </div>
+
+      <div className={styles.editorStats} aria-label="Сводка каталога">
+        {stats.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}
       </div>
 
       <div className={styles.productList}>

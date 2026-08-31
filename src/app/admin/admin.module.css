@@ -157,6 +157,33 @@
   margin-top: 10px;
 }
 
+.editorStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.editorStats > div {
+  display: grid;
+  min-height: 120px;
+  align-content: space-between;
+  padding: 18px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: var(--radius-card);
+  background: #222;
+}
+
+.editorStats span {
+  color: #999;
+  font-size: 11px;
+}
+
+.editorStats strong {
+  font-size: 36px;
+  font-weight: 400;
+}
+
 .productRow {
   display: grid;
   grid-template-columns: minmax(240px, 1.1fr) minmax(560px, 2fr) minmax(120px, .45fr);
@@ -483,6 +510,10 @@
   .productRow {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .editorStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .editorFields {

@@ -95,7 +95,6 @@ export function SiteFooter() {
               <Link href="/instructions">Инструкции</Link>
               <Link href="/faq">Вопросы и ответы</Link>
               <Link href="/returns">Возврат и претензии</Link>
-              <Link href="/order-status">Статус заказа</Link>
             </div>
             <div>
               <p>ASAYA</p>
