@@ -11,10 +11,10 @@
 | Тело | `92:1383` (`Body`) | [Body](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=92-1383) | `/catalog?category=body` |
 | Лицо | `92:3305` (`Face`) | [Face](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=92-3305) | `/catalog?category=face` |
 | Наборы | `137:860` (`Sets`) | [Sets](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=137-860) | `/catalog?category=sets` |
-| Корзина | `97:1997` (`Frame 88`) | [Cart](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=97-1997) | `/cart` (следующая очередь) |
+| Корзина | `97:1997` (`Frame 88`) | [Cart](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=97-1997) | `/cart` |
 | Оформление заказа | `110:1236` (`Frame 7790`) | [Checkout](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=110-1236) | `/checkout` |
-| Пустое избранное | `113:1776` (`Frame 7793`) | [Empty favorites](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=113-1776) | `/favorites` (следующая очередь) |
-| Избранное | `114:1940` (`Frame 7795`) | [Favorites](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=114-1940) | `/favorites` (следующая очередь) |
+| Пустое избранное | `113:1776` (`Frame 7793`) | [Empty favorites](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=113-1776) | `/favorites` |
+| Избранное | `114:1940` (`Frame 7795`) | [Favorites](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=114-1940) | `/favorites` |
 
 ## Подтверждённые токены
 

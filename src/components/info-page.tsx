@@ -30,7 +30,9 @@ export function InfoPage({
             <p>{eyebrow}</p>
             <h1>{title}</h1>
             <span>{lead}</span>
-            {action && <Link href={action.href}>{action.label}</Link>}
+            {action && (action.href.startsWith("http")
+              ? <a href={action.href} rel="noreferrer" target="_blank">{action.label}</a>
+              : <Link href={action.href}>{action.label}</Link>)}
           </header>
           <section className={styles.grid} aria-label={title}>
             {sections.map((section) => (

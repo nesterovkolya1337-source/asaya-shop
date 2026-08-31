@@ -32,12 +32,12 @@ export default function AdminPage() {
         <section className={styles.locked}>
           <span className={styles.lockIcon} aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
           <p>ASAYA / Кабинет менеджера</p>
-          <h1>Управление магазином только через защищённый вход</h1>
+          <h1>Прототип кабинета менеджера уже работает на этом устройстве</h1>
           <div className={styles.explanation}>
-            <strong>Сейчас показана структура будущего back-office.</strong>
-            <span>GitHub Pages не умеет безопасно хранить товары и проверять роли. Реальное редактирование включим после подключения сервера, базы данных, 2FA, резервных копий и журнала действий.</span>
+            <strong>Цены, скидки, остатки и тексты можно проверить прямо сейчас.</strong>
+            <span>Изменения сохраняются только в этом браузере. Общий кабинет для сотрудников будет закрыт серверной авторизацией, 2FA, ролями, резервными копиями и журналом действий.</span>
           </div>
-          <Link href="/">Вернуться в магазин</Link>
+          <Link href="#product-editor-title">Перейти к товарам</Link>
         </section>
         <section className={styles.blueprint}>
           <header><p>Структура кабинета</p><h2>Всё, что менеджер сможет менять без разработчика</h2></header>
