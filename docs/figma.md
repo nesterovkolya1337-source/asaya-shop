@@ -5,6 +5,7 @@
 | Экран | Figma node | Ссылка | Маршрут |
 | --- | --- | --- | --- |
 | Page 2 canvas | `1:2` | [Page 2](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=1-2) | — |
+| Галерея товара | `21:72` (`Frame 24`) | [Frame 24](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=21-72) | `/product/[id]` |
 | Главная | `1:6` (`Frame 6`) | [Frame 6](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=1-6) | `/` |
 | Каталог | `140:1442` (`All shop`) | [All shop](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=140-1442) | `/catalog` |
 | Волосы | `92:2417` (`Hair`) | [Hair](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=92-2417) | `/catalog?category=hair` |

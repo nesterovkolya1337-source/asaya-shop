@@ -71,8 +71,8 @@ export default function Home() {
           </section>
 
           <section className={styles.products} aria-labelledby="featured-title">
-            <h2 id="featured-title">Бестселлеры / Новинки</h2>
-            <ProductRail limit={3} />
+            <h2 className={styles.srTitle} id="featured-title">Бестселлеры и новинки</h2>
+            <ProductRail />
           </section>
 
           <section className={styles.manifesto}>
@@ -83,10 +83,8 @@ export default function Home() {
               sizes="(max-width: 1280px) 94vw, 1160px"
               src={assetPath("/images/figma/asaya-6139.webp")}
             />
-            <p>
-              <span className={styles.manifestoDesktop}>Выбирай не только по функции, но и по тому, как хочется себя чувствовать сегодня. Эмоция помогает влюбиться. Эстетика помогает захотеть. Качество заставляет купить повторно.</span>
-              <span className={styles.manifestoMobile}>Жизнь уже происходит сейчас. Выбирай, как хочется себя чувствовать сегодня.</span>
-            </p>
+            <p>Не подстраивайся под уход. Выбирай уход под себя.</p>
+            <Link className={styles.aboutButton} href="/about">Узнать об ASAYA</Link>
           </section>
 
           <section className={styles.categoryGrid} aria-label="Категории каталога">

@@ -130,6 +130,77 @@
   font-size: 19px;
 }
 
+.visualSteps {
+  grid-template-columns: 1fr;
+  gap: 28px;
+  background: white;
+  box-shadow: inset 0 0 0 1px #e6e6e6;
+}
+
+.visualSteps header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.visualSteps header h2 {
+  max-width: 620px;
+}
+
+.visualSteps ol {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.visualSteps li {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 430px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--color-light-gray);
+}
+
+.visualSteps li::before {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  left: 10px;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-pink);
+}
+
+.visualSteps figure {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.visualSteps figure img {
+  object-fit: cover;
+}
+
+.visualSteps li span {
+  display: flex;
+  min-height: 104px;
+  align-items: center;
+  padding: 18px;
+  font-size: 15px;
+  line-height: 1.3;
+}
+
 .safety {
   display: grid;
   grid-template-columns: 88px 1fr;
@@ -241,6 +312,46 @@
   .steps {
     gap: 30px;
     padding: 34px 22px;
+  }
+
+  .steps h2 {
+    font-size: 44px;
+  }
+
+  .steps li span {
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  .visualSteps {
+    padding: 30px 0 28px;
+    overflow: hidden;
+  }
+
+  .visualSteps header {
+    display: grid;
+    padding: 0 20px;
+  }
+
+  .visualSteps ol {
+    grid-auto-columns: 76vw;
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    gap: 8px;
+    padding: 0 20px 6px;
+    overflow-x: auto;
+    scroll-padding-inline: 20px;
+    scroll-snap-type: inline mandatory;
+    scrollbar-width: none;
+  }
+
+  .visualSteps li {
+    min-height: 0;
+    scroll-snap-align: start;
+  }
+
+  .visualSteps li span {
+    min-height: 92px;
   }
 
   .notes {

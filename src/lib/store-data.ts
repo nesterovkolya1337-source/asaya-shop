@@ -2,6 +2,8 @@ import { assetPath } from "@/lib/asset-path";
 
 export type ProductCategory = "hair" | "body" | "face" | "sets";
 
+export const badgeOptions = ["", "Бестселлер", "Новинка", "Выбор ASAYA", "Лимитированная серия"] as const;
+
 export type Product = {
   id: string;
   name: string;
@@ -18,6 +20,7 @@ export type Product = {
     amount: string;
     tip: string;
   };
+  recommendations: string[];
   category: ProductCategory;
   price: number;
   oldPrice: number;
@@ -56,7 +59,7 @@ const gelInstruction = {
   tip: "После душа нанесите крем для тела на слегка влажную кожу, чтобы дополнить ритуал ухода.",
 };
 
-type ProductDraft = Omit<Product, "gallery" | "sensory" | "price" | "oldPrice" | "discount" | "badge" | "rating" | "reviews" | "stock" | "active"> & Partial<Pick<Product, "gallery" | "sensory" | "price" | "oldPrice" | "discount" | "badge" | "rating" | "reviews" | "stock" | "active">>;
+type ProductDraft = Omit<Product, "gallery" | "sensory" | "recommendations" | "price" | "oldPrice" | "discount" | "badge" | "rating" | "reviews" | "stock" | "active"> & Partial<Pick<Product, "gallery" | "sensory" | "recommendations" | "price" | "oldPrice" | "discount" | "badge" | "rating" | "reviews" | "stock" | "active">>;
 
 function createProduct(draft: ProductDraft): Product {
   return {
@@ -69,10 +72,28 @@ function createProduct(draft: ProductDraft): Product {
     stock: 20,
     active: true,
     gallery: [draft.image],
+    recommendations: [],
     sensory: draft.features.map((label, index) => ({ label, value: index === 2 ? 4 : 5 })),
     ...draft,
   };
 }
+
+const recommendationMap: Record<string, string[]> = {
+  "avocado-body-cream": ["coconut-body-cream", "kiwi-shower-gel", "restoring-face-cream", "strawberry-shower-gel"],
+  "multi-hair-spray": ["hair-cream-spray", "hair-shampoo", "hair-balm", "hair-mask"],
+  "strawberry-shower-gel": ["avocado-body-cream", "coconut-body-cream", "guava-shower-gel", "blueberry-shower-gel"],
+  "coconut-body-cream": ["avocado-body-cream", "yuzu-shower-gel", "lifting-face-cream", "strawberry-shower-gel"],
+  "hair-balm": ["hair-shampoo", "hair-mask", "multi-hair-spray", "hair-cream-spray"],
+  "restoring-face-cream": ["lifting-face-cream", "avocado-body-cream", "coconut-body-cream"],
+  "hair-shampoo": ["hair-balm", "hair-mask", "multi-hair-spray", "hair-cream-spray"],
+  "kiwi-shower-gel": ["avocado-body-cream", "coconut-body-cream", "yuzu-shower-gel", "blueberry-shower-gel"],
+  "hair-mask": ["hair-shampoo", "hair-balm", "hair-cream-spray", "multi-hair-spray"],
+  "guava-shower-gel": ["strawberry-shower-gel", "avocado-body-cream", "coconut-body-cream", "yuzu-shower-gel"],
+  "hair-cream-spray": ["multi-hair-spray", "hair-mask", "hair-balm", "hair-shampoo"],
+  "yuzu-shower-gel": ["kiwi-shower-gel", "coconut-body-cream", "avocado-body-cream", "guava-shower-gel"],
+  "lifting-face-cream": ["restoring-face-cream", "coconut-body-cream", "avocado-body-cream"],
+  "blueberry-shower-gel": ["strawberry-shower-gel", "guava-shower-gel", "coconut-body-cream", "avocado-body-cream"],
+};
 
 export const defaultProducts: Product[] = [
   createProduct({
@@ -303,7 +324,7 @@ export const defaultProducts: Product[] = [
     category: "body",
     image: assetPath("/images/figma/page2-packshots/blueberry-shower-gel.webp"),
   }),
-];
+].map((product) => ({ ...product, recommendations: recommendationMap[product.id] ?? [] }));
 
 export function formatPrice(value: number) {
   return `${new Intl.NumberFormat("ru-RU").format(value)} ₽`;

@@ -1,8 +1,3 @@
-.chrome {
-  position: relative;
-  z-index: 20;
-}
-
 .promo {
   display: grid;
   min-height: 35px;
@@ -16,31 +11,27 @@
   text-align: center;
 }
 
-.chromeOverlay {
-  height: 45px;
-}
-
-.chromeOverlay .overlay {
-  top: 45px;
-}
-
 .header {
-  position: relative;
-  z-index: 20;
+  position: sticky;
+  z-index: 50;
+  top: 10px;
   min-height: 76px;
   display: flex;
   align-items: center;
+  padding: 0 25px;
+  border: 1px solid rgb(32 32 32 / 8%);
+  border-radius: var(--radius-card);
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 7%);
+  backdrop-filter: blur(14px);
 }
 
 .overlay {
-  position: absolute;
-  z-index: 4;
-  top: 0;
-  right: 0;
-  left: 0;
-  min-height: 55px;
-  padding: 0 25px;
+  margin-bottom: -76px;
+  border-color: transparent;
   color: white;
+  background: rgb(20 20 20 / 18%);
+  box-shadow: none;
 }
 
 .navigation {
@@ -93,6 +84,10 @@
   height: 34px;
   flex: none;
   place-items: center;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
 }
 
 .iconLink,
@@ -168,6 +163,124 @@
   margin-top: 45px;
   padding-top: 35px;
   border-top: 1px solid var(--color-gray);
+}
+
+.searchBackdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: start center;
+  padding: clamp(18px, 6vw, 72px) var(--page-gutter);
+  color: var(--color-foreground);
+  background: rgb(15 15 15 / 50%);
+  backdrop-filter: blur(10px);
+}
+
+.searchPanel {
+  width: min(760px, 100%);
+  max-height: calc(100svh - 40px);
+  overflow: auto;
+  padding: 22px;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 24%);
+}
+
+.searchPanel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--color-gray);
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.searchPanel > header button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-light-gray);
+  cursor: pointer;
+  font-size: 25px;
+}
+
+.searchPanel > label {
+  display: grid;
+  min-height: 66px;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: center;
+  margin-top: 16px;
+  padding: 0 18px;
+  border-radius: 14px;
+  background: var(--color-light-gray);
+}
+
+.searchPanel > label svg {
+  width: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.searchPanel input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 20px;
+}
+
+.searchResults {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.searchResults > a {
+  display: grid;
+  min-height: 74px;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.searchResults > a:hover,
+.searchResults > a:focus-visible {
+  background: #ffe7f5;
+}
+
+.searchResults img {
+  height: 58px;
+  object-fit: contain;
+}
+
+.searchResults span {
+  display: grid;
+  gap: 4px;
+}
+
+.searchResults strong {
+  font-weight: 500;
+}
+
+.searchResults small {
+  color: var(--color-gray);
+}
+
+.searchResults b {
+  font-weight: 400;
+}
+
+.searchResults p {
+  padding: 24px 8px;
+  color: var(--color-gray);
 }
 
 .footerIntro {
@@ -418,25 +531,14 @@
 }
 
 @media (max-width: 720px) {
-  .chrome,
-  .chromeOverlay {
-    position: sticky;
-    z-index: 50;
-    top: 0;
-    display: grid;
-    height: auto;
-    gap: 8px;
-    padding-bottom: 8px;
-    background: white;
-  }
-
   .promo {
     min-height: 34px;
-    margin: 0;
+    margin: 0 0 8px;
     font-size: 12px;
   }
 
   .header {
+    top: 8px;
     min-height: 54px;
     padding: 0 14px;
     border: 1px solid rgb(32 32 32 / 8%);
@@ -448,17 +550,10 @@
   }
 
   .overlay {
-    position: relative;
-    top: auto;
-    right: auto;
-    left: auto;
+    margin-bottom: 0;
     min-height: 54px;
     padding: 0 14px;
     color: var(--color-foreground);
-  }
-
-  .chromeOverlay .overlay {
-    top: auto;
   }
 
   .navigation {
@@ -555,7 +650,15 @@
   }
 
   .iconLink {
-    width: 27px;
+    width: 25px;
+  }
+
+  .searchPanel {
+    padding: 16px;
+  }
+
+  .searchPanel input {
+    font-size: 16px;
   }
 
   .cookieBanner {

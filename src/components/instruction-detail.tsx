@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useShop } from "@/components/shop-provider";
+import { assetPath } from "@/lib/asset-path";
 import styles from "@/app/instructions/[id]/instruction.module.css";
 
 function getSafety(productId: string, category: string) {
@@ -41,6 +42,8 @@ export function InstructionDetail({ productId }: { productId: string }) {
   const product = products.find((item) => item.id === productId);
   if (!product) return null;
   const safety = getSafety(product.id, product.category);
+  const isHairSpray = product.id === "multi-hair-spray" || product.id === "hair-cream-spray";
+  const stepImages = isHairSpray ? [1, 2, 3, 4].map((step) => assetPath(`/images/instructions/hair-spray-step-${step}.webp`)) : [];
 
   return (
     <main>
@@ -54,9 +57,9 @@ export function InstructionDetail({ productId }: { productId: string }) {
           <Link href={`/product/${product.id}`}>Перейти к товару</Link>
         </div>
       </section>
-      <section className={styles.steps} aria-labelledby="steps-title">
+      <section className={`${styles.steps} ${isHairSpray ? styles.visualSteps : ""}`} aria-labelledby="steps-title">
         <header><p>Пошагово</p><h2 id="steps-title">Как использовать</h2></header>
-        <ol>{product.instruction.steps.map((step) => <li key={step}><span>{step}</span></li>)}</ol>
+        <ol>{product.instruction.steps.map((step, index) => <li key={step}>{stepImages[index] && <figure><Image alt={`${product.name}: шаг ${index + 1}`} fill sizes="(max-width: 760px) 74vw, 260px" src={stepImages[index]} /></figure>}<span>{step}</span></li>)}</ol>
       </section>
       <section className={styles.safety} aria-labelledby="safety-title">
         <span aria-hidden="true">!</span>

@@ -1,20 +1,79 @@
+.heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+.heading > a {
+  padding-bottom: 5px;
+  border-bottom: 1px solid;
+  white-space: nowrap;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tabs button {
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1px solid var(--color-foreground);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  font-size: clamp(18px, 2.4vw, 30px);
+}
+
+.tabs button:hover,
+.tabs button:focus-visible,
+.tabs .active {
+  color: white;
+  background: var(--color-foreground);
+}
+
 .rail {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
+  grid-auto-columns: minmax(300px, 31.5%);
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  gap: 10px;
+  padding-bottom: 8px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-padding-inline: 2px;
+  scroll-snap-type: inline mandatory;
+  scrollbar-color: var(--color-pink) transparent;
 }
 
 @media (max-width: 900px) {
   .rail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .rail > :last-child:nth-child(odd) {
-    grid-column: 1 / -1;
+    grid-auto-columns: minmax(245px, 47%);
   }
 }
 
 @media (max-width: 620px) {
+  .heading {
+    align-items: center;
+    gap: 10px;
+  }
+
+  .heading > a {
+    font-size: 12px;
+  }
+
+  .tabs {
+    gap: 5px;
+  }
+
+  .tabs button {
+    min-height: 36px;
+    padding: 0 13px;
+    font-size: 14px;
+  }
+
   .rail {
     grid-auto-columns: minmax(168px, 47vw);
     grid-template-columns: none;
@@ -33,7 +92,4 @@
     display: none;
   }
 
-  .rail > :last-child:nth-child(odd) {
-    grid-column: auto;
-  }
 }

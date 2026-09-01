@@ -256,7 +256,8 @@
 }
 
 .editorFields input[type="number"],
-.editorFields input[type="text"] {
+.editorFields input[type="text"],
+.editorFields select {
   width: 100%;
   height: 40px;
   padding: 0 10px;
@@ -265,6 +266,10 @@
   color: white;
   background: #171717;
   outline: none;
+}
+
+.editorFields select {
+  appearance: none;
 }
 
 .editorFields input:focus-visible {
@@ -392,6 +397,44 @@
 
 .contentEditor .wideField {
   grid-column: 1 / -1;
+}
+
+.recommendationEditor {
+  padding: 14px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 9px;
+}
+
+.recommendationEditor legend {
+  padding: 0 6px;
+  color: #aaa;
+  font-size: 10px;
+}
+
+.recommendationEditor > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.recommendationEditor label {
+  display: flex;
+  min-height: 38px;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  color: white;
+  background: #222;
+  cursor: pointer;
+}
+
+.recommendationEditor input {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  accent-color: var(--color-pink);
 }
 
 .lockIcon {
@@ -533,6 +576,10 @@
 
   .contentEditor .wideField {
     grid-column: auto;
+  }
+
+  .recommendationEditor > div {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -2,13 +2,26 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import { CookieConsent } from "@/components/cookie-consent";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
 import styles from "./site-shell.module.css";
 
 export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
-  const { cartCount, favorites } = useShop();
+  const { cartCount, favorites, products } = useShop();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const sitePages = [
+    ["Каталог", "/catalog"], ["О бренде", "/about"], ["Инструкции", "/instructions"],
+    ["Доставка и оплата", "/delivery"], ["Где купить", "/where-to-buy"],
+    ["Вопросы и ответы", "/faq"], ["Служба заботы", "/support"],
+  ];
+  const normalizedSearch = search.trim().toLocaleLowerCase("ru");
+  const searchResults = useMemo(() => normalizedSearch ? products.filter((product) => (
+    `${product.name} ${product.description} ${product.aroma} ${product.features.join(" ")}`.toLocaleLowerCase("ru").includes(normalizedSearch)
+  )).slice(0, 8) : [], [normalizedSearch, products]);
+  const pageResults = normalizedSearch ? sitePages.filter(([label]) => label.toLocaleLowerCase("ru").includes(normalizedSearch)) : sitePages.slice(0, 4);
 
   return (
     <header className={`${styles.header} ${overlay ? styles.overlay : ""}`}>
@@ -39,9 +52,9 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           <Image className={styles.brandLogo} alt="ASAYA" height={28} priority src={assetPath("/images/figma/footer-wordmark.svg")} width={114} />
         </Link>
         <div className={`${styles.navigationSide} ${styles.navigationEnd}`}>
-          <Link className={`${styles.iconLink} ${styles.mobileOptional}`} href="/catalog#search" aria-label="Поиск">
+          <button aria-expanded={searchOpen} className={styles.iconLink} onClick={() => setSearchOpen(true)} type="button" aria-label="Поиск по сайту">
             <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg>
-          </Link>
+          </button>
           <Link className={`${styles.iconLink} ${styles.mobileOptional}`} href="/favorites" aria-label={`Избранное: ${favorites.length}`}>
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6a5.4 5.4 0 0 0-7.6 0L12 5.8l-1.2-1.2a5.4 5.4 0 0 0-7.6 7.6l1.2 1.2L12 21l7.6-7.6 1.2-1.2a5.4 5.4 0 0 0 0-7.6Z"/></svg>
             {favorites.length > 0 && <span className={styles.counter}>{favorites.length}</span>}
@@ -55,16 +68,27 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           </Link>
         </div>
       </nav>
+      {searchOpen && <div className={styles.searchBackdrop} onClick={() => setSearchOpen(false)}>
+        <section aria-label="Поиск по сайту" aria-modal="true" className={styles.searchPanel} onClick={(event) => event.stopPropagation()} role="dialog">
+          <header><span>Поиск по всему сайту</span><button aria-label="Закрыть поиск" onClick={() => setSearchOpen(false)} type="button">×</button></header>
+          <label><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input autoFocus onChange={(event) => setSearch(event.target.value)} placeholder="Товар, инструкция или раздел" type="search" value={search} /></label>
+          <div className={styles.searchResults}>
+            {searchResults.map((product) => <Link href={`/product/${product.id}`} key={product.id} onClick={() => setSearchOpen(false)}><Image alt="" height={70} src={product.image} width={52} /><span><strong>{product.name}</strong><small>Товар · {product.volume}</small></span><b>→</b></Link>)}
+            {pageResults.map(([label, href]) => <Link href={href} key={href} onClick={() => setSearchOpen(false)}><span><strong>{label}</strong><small>Раздел сайта</small></span><b>→</b></Link>)}
+            {normalizedSearch && !searchResults.length && !pageResults.length && <p>Ничего не найдено. Попробуйте название продукта или раздела.</p>}
+          </div>
+        </section>
+      </div>}
     </header>
   );
 }
 
 export function SiteChrome({ overlay = false }: { overlay?: boolean }) {
   return (
-    <div className={`${styles.chrome} ${overlay ? styles.chromeOverlay : ""}`}>
+    <>
       <div className={styles.promo}>Бесплатная доставка при заказе от 1500 ₽</div>
       <SiteHeader overlay={overlay} />
-    </div>
+    </>
   );
 }
 

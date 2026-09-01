@@ -106,12 +106,13 @@
   padding: 42px 0 16px;
 }
 
-.products > h2 {
-  margin-bottom: 18px;
-  font-size: 24px;
-  font-weight: 400;
-  line-height: 28px;
-  text-align: center;
+.srTitle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .manifesto {
@@ -145,8 +146,29 @@
   text-transform: uppercase;
 }
 
-.manifestoMobile {
-  display: none;
+.aboutButton {
+  position: absolute;
+  z-index: 3;
+  bottom: 34px;
+  left: 50%;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 22px;
+  transform: translateX(-50%);
+  border: 1px solid white;
+  border-radius: 999px;
+  color: white;
+  background: rgb(0 0 0 / 14%);
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+}
+
+.aboutButton:hover,
+.aboutButton:focus-visible {
+  color: var(--color-foreground);
+  background: white;
 }
 
 .categoryGrid {
@@ -338,12 +360,8 @@
     line-height: 1.02;
   }
 
-  .manifestoDesktop {
-    display: none;
-  }
-
-  .manifestoMobile {
-    display: inline;
+  .aboutButton {
+    bottom: 22px;
   }
 
   .categoryGrid {

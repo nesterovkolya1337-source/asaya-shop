@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ProductCard } from "@/components/product-card";
 import { useShop } from "@/components/shop-provider";
@@ -11,6 +12,7 @@ import styles from "./product-view.module.css";
 
 export function ProductView({ productId }: { productId: string }) {
   const { addToCart, cart, changeQuantity, favorites, products, toggleFavorite } = useShop();
+  const router = useRouter();
   const [activeImage, setActiveImage] = useState(0);
   const product = products.find((item) => item.id === productId);
 
@@ -26,7 +28,7 @@ export function ProductView({ productId }: { productId: string }) {
 
   const quantity = cart[product.id] ?? 0;
   const isFavorite = favorites.includes(product.id);
-  const recommendations = products.filter((item) => item.active && item.id !== product.id).slice(0, 3);
+  const recommendations = product.recommendations.map((id) => products.find((item) => item.id === id)).filter((item) => item?.active && item.id !== product.id).filter((item): item is NonNullable<typeof item> => Boolean(item));
   const gallery = product.gallery.length ? product.gallery : [product.image];
   const ugcImages = [
     assetPath("/images/figma/ugc-000012160039.webp"),
@@ -36,6 +38,10 @@ export function ProductView({ productId }: { productId: string }) {
   ];
   const hasReviews = product.reviews > 0;
   const ratingRows = [5, 4, 3, 2, 1];
+  const buyNow = () => {
+    if (!quantity && product.stock) addToCart(product.id);
+    router.push("/checkout");
+  };
 
   return (
     <main className={styles.main}>
@@ -196,13 +202,18 @@ export function ProductView({ productId }: { productId: string }) {
 
       <section className={styles.recommendations} aria-labelledby="recommendations-title">
         <div className={styles.sectionHeading}>
-          <h2 id="recommendations-title">Попробуй ещё</h2>
+          <h2 id="recommendations-title">Рекомендуем</h2>
           <Link href="/catalog">Весь каталог</Link>
         </div>
         <div className={styles.recommendationGrid}>
           {recommendations.map((item) => <ProductCard key={item.id} product={item} />)}
         </div>
       </section>
+      <aside className={styles.stickyBuy} aria-label="Быстрая покупка">
+        <div><small>{product.name}</small><strong>{formatPrice(product.price)}</strong></div>
+        <button className={styles.buyNow} disabled={!product.stock} onClick={buyNow} type="button">Купить сейчас</button>
+        <button className={styles.stickyCart} disabled={!product.stock || quantity >= product.stock} onClick={() => addToCart(product.id)} type="button">{quantity ? `В корзине · ${quantity}` : "В корзину"}</button>
+      </aside>
     </main>
   );
 }

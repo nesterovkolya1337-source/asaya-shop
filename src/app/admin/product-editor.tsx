@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useShop, type ProductAdminUpdate } from "@/components/shop-provider";
-import { categoryLabels, formatPrice, type Product, type ProductCategory } from "@/lib/store-data";
+import { badgeOptions, categoryLabels, formatPrice, type Product, type ProductCategory } from "@/lib/store-data";
 import styles from "./admin.module.css";
 
 type NumberField = "price" | "oldPrice" | "discount" | "stock";
@@ -15,7 +15,7 @@ function toNumber(value: string, field: NumberField) {
   return Math.max(0, Math.round(parsed));
 }
 
-function ProductRow({ product, updateProduct }: { product: Product; updateProduct: (id: string, updates: ProductAdminUpdate) => void }) {
+function ProductRow({ product, products, updateProduct }: { product: Product; products: Product[]; updateProduct: (id: string, updates: ProductAdminUpdate) => void }) {
   const updateNumber = (field: NumberField, value: string) => updateProduct(product.id, { [field]: toNumber(value, field) });
 
   return (
@@ -34,7 +34,7 @@ function ProductRow({ product, updateProduct }: { product: Product; updateProduc
         <label>Старая цена, ₽<input min="0" onChange={(event) => updateNumber("oldPrice", event.target.value)} type="number" value={product.oldPrice} /></label>
         <label>Скидка, %<input max="100" min="0" onChange={(event) => updateNumber("discount", event.target.value)} type="number" value={product.discount} /></label>
         <label>Остаток, шт.<input min="0" onChange={(event) => updateNumber("stock", event.target.value)} type="number" value={product.stock} /></label>
-        <label>Бейдж<input maxLength={24} onChange={(event) => updateProduct(product.id, { badge: event.target.value })} placeholder="Новинка" type="text" value={product.badge} /></label>
+        <label>Бейдж<select onChange={(event) => updateProduct(product.id, { badge: event.target.value })} value={product.badge}>{badgeOptions.map((badge) => <option key={badge || "none"} value={badge}>{badge || "Без бейджа"}</option>)}</select></label>
         <label className={styles.activeToggle}>
           <input checked={product.active} onChange={(event) => updateProduct(product.id, { active: event.target.checked })} type="checkbox" />
           <span>{product.active ? "Показывается" : "Скрыт"}</span>
@@ -53,6 +53,8 @@ function ProductRow({ product, updateProduct }: { product: Product; updateProduc
           <label>Название<input onChange={(event) => updateProduct(product.id, { name: event.target.value })} type="text" value={product.name} /></label>
           <label>Объём<input onChange={(event) => updateProduct(product.id, { volume: event.target.value })} type="text" value={product.volume} /></label>
           <label>Категория<select onChange={(event) => updateProduct(product.id, { category: event.target.value as ProductCategory })} value={product.category}>{Object.entries(categoryLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <label className={styles.wideField}>Основное фото<input onChange={(event) => updateProduct(product.id, { image: event.target.value })} type="text" value={product.image} /></label>
+          <label className={styles.wideField}>Галерея товара — одна фотография в строке<textarea onChange={(event) => updateProduct(product.id, { gallery: event.target.value.split("\n").map((value) => value.trim()).filter(Boolean) })} rows={5} value={product.gallery.join("\n")} /></label>
           <label className={styles.wideField}>Описание<textarea onChange={(event) => updateProduct(product.id, { description: event.target.value })} rows={4} value={product.description} /></label>
           <label className={styles.wideField}>Способ применения<textarea onChange={(event) => updateProduct(product.id, { usage: event.target.value })} rows={4} value={product.usage} /></label>
           {product.instruction.steps.map((step, index) => (
@@ -60,6 +62,15 @@ function ProductRow({ product, updateProduct }: { product: Product; updateProduc
           ))}
           <label className={styles.wideField}>Количество средства<textarea onChange={(event) => updateProduct(product.id, { instruction: { ...product.instruction, amount: event.target.value } })} rows={2} value={product.instruction.amount} /></label>
           <label className={styles.wideField}>Полезный совет<textarea onChange={(event) => updateProduct(product.id, { instruction: { ...product.instruction, tip: event.target.value } })} rows={2} value={product.instruction.tip} /></label>
+          <fieldset className={`${styles.wideField} ${styles.recommendationEditor}`}>
+            <legend>Рекомендуемые товары — выбираются вручную</legend>
+            <div>
+              {products.filter((item) => item.id !== product.id).map((item) => {
+                const selected = product.recommendations.includes(item.id);
+                return <label key={item.id}><input checked={selected} onChange={(event) => updateProduct(product.id, { recommendations: event.target.checked ? [...product.recommendations, item.id] : product.recommendations.filter((id) => id !== item.id) })} type="checkbox" /><span>{item.name}</span></label>;
+              })}
+            </div>
+          </fieldset>
           <label className={styles.wideField}>Аромат<textarea onChange={(event) => updateProduct(product.id, { aroma: event.target.value })} rows={3} value={product.aroma} /></label>
           <label className={styles.wideField}>Состав<textarea onChange={(event) => updateProduct(product.id, { ingredients: event.target.value })} rows={5} value={product.ingredients} /></label>
         </div>
@@ -97,7 +108,7 @@ export function ProductEditor() {
       </div>
 
       <div className={styles.productList}>
-        {products.map((product) => <ProductRow key={product.id} product={product} updateProduct={updateProduct} />)}
+        {products.map((product) => <ProductRow key={product.id} product={product} products={products} updateProduct={updateProduct} />)}
       </div>
     </section>
   );
