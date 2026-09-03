@@ -95,14 +95,14 @@ const recommendationMap: Record<string, string[]> = {
   "strawberry-shower-gel": ["avocado-body-cream", "coconut-body-cream", "guava-shower-gel", "blueberry-shower-gel"],
   "coconut-body-cream": ["avocado-body-cream", "yuzu-shower-gel", "lifting-face-cream", "strawberry-shower-gel"],
   "hair-balm": ["hair-shampoo", "hair-mask", "multi-hair-spray", "hair-cream-spray"],
-  "restoring-face-cream": ["lifting-face-cream", "avocado-body-cream", "coconut-body-cream"],
+  "restoring-face-cream": ["lifting-face-cream", "avocado-body-cream", "coconut-body-cream", "strawberry-shower-gel"],
   "hair-shampoo": ["hair-balm", "hair-mask", "multi-hair-spray", "hair-cream-spray"],
   "kiwi-shower-gel": ["avocado-body-cream", "coconut-body-cream", "yuzu-shower-gel", "blueberry-shower-gel"],
   "hair-mask": ["hair-shampoo", "hair-balm", "hair-cream-spray", "multi-hair-spray"],
   "guava-shower-gel": ["strawberry-shower-gel", "avocado-body-cream", "coconut-body-cream", "yuzu-shower-gel"],
   "hair-cream-spray": ["multi-hair-spray", "hair-mask", "hair-balm", "hair-shampoo"],
   "yuzu-shower-gel": ["kiwi-shower-gel", "coconut-body-cream", "avocado-body-cream", "guava-shower-gel"],
-  "lifting-face-cream": ["restoring-face-cream", "coconut-body-cream", "avocado-body-cream"],
+  "lifting-face-cream": ["restoring-face-cream", "coconut-body-cream", "avocado-body-cream", "strawberry-shower-gel"],
   "blueberry-shower-gel": ["strawberry-shower-gel", "guava-shower-gel", "coconut-body-cream", "avocado-body-cream"],
 };
 

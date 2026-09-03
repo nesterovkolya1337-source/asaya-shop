@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ChangeEvent, type FormEvent, useState } from "react";
+import { type ChangeEvent, type FormEvent, type MouseEvent, type PointerEvent, useRef, useState } from "react";
 import { ProductCard } from "@/components/product-card";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
@@ -27,6 +27,8 @@ export function ProductView({ productId }: { productId: string }) {
   const [reviewText, setReviewText] = useState("");
   const [reviewPhotos, setReviewPhotos] = useState<string[]>([]);
   const [reviewNotice, setReviewNotice] = useState("");
+  const [recommendationDragging, setRecommendationDragging] = useState(false);
+  const recommendationDrag = useRef({ active: false, moved: false, pointerId: -1, startX: 0, startY: 0, scrollLeft: 0 });
   const product = products.find((item) => item.id === productId);
 
   if (!product) {
@@ -56,6 +58,42 @@ export function ProductView({ productId }: { productId: string }) {
   const buyNow = () => {
     if (!quantity && product.stock) addToCart(product.id);
     router.push("/checkout");
+  };
+  const startRecommendationDrag = (event: PointerEvent<HTMLDivElement>) => {
+    if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+    recommendationDrag.current = {
+      active: true,
+      moved: false,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      scrollLeft: event.currentTarget.scrollLeft,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setRecommendationDragging(true);
+  };
+  const moveRecommendationDrag = (event: PointerEvent<HTMLDivElement>) => {
+    if (!recommendationDrag.current.active || recommendationDrag.current.pointerId !== event.pointerId) return;
+    const distanceX = event.clientX - recommendationDrag.current.startX;
+    const distanceY = event.clientY - recommendationDrag.current.startY;
+    if (!recommendationDrag.current.moved && Math.abs(distanceX) < 6) return;
+    if (!recommendationDrag.current.moved && Math.abs(distanceY) > Math.abs(distanceX)) return;
+    recommendationDrag.current.moved = true;
+    event.preventDefault();
+    event.currentTarget.scrollLeft = recommendationDrag.current.scrollLeft - distanceX;
+  };
+  const stopRecommendationDrag = (event: PointerEvent<HTMLDivElement>) => {
+    if (recommendationDrag.current.pointerId !== event.pointerId) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    recommendationDrag.current.active = false;
+    recommendationDrag.current.pointerId = -1;
+    setRecommendationDragging(false);
+  };
+  const blockRecommendationClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (!recommendationDrag.current.moved) return;
+    event.preventDefault();
+    event.stopPropagation();
+    recommendationDrag.current.moved = false;
   };
   const addPhotos = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []).filter((file) => file.type.startsWith("image/")).slice(0, 2);
@@ -260,7 +298,16 @@ export function ProductView({ productId }: { productId: string }) {
           <h2 id="recommendations-title">Рекомендуем</h2>
           <Link href="/catalog">Весь каталог</Link>
         </div>
-        <div className={styles.recommendationGrid}>
+        <div
+          className={`${styles.recommendationGrid} ${recommendationDragging ? styles.recommendationDragging : ""}`}
+          onClickCapture={blockRecommendationClick}
+          onDragStart={(event) => event.preventDefault()}
+          onLostPointerCapture={stopRecommendationDrag}
+          onPointerCancel={stopRecommendationDrag}
+          onPointerDown={startRecommendationDrag}
+          onPointerMove={moveRecommendationDrag}
+          onPointerUp={stopRecommendationDrag}
+        >
           {recommendations.map((item) => <ProductCard key={item.id} product={item} />)}
         </div>
       </section>

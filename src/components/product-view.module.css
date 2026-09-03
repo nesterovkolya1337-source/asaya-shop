@@ -793,6 +793,22 @@
   scroll-padding-inline: 2px;
   scroll-snap-type: inline mandatory;
   scrollbar-width: none;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-overflow-scrolling: touch;
+  -webkit-user-select: none;
+}
+
+.recommendationGrid a,
+.recommendationGrid img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.recommendationDragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
 }
 
 .recommendationGrid::-webkit-scrollbar {
