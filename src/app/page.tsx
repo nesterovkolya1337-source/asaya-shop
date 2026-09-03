@@ -105,11 +105,11 @@ export default function Home() {
           <section className={styles.careSection}>
             <div className={styles.careImageWrap}>
               <Image
-                alt="Модель использует спрей ASAYA"
+                alt="Девушка с мульти-спреем ASAYA"
                 className={styles.careImage}
                 fill
                 sizes="(max-width: 760px) 92vw, 580px"
-                src={assetPath("/images/figma/asaya-7082.webp")}
+                src={assetPath("/images/drive/home-care-model.jpg")}
               />
             </div>
             <div className={styles.careCopy}>
