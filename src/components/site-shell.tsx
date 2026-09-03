@@ -144,7 +144,7 @@ export function SiteFooter() {
             <div className={styles.careLinks}>
               <p>Служба заботы</p>
               <a href="https://t.me/asayahelp" rel="noreferrer" target="_blank"><span>Telegram</span><b>@asayahelp ↗</b></a>
-              <Link href="/support"><span>MAX</span><b>Подключаем канал</b></Link>
+              <a href={companyData.phoneHref}><span>Телефон</span><b>{companyData.phone}</b></a>
               <a href={companyData.emailHref}><span>Email</span><b>{companyData.email}</b></a>
             </div>
           </nav>
