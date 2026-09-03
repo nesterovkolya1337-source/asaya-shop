@@ -583,11 +583,14 @@
   .overlay {
     min-height: 54px;
     padding: 0 14px;
-    color: var(--color-foreground);
+    border-color: transparent;
+    color: white;
+    background: rgb(20 20 20 / 18%);
+    box-shadow: none;
   }
 
   .overlayPlacement {
-    margin-bottom: 0;
+    margin-bottom: -54px;
   }
 
   .navigation {
@@ -669,7 +672,7 @@
   }
 
   .overlay .brandLogo {
-    filter: brightness(0);
+    filter: brightness(0) invert(1);
   }
 
   .navigationEnd {
