@@ -148,6 +148,39 @@
   line-height: 1.35;
 }
 
+.profileStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.profileStats > div {
+  display: grid;
+  min-height: 92px;
+  align-content: space-between;
+  padding: 14px;
+  border-radius: 10px;
+  background: white;
+}
+
+.profileStats strong {
+  font-size: 30px;
+  font-weight: 400;
+}
+
+.profileStats span {
+  color: var(--color-gray);
+  font-size: 11px;
+}
+
+.loginCard .logoutButton {
+  min-height: 42px;
+  margin-top: 18px;
+  color: var(--color-foreground);
+  background: transparent;
+}
+
 .orders {
   display: flex;
   min-height: 380px;
@@ -247,6 +280,10 @@
 
   .loginCard form {
     display: grid;
+  }
+
+  .profileStats {
+    grid-template-columns: 1fr;
   }
 
   .orders {

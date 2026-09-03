@@ -137,6 +137,13 @@
   text-decoration: line-through;
 }
 
+.rating b {
+  color: var(--color-foreground);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: .02em;
+}
+
 .addButton,
 .cartControl {
   position: absolute;
@@ -264,9 +271,8 @@
     font-size: 10px;
   }
 
-  .rating img {
-    width: 48px;
-    height: auto;
+  .rating b {
+    font-size: 9px;
   }
 
   .meta h3 {

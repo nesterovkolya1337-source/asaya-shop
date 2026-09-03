@@ -2,13 +2,13 @@
 
 The GitHub Pages version is a static storefront prototype. It deliberately does not expose real customer authentication, order submission, payments, or catalog administration.
 
-## Current public build
+## Current public prototype
 
 - Served over HTTPS by GitHub Pages.
-- Stores only guest cart quantities and favorite product IDs in `localStorage`.
-- Does not store names, phone numbers, email addresses, passwords, tokens, payment details, API keys, or administrator changes in the browser.
-- The `/admin` route exposes no management controls. It is a locked placeholder until server-side authorization exists.
-- Checkout and account forms do not send or persist entered data.
+- Stores cart quantities, favorite product IDs, the demo account email, submitted demo reviews/photos, and local catalog overrides in `localStorage` on that device.
+- Does not use or store passwords, session tokens, payment details, or API keys.
+- The `/admin` route is an intentionally unprotected local demo of product editing and review moderation. It is not a production administration system and its changes are visible only in the same browser.
+- Checkout does not send an order to a server. The demo account email is retained only in that browser so the review flow can be tested.
 
 ## Requirements before production launch
 

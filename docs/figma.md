@@ -5,7 +5,13 @@
 | Экран | Figma node | Ссылка | Маршрут |
 | --- | --- | --- | --- |
 | Page 2 canvas | `1:2` | [Page 2](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=1-2) | — |
-| Галерея товара | `21:72` (`Frame 24`) | [Frame 24](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=21-72) | `/product/[id]` |
+| Галерея крема с кокосом | `21:72` (`Frame 24`) | [Frame 24](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=21-72) | `/product/coconut-body-cream` |
+| Галерея крема с авокадо | `146:4027` | [Frame](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=146-4027) | `/product/avocado-body-cream` |
+| Галерея бальзама | `97:1906` | [Frame](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=97-1906) | `/product/hair-balm` |
+| Галерея маски | `146:4087` | [Frame](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=146-4087) | `/product/hair-mask` |
+| Галерея шампуня | `146:4229` | [Frame](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=146-4229) | `/product/hair-shampoo` |
+| Галерея мульти-спрея | `146:5078` | [Frame](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=146-5078) | `/product/multi-hair-spray` |
+| Галерея крем-спрея | `146:5238` | [Frame](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=146-5238) | `/product/hair-cream-spray` |
 | Главная | `1:6` (`Frame 6`) | [Frame 6](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=1-6) | `/` |
 | Каталог | `140:1442` (`All shop`) | [All shop](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=140-1442) | `/catalog` |
 | Волосы | `92:2417` (`Hair`) | [Hair](https://www.figma.com/design/4w8Dr2nHxdoxu6uOGmAtYR/Website--Copy-?node-id=92-2417) | `/catalog?category=hair` |
@@ -29,3 +35,5 @@
 ## Правило работы с ассетами
 
 Ссылки `figma.com/api/mcp/asset/...` временные. Перед использованием в коде изображения и иконки нужно скачать без изменений и сохранить в `public/images` или `public/icons`.
+
+На Page 2 отдельные четырёхкадровые продуктовые галереи собраны для семи товаров. Для остальных товаров сайт использует точный packshot из Page 2 и дополнительные реальные кадры из соответствующих разделов Page 2; сгенерированных банок в каталоге нет.

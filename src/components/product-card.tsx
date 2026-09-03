@@ -39,7 +39,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className={styles.info}>
         <div className={styles.meta}>
           <div className={styles.rating}>
-            {product.reviews > 0 && <Image alt={`${product.rating} из 5`} height={12} src={assetPath("/images/figma/stars.svg")} width={58} />}
+            {product.reviews > 0 && <b aria-label={`${product.rating.toFixed(1)} из 5`}>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</b>}
             <span>{product.reviews > 0 ? `(${product.reviews})` : "Нет отзывов"}</span>
           </div>
           <h3><Link href={`/product/${product.id}`}>{product.name}</Link></h3>

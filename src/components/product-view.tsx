@@ -3,17 +3,30 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { type ChangeEvent, type FormEvent, useState } from "react";
 import { ProductCard } from "@/components/product-card";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
 import { categoryLabels, formatPrice } from "@/lib/store-data";
 import styles from "./product-view.module.css";
 
+function fileToDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export function ProductView({ productId }: { productId: string }) {
-  const { addToCart, cart, changeQuantity, favorites, products, toggleFavorite } = useShop();
+  const { addReview, addToCart, cart, changeQuantity, favorites, products, reviews, toggleFavorite, userEmail } = useShop();
   const router = useRouter();
   const [activeImage, setActiveImage] = useState(0);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewPhotos, setReviewPhotos] = useState<string[]>([]);
+  const [reviewNotice, setReviewNotice] = useState("");
   const product = products.find((item) => item.id === productId);
 
   if (!product) {
@@ -28,6 +41,8 @@ export function ProductView({ productId }: { productId: string }) {
 
   const quantity = cart[product.id] ?? 0;
   const isFavorite = favorites.includes(product.id);
+  const approvedReviews = reviews.filter((review) => review.productId === product.id && review.status === "approved");
+  const pendingReview = reviews.find((review) => review.productId === product.id && review.email === userEmail && review.status === "pending");
   const recommendations = product.recommendations.map((id) => products.find((item) => item.id === id)).filter((item) => item?.active && item.id !== product.id).filter((item): item is NonNullable<typeof item> => Boolean(item));
   const gallery = product.gallery.length ? product.gallery : [product.image];
   const ugcImages = [
@@ -41,6 +56,28 @@ export function ProductView({ productId }: { productId: string }) {
   const buyNow = () => {
     if (!quantity && product.stock) addToCart(product.id);
     router.push("/checkout");
+  };
+  const addPhotos = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []).filter((file) => file.type.startsWith("image/")).slice(0, 2);
+    if (files.some((file) => file.size > 900_000)) {
+      setReviewNotice("Каждое фото должно быть меньше 900 КБ.");
+      event.target.value = "";
+      return;
+    }
+    const photos = await Promise.all(files.map(fileToDataUrl));
+    setReviewPhotos(photos);
+    setReviewNotice("");
+  };
+  const submitReview = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!userEmail || reviewText.trim().length < 10) {
+      setReviewNotice("Добавьте впечатление длиной не меньше 10 символов.");
+      return;
+    }
+    addReview({ email: userEmail, photos: reviewPhotos, productId: product.id, rating: reviewRating, text: reviewText.trim() });
+    setReviewText("");
+    setReviewPhotos([]);
+    setReviewNotice("Отзыв отправлен менеджеру на модерацию.");
   };
 
   return (
@@ -79,7 +116,7 @@ export function ProductView({ productId }: { productId: string }) {
 
         <div className={styles.details}>
           <div className={styles.rating}>
-            {hasReviews && <Image alt={`${product.rating} из 5`} height={14} src={assetPath("/images/figma/stars.svg")} width={68} />}
+            {hasReviews && <span aria-label={`${product.rating.toFixed(1)} из 5`} className={styles.stars}>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</span>}
             <span>{hasReviews ? `${product.reviews} отзывов` : "Пока без отзывов"}</span>
           </div>
           <div className={styles.titleRow}>
@@ -178,24 +215,42 @@ export function ProductView({ productId }: { productId: string }) {
           <p>Отзывы</p>
           <h2 id="reviews-title">{hasReviews ? product.rating.toFixed(1) : "—"}</h2>
           <div className={styles.reviewMeta}>
-            {hasReviews && <Image alt={`${product.rating} из 5`} height={16} src={assetPath("/images/figma/stars.svg")} width={78} />}
+            {hasReviews && <span aria-label={`${product.rating.toFixed(1)} из 5`} className={styles.stars}>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</span>}
             <span>{hasReviews ? `${product.reviews} оценок` : "Оценок пока нет"}</span>
           </div>
           <div className={styles.ratingBreakdown} aria-label="Распределение оценок">
             {ratingRows.map((rating) => (
               <div key={rating}>
                 <span>{rating}</span>
-                <i><b /></i>
-                <small>0</small>
+                <i><b style={{ width: `${approvedReviews.length ? (approvedReviews.filter((review) => review.rating === rating).length / approvedReviews.length) * 100 : 0}%` }} /></i>
+                <small>{approvedReviews.filter((review) => review.rating === rating).length}</small>
               </div>
             ))}
           </div>
         </div>
         <div className={styles.reviewState}>
           <span className={styles.reviewEyebrow}>Ваше мнение важно</span>
-          <h3>Будьте первым, кто поделится впечатлением</h3>
-          <p>После запуска личного кабинета покупатель сможет поставить 1–5 звёзд, написать текст и приложить фотографии. Отзыв с заказом получит отметку «Покупка подтверждена».</p>
-          <Link href="/account">Войти, чтобы оставить отзыв</Link>
+          {userEmail ? (
+            <>
+              <h3>{pendingReview ? "Ваш отзыв уже на проверке" : "Поделитесь впечатлением"}</h3>
+              {!pendingReview && <form className={styles.reviewForm} onSubmit={submitReview}>
+                <fieldset><legend>Оценка</legend><div>{[1, 2, 3, 4, 5].map((rating) => <button aria-label={`${rating} из 5`} aria-pressed={rating <= reviewRating} className={rating <= reviewRating ? styles.activeStar : ""} key={rating} onClick={() => setReviewRating(rating)} type="button">★</button>)}</div></fieldset>
+                <label>Ваш отзыв<textarea minLength={10} onChange={(event) => setReviewText(event.target.value)} placeholder="Расскажите о текстуре, аромате и результате" required rows={4} value={reviewText} /></label>
+                <label className={styles.photoInput}>До двух фото<input accept="image/*" multiple onChange={addPhotos} type="file" /></label>
+                {reviewPhotos.length > 0 && <div className={styles.reviewPhotos}>{reviewPhotos.map((photo, index) => <span key={`${photo.slice(0, 30)}-${index}`}><Image alt={`Фото к отзыву ${index + 1}`} fill sizes="90px" src={photo} unoptimized /></span>)}</div>}
+                <button className={styles.submitReview} type="submit">Отправить на модерацию</button>
+              </form>}
+              {pendingReview && <p>После одобрения менеджером текст и фотографии появятся на странице товара.</p>}
+              {reviewNotice && <div className={styles.reviewNotice} role="status">{reviewNotice}</div>}
+            </>
+          ) : (
+            <>
+              <h3>{hasReviews ? "Добавьте свой отзыв" : "Будьте первым, кто поделится впечатлением"}</h3>
+              <p>Войдите в личный кабинет, поставьте оценку, напишите текст и приложите фотографии.</p>
+              <Link href="/account">Войти, чтобы оставить отзыв</Link>
+            </>
+          )}
+          {approvedReviews.length > 0 && <div className={styles.reviewList}>{approvedReviews.map((review) => <article key={review.id}><header><strong>{review.email.split("@")[0]}</strong><span>{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span></header><p>{review.text}</p>{review.photos.length > 0 && <div>{review.photos.map((photo, index) => <span key={`${review.id}-${index}`}><Image alt={`Фото покупателя ${index + 1}`} fill sizes="110px" src={photo} unoptimized /></span>)}</div>}<small>{new Intl.DateTimeFormat("ru-RU").format(new Date(review.createdAt))}</small></article>)}</div>}
           <small>Мы не публикуем рекламные тексты под видом отзывов покупателей.</small>
         </div>
       </section>

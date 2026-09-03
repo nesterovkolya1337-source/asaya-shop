@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useShop, type ProductAdminUpdate } from "@/components/shop-provider";
+import { useShop, type ProductAdminUpdate, type ProductReview, type ReviewStatus } from "@/components/shop-provider";
 import { badgeOptions, categoryLabels, formatPrice, type Product, type ProductCategory } from "@/lib/store-data";
 import styles from "./admin.module.css";
 
@@ -79,8 +79,52 @@ function ProductRow({ product, products, updateProduct }: { product: Product; pr
   );
 }
 
+function ReviewModeration({ moderateReview, products, reviews }: { moderateReview: (id: string, status: ReviewStatus) => void; products: Product[]; reviews: ProductReview[] }) {
+  const statusLabels: Record<ReviewStatus, string> = {
+    pending: "На проверке",
+    approved: "Опубликован",
+    rejected: "Отклонён",
+  };
+  const orderedReviews = [...reviews].sort((left, right) => {
+    if (left.status === right.status) return right.createdAt.localeCompare(left.createdAt);
+    return left.status === "pending" ? -1 : 1;
+  });
+
+  return (
+    <section className={styles.reviewModeration} aria-labelledby="review-moderation-title">
+      <header>
+        <div><p>Отзывы покупателей</p><h3 id="review-moderation-title">Модерация текста и фотографий</h3></div>
+        <span>{reviews.filter((review) => review.status === "pending").length} на проверке</span>
+      </header>
+      {orderedReviews.length ? (
+        <div className={styles.reviewQueue}>
+          {orderedReviews.map((review) => {
+            const product = products.find((item) => item.id === review.productId);
+            return (
+              <article key={review.id}>
+                <div className={styles.reviewDetails}>
+                  <span>{product?.name ?? review.productId}</span>
+                  <h4>{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</h4>
+                  <p>{review.text}</p>
+                  <small>{review.email} · {new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(new Date(review.createdAt))}</small>
+                  {review.photos.length > 0 && <div className={styles.moderationPhotos}>{review.photos.map((photo, index) => <span key={`${review.id}-${index}`}><Image alt={`Фото к отзыву ${index + 1}`} fill sizes="94px" src={photo} unoptimized /></span>)}</div>}
+                </div>
+                <div className={styles.moderationActions}>
+                  <strong data-status={review.status}>{statusLabels[review.status]}</strong>
+                  <button disabled={review.status === "approved"} onClick={() => moderateReview(review.id, "approved")} type="button">Опубликовать</button>
+                  <button disabled={review.status === "rejected"} onClick={() => moderateReview(review.id, "rejected")} type="button">Отклонить</button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : <div className={styles.emptyReviewQueue}>Новых отзывов пока нет. После отправки из карточки товара они появятся здесь.</div>}
+    </section>
+  );
+}
+
 export function ProductEditor() {
-  const { products, resetProducts, updateProduct } = useShop();
+  const { moderateReview, products, resetProducts, reviews, updateProduct } = useShop();
   const stats = [
     ["Всего товаров", products.length],
     ["Опубликовано", products.filter((product) => product.active).length],
@@ -106,6 +150,8 @@ export function ProductEditor() {
       <div className={styles.editorStats} aria-label="Сводка каталога">
         {stats.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}
       </div>
+
+      <ReviewModeration moderateReview={moderateReview} products={products} reviews={reviews} />
 
       <div className={styles.productList}>
         {products.map((product) => <ProductRow key={product.id} product={product} products={products} updateProduct={updateProduct} />)}

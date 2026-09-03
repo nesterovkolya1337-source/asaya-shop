@@ -134,6 +134,7 @@
 
 .details {
   display: flex;
+  min-width: 0;
   flex-direction: column;
   padding: clamp(28px, 4.3vw, 58px);
 }
@@ -501,6 +502,13 @@
   font-size: 12px;
 }
 
+.stars {
+  color: var(--color-foreground);
+  font-size: 16px;
+  letter-spacing: .08em;
+  line-height: 1;
+}
+
 .ratingBreakdown {
   display: grid;
   gap: 8px;
@@ -590,6 +598,159 @@
   margin-top: 14px;
   color: var(--color-gray);
   font-size: 11px;
+}
+
+.reviewForm {
+  display: grid;
+  width: min(100%, 720px);
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.reviewForm fieldset {
+  display: grid;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+}
+
+.reviewForm legend,
+.reviewForm label {
+  color: #666;
+  font-size: 12px;
+}
+
+.reviewForm fieldset > div {
+  display: flex;
+  gap: 1px;
+}
+
+.reviewForm fieldset button {
+  padding: 0 2px;
+  border: 0;
+  color: #d4d4d4;
+  background: transparent;
+  cursor: pointer;
+  font-size: 29px;
+  line-height: 1;
+}
+
+.reviewForm fieldset button.activeStar {
+  color: #171717;
+}
+
+.reviewForm label {
+  display: grid;
+  gap: 8px;
+}
+
+.reviewForm textarea {
+  width: 100%;
+  min-height: 112px;
+  padding: 14px;
+  border: 1px solid #d7d7d7;
+  border-radius: 12px;
+  outline: none;
+  resize: vertical;
+  background: #fafafa;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.reviewForm textarea:focus-visible {
+  border-color: var(--color-foreground);
+}
+
+.photoInput input {
+  padding: 12px;
+  border: 1px dashed #bdbdbd;
+  border-radius: 12px;
+  background: #fafafa;
+  cursor: pointer;
+}
+
+.reviewPhotos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reviewPhotos > span,
+.reviewList article > div > span {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--color-light-gray);
+}
+
+.reviewPhotos img,
+.reviewList article > div img {
+  object-fit: cover;
+}
+
+.submitReview {
+  min-height: 46px;
+  justify-self: start;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  color: white;
+  background: var(--color-foreground);
+  cursor: pointer;
+}
+
+.submitReview:hover,
+.submitReview:focus-visible {
+  color: var(--color-foreground);
+  background: var(--color-pink);
+}
+
+.reviewNotice {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--color-pink);
+  font-size: 13px;
+}
+
+.reviewList {
+  display: grid;
+  width: min(100%, 720px);
+  gap: 8px;
+  margin-top: 30px;
+}
+
+.reviewList article {
+  padding: 18px;
+  border-radius: 12px;
+  background: var(--color-light-gray);
+}
+
+.reviewList article header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.reviewList article header strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.reviewList article header span {
+  letter-spacing: .04em;
+}
+
+.reviewList article > p {
+  margin-top: 12px;
+}
+
+.reviewList article > div {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
 }
 
 .recommendations {
@@ -718,7 +879,7 @@
 
 @media (max-width: 900px) {
   .product {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .gallery {

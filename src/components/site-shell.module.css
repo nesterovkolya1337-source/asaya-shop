@@ -1,4 +1,7 @@
 .promo {
+  position: sticky;
+  z-index: 51;
+  top: 0;
   display: grid;
   min-height: 35px;
   place-items: center;
@@ -14,7 +17,7 @@
 .header {
   position: sticky;
   z-index: 50;
-  top: 10px;
+  top: 45px;
   min-height: 76px;
   display: flex;
   align-items: center;
@@ -24,6 +27,10 @@
   background: rgb(255 255 255 / 94%);
   box-shadow: 0 8px 28px rgb(0 0 0 / 7%);
   backdrop-filter: blur(14px);
+}
+
+.promo + .header {
+  top: 45px;
 }
 
 .overlay {
@@ -535,6 +542,10 @@
     min-height: 34px;
     margin: 0 0 8px;
     font-size: 12px;
+  }
+
+  .promo + .header {
+    top: 42px;
   }
 
   .header {

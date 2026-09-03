@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useShop } from "@/components/shop-provider";
-import { assetPath } from "@/lib/asset-path";
 import styles from "@/app/instructions/[id]/instruction.module.css";
 
 function getSafety(productId: string, category: string) {
@@ -43,7 +42,7 @@ export function InstructionDetail({ productId }: { productId: string }) {
   if (!product) return null;
   const safety = getSafety(product.id, product.category);
   const isHairSpray = product.id === "multi-hair-spray" || product.id === "hair-cream-spray";
-  const stepImages = isHairSpray ? [1, 2, 3, 4].map((step) => assetPath(`/images/instructions/hair-spray-step-${step}.webp`)) : [];
+  const stepImages = isHairSpray ? product.gallery.slice(0, 4) : [];
 
   return (
     <main>

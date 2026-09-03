@@ -7,13 +7,15 @@ import { useShop } from "@/components/shop-provider";
 import styles from "./account-view.module.css";
 
 export function AccountView() {
-  const { favorites, products } = useShop();
+  const { favorites, login, logout, products, reviews, userEmail } = useShop();
   const [email, setEmail] = useState("");
   const [notice, setNotice] = useState(false);
   const favoriteProducts = products.filter((product) => favorites.includes(product.id) && product.active);
+  const ownReviews = reviews.filter((review) => review.email === userEmail);
 
   function requestLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    login(email);
     setNotice(true);
   }
 
@@ -28,14 +30,30 @@ export function AccountView() {
       <div className={styles.dashboard}>
         <section className={styles.loginCard}>
           <div className={styles.lock} aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
-          <p>Защищённый вход</p>
-          <h2>Ваши данные должны оставаться только вашими</h2>
-          <span>Вход будет включён вместе с серверной авторизацией, подтверждением почты и безопасными HttpOnly-cookie.</span>
-          <form onSubmit={requestLogin}>
-            <label>Email<input onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" required type="email" value={email} /></label>
-            <button type="submit">Продолжить</button>
-          </form>
-          {notice && <div className={styles.notice} role="status">Данные не отправлены и не сохранены: защищённый серверный вход ещё не подключён.</div>}
+          {userEmail ? (
+            <>
+              <p>Профиль на этом устройстве</p>
+              <h2>{userEmail}</h2>
+              <span>Можно сохранять избранное и отправлять отзывы на модерацию. Для синхронизации между устройствами потребуется серверный вход.</span>
+              <div className={styles.profileStats}>
+                <div><strong>{ownReviews.length}</strong><span>отзывов отправлено</span></div>
+                <div><strong>{ownReviews.filter((review) => review.status === "approved").length}</strong><span>опубликовано</span></div>
+                <div><strong>{ownReviews.filter((review) => review.status === "pending").length}</strong><span>на проверке</span></div>
+              </div>
+              <button className={styles.logoutButton} onClick={logout} type="button">Выйти</button>
+            </>
+          ) : (
+            <>
+              <p>Вход в рабочий прототип</p>
+              <h2>Войдите, чтобы оставить отзыв</h2>
+              <span>Email сохраняется только в этом браузере и никуда не отправляется.</span>
+              <form onSubmit={requestLogin}>
+                <label>Email<input onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" required type="email" value={email} /></label>
+                <button type="submit">Продолжить</button>
+              </form>
+              {notice && <div className={styles.notice} role="status">Профиль создан на этом устройстве.</div>}
+            </>
+          )}
         </section>
 
         <section className={styles.orders}>
