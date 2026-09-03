@@ -7,6 +7,6 @@
 .page article { display: grid; grid-template-columns: 50px 1fr 1fr; gap: 20px; padding: 26px; border-radius: var(--radius-card); background: var(--color-light-gray); }
 .page article > span { color: var(--color-gray); }
 .page article h2 { font-size: 22px; font-weight: 500; }
-.page article p { color: #666; line-height: 1.45; }
+.page article p { color: #666; line-height: 1.45; white-space: pre-line; }
 .page main > a { display: inline-flex; margin-top: 32px; padding-bottom: 4px; border-bottom: 1px solid; }
 @media (max-width: 700px) { .page { padding: 8px 10px 24px; } .page main { padding: 48px 0; } .page article { grid-template-columns: 34px 1fr; } .page article p { grid-column: 2; } }

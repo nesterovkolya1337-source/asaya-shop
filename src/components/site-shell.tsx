@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { CookieConsent } from "@/components/cookie-consent";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
+import { companyData } from "@/lib/company-data";
 import styles from "./site-shell.module.css";
 
 export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
@@ -107,7 +108,7 @@ export function SiteFooter() {
               <a aria-label="Telegram" href="https://t.me/asayabeauty" rel="noreferrer" target="_blank">TG</a>
               <a aria-label="ВКонтакте" href="https://vk.com/asaya.beauty" rel="noreferrer" target="_blank">VK</a>
               <a aria-label="Instagram" href="https://instagram.com/asaya.beauty" rel="noreferrer" target="_blank">IG</a>
-              <a aria-label="Email" href="mailto:globalcos@yandex.ru">@</a>
+              <a aria-label="Email" href={companyData.emailHref}>@</a>
             </div>
           </div>
 
@@ -129,8 +130,19 @@ export function SiteFooter() {
             </div>
           </nav>
         </div>
+        <div className={styles.companyDetails}>
+          <div>
+            <strong>{companyData.shortName}</strong>
+            <span>ОГРН {companyData.ogrn} · ИНН {companyData.inn}</span>
+          </div>
+          <address>{companyData.legalAddress}</address>
+          <div className={styles.companyContacts}>
+            <a href={companyData.phoneHref}>{companyData.phone}</a>
+            <a href={companyData.emailHref}>{companyData.email}</a>
+          </div>
+        </div>
         <div className={styles.legalRow}>
-          <span>© ASAYA</span>
+          <span>© 2026 ASAYA</span>
           <div>
             <Link href="/legal/privacy">Политика конфиденциальности</Link>
             <Link href="/legal/personal-data">Согласие на обработку данных</Link>
@@ -145,7 +157,7 @@ export function SiteFooter() {
           <strong>Служба заботы</strong>
           <span>Подбор ухода, вопросы по применению, заказу или повреждённому товару.</span>
           <a href="https://t.me/asayahelp" rel="noreferrer" target="_blank">Написать в Telegram</a>
-          <a href="mailto:globalcos@yandex.ru">Написать на email</a>
+          <a href={companyData.emailHref}>Написать на email</a>
           <small>MAX — после подтверждения официальной ссылки</small>
         </div>
       </details>
