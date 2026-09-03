@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   output: "export",
   basePath,
   trailingSlash: true,
+  experimental: {
+    cpus: 1,
+  },
   images: {
     unoptimized: true,
   },

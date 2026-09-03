@@ -42,7 +42,9 @@ export function InstructionDetail({ productId }: { productId: string }) {
   if (!product) return null;
   const safety = getSafety(product.id, product.category);
   const isHairSpray = product.id === "multi-hair-spray" || product.id === "hair-cream-spray";
-  const stepImages = isHairSpray ? product.gallery.slice(0, 4) : [];
+  const stepImages = isHairSpray
+    ? [product.gallery[1], product.gallery[3], product.gallery[2], product.image].filter(Boolean)
+    : [];
 
   return (
     <main>
@@ -58,7 +60,7 @@ export function InstructionDetail({ productId }: { productId: string }) {
       </section>
       <section className={`${styles.steps} ${isHairSpray ? styles.visualSteps : ""}`} aria-labelledby="steps-title">
         <header><p>Пошагово</p><h2 id="steps-title">Как использовать</h2></header>
-        <ol>{product.instruction.steps.map((step, index) => <li key={step}>{stepImages[index] && <figure><Image alt={`${product.name}: шаг ${index + 1}`} fill sizes="(max-width: 760px) 74vw, 260px" src={stepImages[index]} /></figure>}<span>{step}</span></li>)}</ol>
+        <ol>{product.instruction.steps.map((step, index) => <li key={step}>{stepImages[index] && <figure className={index === 3 ? styles.packshotStep : undefined}><Image alt={`${product.name}: шаг ${index + 1}`} fill sizes="(max-width: 760px) 74vw, 260px" src={stepImages[index]} /></figure>}<span>{step}</span></li>)}</ol>
       </section>
       <section className={styles.safety} aria-labelledby="safety-title">
         <span aria-hidden="true">!</span>

@@ -13,7 +13,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   const { cartCount, favorites, products } = useShop();
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [pastHero, setPastHero] = useState(false);
+  const [solidHeader, setSolidHeader] = useState(false);
   const sitePages = [
     ["Каталог", "/catalog"], ["О бренде", "/about"], ["Инструкции", "/instructions"],
     ["Доставка и оплата", "/delivery"], ["Где купить", "/where-to-buy"],
@@ -29,7 +29,8 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
     if (!overlay) return;
     const updateHeader = () => {
       const hero = document.querySelector<HTMLElement>("[data-site-hero]");
-      setPastHero(hero ? hero.getBoundingClientRect().bottom <= 96 : window.scrollY > window.innerHeight * 0.7);
+      const solidAt = Math.min(260, window.innerHeight * 0.28);
+      setSolidHeader(hero ? hero.getBoundingClientRect().bottom <= solidAt : window.scrollY > window.innerHeight * 0.62);
     };
     updateHeader();
     window.addEventListener("scroll", updateHeader, { passive: true });
@@ -41,30 +42,32 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   }, [overlay]);
 
   return (
-    <header className={`${styles.header} ${overlay ? styles.overlayPlacement : ""} ${overlay && !pastHero ? styles.overlay : ""}`}>
+    <header className={`${styles.header} ${overlay ? styles.overlayPlacement : ""} ${overlay && solidHeader ? styles.floatingHeader : ""}`}>
       <nav aria-label="Основная навигация" className={styles.navigation}>
-        <div className={styles.navigationSide}>
-          <Link href="/catalog">Каталог</Link>
-          <Link href="/about">О бренде</Link>
-        </div>
-        <details className={styles.mobileMenu}>
-          <summary aria-label="Открыть меню" role="button">
-            <span />
-            <span />
-            <span />
-          </summary>
-          <div className={styles.mobileMenuPanel}>
+        <div className={styles.navigationStart}>
+          <details className={styles.mobileMenu}>
+            <summary aria-label="Открыть меню" role="button">
+              <span />
+              <span />
+              <span />
+            </summary>
+            <div className={styles.mobileMenuPanel}>
+              <Link href="/catalog">Каталог</Link>
+              <Link href="/favorites">Избранное</Link>
+              <Link href="/about">О бренде</Link>
+              <Link href="/delivery">Доставка и оплата</Link>
+              <Link href="/where-to-buy">Где купить</Link>
+              <Link href="/instructions">Инструкции</Link>
+              <Link href="/faq">Вопросы и ответы</Link>
+              <Link href="/order-status">Статус заказа</Link>
+              <Link href="/support">Служба заботы</Link>
+            </div>
+          </details>
+          <div className={styles.navigationSide}>
             <Link href="/catalog">Каталог</Link>
-            <Link href="/favorites">Избранное</Link>
             <Link href="/about">О бренде</Link>
-            <Link href="/delivery">Доставка и оплата</Link>
-            <Link href="/where-to-buy">Где купить</Link>
-            <Link href="/instructions">Инструкции</Link>
-            <Link href="/faq">Вопросы и ответы</Link>
-            <Link href="/order-status">Статус заказа</Link>
-            <Link href="/support">Служба заботы</Link>
           </div>
-        </details>
+        </div>
         <Link className={styles.wordmark} href="/" aria-label="ASAYA — главная">
           <Image className={styles.brandLogo} alt="ASAYA" height={28} priority src={assetPath("/images/figma/footer-wordmark.svg")} width={114} />
         </Link>
