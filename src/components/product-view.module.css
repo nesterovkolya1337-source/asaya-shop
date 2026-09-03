@@ -43,7 +43,7 @@
 
 .gallery {
   position: relative;
-  min-height: 680px;
+  min-height: clamp(680px, 74vh, 920px);
   overflow: hidden;
 }
 

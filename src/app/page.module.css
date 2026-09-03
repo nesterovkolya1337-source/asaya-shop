@@ -1,12 +1,11 @@
 .page {
-  width: min(100%, calc(var(--content-width) + (var(--page-gutter) * 2)));
-  margin: 0 auto;
+  width: 100%;
   padding: 10px var(--page-gutter) 24px;
 }
 
 .hero {
   position: relative;
-  min-height: clamp(540px, 49vw, 595px);
+  min-height: clamp(620px, calc(100svh - 145px), 900px);
   overflow: hidden;
   border-radius: var(--radius-card);
   background: #202020;
@@ -39,8 +38,8 @@
 .heroCopy {
   position: absolute;
   z-index: 3;
-  bottom: 55px;
-  left: 55px;
+  bottom: clamp(34px, 4vw, 72px);
+  left: clamp(28px, 4vw, 72px);
   max-width: 360px;
   color: white;
 }
@@ -117,7 +116,7 @@
 
 .manifesto {
   position: relative;
-  min-height: 585px;
+  min-height: clamp(585px, 62vh, 820px);
   overflow: hidden;
   margin-top: 16px;
   border-radius: var(--radius-card);
@@ -180,7 +179,7 @@
 
 .categoryCard {
   position: relative;
-  min-height: 455px;
+  min-height: clamp(455px, 36vw, 680px);
   overflow: hidden;
   border-radius: var(--radius-card);
 }
@@ -221,7 +220,7 @@
 
 .careSection {
   display: grid;
-  min-height: 650px;
+  min-height: clamp(650px, 72vh, 900px);
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-top: 10px;
