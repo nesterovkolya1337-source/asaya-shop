@@ -95,8 +95,18 @@ export function CheckoutView() {
           </section>
 
           <section className={styles.block} aria-labelledby="payment-heading">
-            <h2 id="payment-heading">Оплата</h2>
-            <label className={styles.payment}><input defaultChecked name="payment" type="radio" /><span><strong>Банковской картой на сайте</strong><small>МИР · Visa · Mastercard</small></span></label>
+            <div className={styles.paymentHeading}>
+              <div><p>Безопасная оплата</p><h2 id="payment-heading">Оплата картой или через СБП</h2></div>
+              <span aria-hidden="true">⌁</span>
+            </div>
+            <label className={styles.payment}>
+              <input defaultChecked name="payment" type="radio" />
+              <span><strong>Перейти к защищённой форме оплаты</strong><small>Доступные способы покажет платёжный партнёр</small></span>
+            </label>
+            <div className={styles.paymentMarks} aria-label="Планируемые способы оплаты">
+              <span>МИР</span><span>СБП</span><span>VISA</span><span>Mastercard</span><span>Pay</span>
+            </div>
+            <p className={styles.paymentNote}>Реквизиты карты вводятся только на защищённой странице платёжного сервиса. ASAYA не хранит данные банковской карты.</p>
           </section>
         </div>
 

@@ -27,6 +27,7 @@
   background: rgb(255 255 255 / 94%);
   box-shadow: 0 8px 28px rgb(0 0 0 / 7%);
   backdrop-filter: blur(14px);
+  transition: color 220ms ease, background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
 }
 
 .promo + .header {
@@ -490,11 +491,6 @@
 .supportBubble > div a:hover {
   color: var(--color-foreground);
   background: var(--color-pink);
-}
-
-.supportBubble small {
-  color: #888;
-  font-size: 11px;
 }
 
 .cookieBanner {

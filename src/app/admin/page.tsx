@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteChrome } from "@/components/site-shell";
+import { integrationReadiness, orderStatuses } from "@/lib/commerce-contract";
 import { ProductEditor } from "./product-editor";
 import styles from "./admin.module.css";
 
@@ -45,6 +46,33 @@ export default function AdminPage() {
             {sections.map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}
           </div>
           <aside><strong>Принцип безопасности</strong><span>Покупатели никогда не получают доступ к этим разделам. Каждое изменение цены, скидки или карточки товара сохраняется с автором и временем.</span></aside>
+        </section>
+        <section className={styles.integrationReadiness} aria-labelledby="integration-readiness-title">
+          <header>
+            <p>Готовность к запуску</p>
+            <h2 id="integration-readiness-title">Что уже работает и какие доступы ещё нужны</h2>
+          </header>
+          <div className={styles.integrationGrid}>
+            {integrationReadiness.map((item) => (
+              <article key={item.name}>
+                <span data-status={item.status}>{item.label}</span>
+                <h3>{item.name}</h3>
+                <p>{item.detail}</p>
+              </article>
+            ))}
+          </div>
+          <div className={styles.orderFlow} aria-label="Рабочие статусы заказа">
+            <strong>Путь заказа без потерь и дублей</strong>
+            <ol>
+              {orderStatuses.map((status, index) => (
+                <li key={status.id}><span>{String(index + 1).padStart(2, "0")}</span>{status.label}</li>
+              ))}
+            </ol>
+          </div>
+          <aside>
+            <strong>GitHub Pages остаётся демонстрацией.</strong>
+            <span>Настоящие заказы, webhook оплаты, ключи СДЭК и кабинет сотрудников будут работать только на защищённом сервере ASAYA.</span>
+          </aside>
         </section>
         <ProductEditor />
       </main>

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CookieConsent } from "@/components/cookie-consent";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
@@ -13,6 +13,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   const { cartCount, favorites, products } = useShop();
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [scrolled, setScrolled] = useState(false);
   const sitePages = [
     ["Каталог", "/catalog"], ["О бренде", "/about"], ["Инструкции", "/instructions"],
     ["Доставка и оплата", "/delivery"], ["Где купить", "/where-to-buy"],
@@ -24,8 +25,16 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   )).slice(0, 8) : [], [normalizedSearch, products]);
   const pageResults = normalizedSearch ? sitePages.filter(([label]) => label.toLocaleLowerCase("ru").includes(normalizedSearch)) : sitePages.slice(0, 4);
 
+  useEffect(() => {
+    if (!overlay) return;
+    const updateHeader = () => setScrolled(window.scrollY > 48);
+    updateHeader();
+    window.addEventListener("scroll", updateHeader, { passive: true });
+    return () => window.removeEventListener("scroll", updateHeader);
+  }, [overlay]);
+
   return (
-    <header className={`${styles.header} ${overlay ? styles.overlay : ""}`}>
+    <header className={`${styles.header} ${overlay && !scrolled ? styles.overlay : ""}`}>
       <nav aria-label="Основная навигация" className={styles.navigation}>
         <div className={styles.navigationSide}>
           <Link href="/catalog">Каталог</Link>
@@ -156,9 +165,9 @@ export function SiteFooter() {
         <div>
           <strong>Служба заботы</strong>
           <span>Подбор ухода, вопросы по применению, заказу или повреждённому товару.</span>
-          <a href="https://t.me/asayahelp" rel="noreferrer" target="_blank">Написать в Telegram</a>
-          <a href={companyData.emailHref}>Написать на email</a>
-          <small>MAX — после подтверждения официальной ссылки</small>
+          <a href="https://t.me/asayahelp" rel="noreferrer" target="_blank">Telegram · @asayahelp</a>
+          <a href={companyData.emailHref}>{companyData.email}</a>
+          <a href={companyData.phoneHref}>{companyData.phone}</a>
         </div>
       </details>
       <CookieConsent />
