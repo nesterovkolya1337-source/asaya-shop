@@ -149,17 +149,6 @@ export function SiteFooter() {
             </div>
           </nav>
         </div>
-        <div className={styles.companyDetails}>
-          <div>
-            <strong>{companyData.shortName}</strong>
-            <span>ОГРН {companyData.ogrn} · ИНН {companyData.inn}</span>
-          </div>
-          <address>{companyData.legalAddress}</address>
-          <div className={styles.companyContacts}>
-            <a href={companyData.phoneHref}>{companyData.phone}</a>
-            <a href={companyData.emailHref}>{companyData.email}</a>
-          </div>
-        </div>
         <div className={styles.legalRow}>
           <span>© 2026 ASAYA</span>
           <div>

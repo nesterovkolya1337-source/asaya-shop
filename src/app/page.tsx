@@ -58,7 +58,7 @@ export default function Home() {
               className={styles.heroImage}
               fill
               priority
-              sizes="100vw"
+              sizes="(max-width: 1280px) 94vw, 1160px"
               src={assetPath("/images/figma/hero.webp")}
             />
             <div className={styles.heroCopy}>
@@ -80,7 +80,7 @@ export default function Home() {
               alt="Модель ASAYA с кудрявыми волосами"
               className={styles.coverImage}
               fill
-              sizes="100vw"
+              sizes="(max-width: 1280px) 94vw, 1160px"
               src={assetPath("/images/figma/asaya-6139.webp")}
             />
             <p>Не подстраивайся под уход. Выбирай уход под себя.</p>
@@ -94,7 +94,7 @@ export default function Home() {
                   alt={category.name}
                   className={`${styles.categoryImage} ${styles[category.position]}`}
                   fill
-                  sizes="(max-width: 760px) 50vw, 33vw"
+                  sizes="(max-width: 760px) 92vw, 370px"
                   src={category.image}
                 />
                 <span>{category.name}</span>
@@ -108,7 +108,7 @@ export default function Home() {
                 alt="Модель использует спрей ASAYA"
                 className={styles.careImage}
                 fill
-                sizes="(max-width: 760px) 100vw, 50vw"
+                sizes="(max-width: 760px) 92vw, 580px"
                 src={assetPath("/images/figma/asaya-7082.webp")}
               />
             </div>
@@ -133,7 +133,7 @@ export default function Home() {
                     alt={photo.alt}
                     className={styles.coverImage}
                     fill
-                    sizes="(max-width: 760px) 72vw, 25vw"
+                    sizes="(max-width: 760px) 44vw, 270px"
                     src={photo.image}
                   />
                 </div>

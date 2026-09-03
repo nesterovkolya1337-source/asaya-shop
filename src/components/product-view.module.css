@@ -47,7 +47,7 @@
 .gallery {
   grid-area: gallery;
   position: relative;
-  min-height: clamp(680px, 74vh, 920px);
+  min-height: 680px;
   overflow: hidden;
 }
 

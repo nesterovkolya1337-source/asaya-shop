@@ -5,8 +5,8 @@
   --color-gray: #9c9c9b;
   --color-light-gray: #f0f0f0;
   --radius-card: 10px;
-  --page-gutter: clamp(10px, 1.25vw, 24px);
-  --content-width: 100vw;
+  --page-gutter: clamp(16px, 3vw, 40px);
+  --content-width: 1200px;
   --font-involve: "Involve", Arial, Helvetica, sans-serif;
 }
 
@@ -22,7 +22,6 @@ body {
 }
 
 body {
-  width: 100%;
   min-height: 100%;
   color: var(--color-foreground);
   background: var(--color-background);
