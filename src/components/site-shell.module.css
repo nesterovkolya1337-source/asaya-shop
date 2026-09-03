@@ -1,15 +1,14 @@
 .promo {
-  position: sticky;
+  position: relative;
   z-index: 51;
-  top: 0;
   display: grid;
-  min-height: 35px;
+  min-height: 32px;
   place-items: center;
   margin-bottom: 10px;
   padding: 6px 12px;
   border-radius: var(--radius-card);
   background: var(--color-pink);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.2;
   text-align: center;
 }
@@ -17,8 +16,8 @@
 .header {
   position: sticky;
   z-index: 50;
-  top: 45px;
-  min-height: 76px;
+  top: 10px;
+  min-height: 64px;
   display: flex;
   align-items: center;
   padding: 0 25px;
@@ -30,12 +29,11 @@
   transition: color 220ms ease, background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
 }
 
-.promo + .header {
-  top: 45px;
+.overlayPlacement {
+  margin-bottom: -64px;
 }
 
 .overlay {
-  margin-bottom: -76px;
   border-color: transparent;
   color: white;
   background: rgb(20 20 20 / 18%);
@@ -158,19 +156,10 @@
   background: var(--color-light-gray);
 }
 
-.footerWordmark {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1039 / 256;
-}
-
 .footerColumns {
   display: grid;
   grid-template-columns: .8fr 1.2fr;
   gap: clamp(40px, 8vw, 100px);
-  margin-top: 45px;
-  padding-top: 35px;
-  border-top: 1px solid var(--color-gray);
 }
 
 .searchBackdrop {
@@ -295,45 +284,51 @@
   align-content: start;
 }
 
+.footerEyebrow {
+  color: var(--color-gray);
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
 .footerLead {
   max-width: 430px;
+  margin-top: 12px;
   font-size: 24px;
+  font-weight: 500;
   line-height: 1.15;
 }
 
-.telegramButton {
-  display: inline-flex;
-  min-height: 46px;
-  align-items: center;
-  justify-content: center;
-  margin-top: 30px;
-  padding: 0 20px;
-  border-radius: 999px;
-  color: white;
-  background: var(--color-foreground);
-}
-
-.telegramButton:hover,
-.telegramButton:focus-visible {
-  color: var(--color-foreground);
-  background: var(--color-pink);
+.footerText {
+  display: block;
+  max-width: 390px;
+  margin-top: 14px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .socials {
-  display: flex;
-  gap: 8px;
-  margin-top: 20px;
+  display: grid;
+  max-width: 430px;
+  gap: 7px;
+  margin-top: 28px;
 }
 
 .socials a {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
   border: 1px solid var(--color-foreground);
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 600;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.socials b,
+.careLinks b {
+  font-weight: 400;
 }
 
 .socials a:hover,
@@ -344,7 +339,7 @@
 
 .footerNav {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: .7fr .7fr 1.6fr;
   gap: 36px;
 }
 
@@ -365,6 +360,38 @@
 .footerNav a:hover {
   text-decoration: underline;
   text-underline-offset: 4px;
+}
+
+.footerNav .careLinks {
+  gap: 7px;
+}
+
+.careLinks > p {
+  margin-bottom: 12px;
+}
+
+.careLinks > a {
+  display: grid;
+  min-height: 54px;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 8px 14px;
+  border: 1px solid rgb(32 32 32 / 16%);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 46%);
+  font-size: 13px;
+}
+
+.careLinks > a:hover,
+.careLinks > a:focus-visible {
+  background: var(--color-pink);
+  text-decoration: none;
+}
+
+.careLinks > a b {
+  color: #5d5d5d;
+  overflow-wrap: anywhere;
 }
 
 .companyDetails {
@@ -435,8 +462,8 @@
 
 .supportBubble summary {
   display: grid;
-  width: 70px;
-  height: 70px;
+  width: 56px;
+  height: 56px;
   place-items: center;
   border: 0;
   border-radius: 50%;
@@ -444,7 +471,7 @@
   background: var(--color-foreground);
   box-shadow: 0 12px 36px rgb(0 0 0 / 20%);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 11px;
   list-style: none;
 }
 
@@ -460,7 +487,7 @@
 .supportBubble > div {
   position: absolute;
   right: 0;
-  bottom: 82px;
+  bottom: 68px;
   display: grid;
   width: min(340px, calc(100vw - 36px));
   gap: 12px;
@@ -571,13 +598,9 @@
 
 @media (max-width: 720px) {
   .promo {
-    min-height: 34px;
+    min-height: 32px;
     margin: 0 0 8px;
     font-size: 12px;
-  }
-
-  .promo + .header {
-    top: 42px;
   }
 
   .header {
@@ -593,10 +616,13 @@
   }
 
   .overlay {
-    margin-bottom: 0;
     min-height: 54px;
     padding: 0 14px;
     color: var(--color-foreground);
+  }
+
+  .overlayPlacement {
+    margin-bottom: 0;
   }
 
   .navigation {
@@ -723,7 +749,12 @@
   }
 
   .footerNav {
-    gap: 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 18px;
+  }
+
+  .careLinks {
+    grid-column: 1 / -1;
   }
 
   .companyDetails {
@@ -786,12 +817,12 @@
   }
 
   .supportBubble summary {
-    width: 58px;
-    height: 58px;
+    width: 52px;
+    height: 52px;
   }
 
   .supportBubble > div {
-    bottom: 68px;
+    bottom: 62px;
   }
 
   .cookieActions {

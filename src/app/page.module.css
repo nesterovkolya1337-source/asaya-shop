@@ -190,14 +190,17 @@
 
 .categoryImage.hair {
   object-position: center 34%;
+  transform: scale(1.16);
 }
 
 .categoryImage.body {
   object-position: center 67%;
+  transform: scale(1.12);
 }
 
 .categoryImage.face {
   object-position: center 24%;
+  transform: scale(1.18);
 }
 
 .categoryCard span {
@@ -215,7 +218,7 @@
 }
 
 .categoryCard:hover .categoryImage {
-  transform: scale(1.025);
+  transform: scale(1.22);
 }
 
 .careSection {
@@ -234,7 +237,7 @@
 }
 
 .careImage {
-  object-position: center 22%;
+  object-position: center 38%;
 }
 
 .careCopy {

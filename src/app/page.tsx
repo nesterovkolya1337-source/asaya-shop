@@ -52,7 +52,7 @@ export default function Home() {
         <SiteChrome overlay />
 
         <main>
-          <section className={styles.hero}>
+          <section className={styles.hero} data-site-hero>
             <Image
               alt="Модель с розовыми волосами держит спрей ASAYA"
               className={styles.heroImage}
@@ -109,7 +109,7 @@ export default function Home() {
                 className={styles.careImage}
                 fill
                 sizes="(max-width: 760px) 100vw, 50vw"
-                src={assetPath("/images/figma/asaya-6459.webp")}
+                src={assetPath("/images/figma/asaya-7082.webp")}
               />
             </div>
             <div className={styles.careCopy}>

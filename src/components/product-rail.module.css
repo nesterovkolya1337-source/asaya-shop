@@ -21,13 +21,13 @@
 }
 
 .tabs button {
-  min-height: 38px;
-  padding: 0 18px;
+  min-height: 32px;
+  padding: 0 14px;
   border: 1px solid var(--color-foreground);
   border-radius: 999px;
   background: transparent;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 13px;
   transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
@@ -48,12 +48,24 @@
   grid-template-columns: none;
   grid-auto-flow: column;
   gap: 10px;
-  padding-bottom: 8px;
+  padding-bottom: 2px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-padding-inline: 2px;
   scroll-snap-type: inline mandatory;
-  scrollbar-color: var(--color-pink) transparent;
+  scrollbar-width: none;
+  cursor: grab;
+  touch-action: pan-x pan-y;
+  user-select: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
 }
 
 @media (max-width: 900px) {
@@ -80,9 +92,9 @@
   }
 
   .tabs button {
-    min-height: 36px;
-    padding: 0 13px;
-    font-size: 14px;
+    min-height: 32px;
+    padding: 0 11px;
+    font-size: 12px;
   }
 
   .rail {

@@ -13,7 +13,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   const { cartCount, favorites, products } = useShop();
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [scrolled, setScrolled] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
   const sitePages = [
     ["Каталог", "/catalog"], ["О бренде", "/about"], ["Инструкции", "/instructions"],
     ["Доставка и оплата", "/delivery"], ["Где купить", "/where-to-buy"],
@@ -27,14 +27,21 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
 
   useEffect(() => {
     if (!overlay) return;
-    const updateHeader = () => setScrolled(window.scrollY > 48);
+    const updateHeader = () => {
+      const hero = document.querySelector<HTMLElement>("[data-site-hero]");
+      setPastHero(hero ? hero.getBoundingClientRect().bottom <= 96 : window.scrollY > window.innerHeight * 0.7);
+    };
     updateHeader();
     window.addEventListener("scroll", updateHeader, { passive: true });
-    return () => window.removeEventListener("scroll", updateHeader);
+    window.addEventListener("resize", updateHeader);
+    return () => {
+      window.removeEventListener("scroll", updateHeader);
+      window.removeEventListener("resize", updateHeader);
+    };
   }, [overlay]);
 
   return (
-    <header className={`${styles.header} ${overlay && !scrolled ? styles.overlay : ""}`}>
+    <header className={`${styles.header} ${overlay ? styles.overlayPlacement : ""} ${overlay && !pastHero ? styles.overlay : ""}`}>
       <nav aria-label="Основная навигация" className={styles.navigation}>
         <div className={styles.navigationSide}>
           <Link href="/catalog">Каталог</Link>
@@ -106,18 +113,15 @@ export function SiteFooter() {
   return (
     <footer className={styles.footer} id="about">
       <div className={styles.footerInner}>
-        <div className={styles.footerWordmark}>
-          <Image alt="ASAYA" fill sizes="(max-width: 1200px) 86vw, 1040px" src={assetPath("/images/figma/footer-wordmark.svg")} />
-        </div>
         <div className={styles.footerColumns}>
           <div className={styles.footerIntro}>
-            <p className={styles.footerLead}>Косметика под настроение — для ухода, который хочется повторять.</p>
-            <a className={styles.telegramButton} href="https://t.me/asayabeauty" rel="noreferrer" target="_blank">Читать ASAYA в Telegram</a>
+            <p className={styles.footerEyebrow}>ASAYA рядом</p>
+            <h2 className={styles.footerLead}>Следите за нами</h2>
+            <span className={styles.footerText}>Новости, съёмки и настроение бренда — в наших социальных сетях.</span>
             <div className={styles.socials} aria-label="Социальные сети ASAYA">
-              <a aria-label="Telegram" href="https://t.me/asayabeauty" rel="noreferrer" target="_blank">TG</a>
-              <a aria-label="ВКонтакте" href="https://vk.com/asaya.beauty" rel="noreferrer" target="_blank">VK</a>
-              <a aria-label="Instagram" href="https://instagram.com/asaya.beauty" rel="noreferrer" target="_blank">IG</a>
-              <a aria-label="Email" href={companyData.emailHref}>@</a>
+              <a href="https://t.me/asayabeauty" rel="noreferrer" target="_blank"><span>Telegram</span><b>↗</b></a>
+              <a href="https://vk.com/asaya.beauty" rel="noreferrer" target="_blank"><span>ВКонтакте</span><b>↗</b></a>
+              <a href="https://instagram.com/asaya.beauty" rel="noreferrer" target="_blank"><span>Instagram</span><b>↗</b></a>
             </div>
           </div>
 
@@ -134,8 +138,14 @@ export function SiteFooter() {
               <p>ASAYA</p>
               <Link href="/about">О бренде</Link>
               <Link href="/where-to-buy">Где купить</Link>
-              <Link href="/support">Служба заботы</Link>
-              <a href="https://t.me/asayahelp" rel="noreferrer" target="_blank">Поддержка в Telegram</a>
+              <Link href="/account">Личный кабинет</Link>
+              <Link href="/order-status">Статус заказа</Link>
+            </div>
+            <div className={styles.careLinks}>
+              <p>Служба заботы</p>
+              <a href="https://t.me/asayahelp" rel="noreferrer" target="_blank"><span>Telegram</span><b>@asayahelp ↗</b></a>
+              <Link href="/support"><span>MAX</span><b>Подключаем канал</b></Link>
+              <a href={companyData.emailHref}><span>Email</span><b>{companyData.email}</b></a>
             </div>
           </nav>
         </div>

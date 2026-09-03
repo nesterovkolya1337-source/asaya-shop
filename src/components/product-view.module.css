@@ -38,10 +38,14 @@
 .galleryColumn {
   display: grid;
   min-width: 0;
+  grid-template-columns: 92px minmax(0, 1fr);
+  grid-template-areas: "thumbnails gallery";
   gap: 10px;
+  align-items: start;
 }
 
 .gallery {
+  grid-area: gallery;
   position: relative;
   min-height: clamp(680px, 74vh, 920px);
   overflow: hidden;
@@ -98,10 +102,11 @@
 
 .thumbnails {
   display: grid;
-  grid-auto-columns: 104px;
-  grid-auto-flow: column;
+  grid-area: thumbnails;
+  grid-auto-rows: 104px;
   gap: 8px;
-  overflow-x: auto;
+  max-height: clamp(680px, 74vh, 920px);
+  overflow-y: auto;
   scrollbar-width: none;
 }
 
@@ -111,7 +116,8 @@
 
 .thumbnails button {
   position: relative;
-  height: 112px;
+  width: 92px;
+  height: 104px;
   overflow: hidden;
   border: 1px solid transparent;
   border-radius: 8px;
@@ -782,11 +788,15 @@
   grid-template-columns: none;
   grid-auto-flow: column;
   gap: 10px;
-  padding-bottom: 8px;
+  padding-bottom: 2px;
   overflow-x: auto;
   scroll-padding-inline: 2px;
   scroll-snap-type: inline mandatory;
-  scrollbar-color: var(--color-pink) transparent;
+  scrollbar-width: none;
+}
+
+.recommendationGrid::-webkit-scrollbar {
+  display: none;
 }
 
 .stickyBuy {
@@ -909,6 +919,11 @@
     padding-top: 20px;
   }
 
+  .galleryColumn {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "gallery" "thumbnails";
+  }
+
   .breadcrumbs {
     margin-bottom: 10px;
     font-size: 10px;
@@ -1002,9 +1017,15 @@
 
   .thumbnails {
     grid-auto-columns: 80px;
+    grid-auto-rows: auto;
+    grid-auto-flow: column;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
 
   .thumbnails button {
+    width: 80px;
     height: 88px;
   }
 
