@@ -373,8 +373,8 @@
 .careLinks > a {
   display: grid;
   min-height: 54px;
-  grid-template-columns: 82px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 66px minmax(0, 1fr);
+  gap: 8px;
   align-items: center;
   padding: 8px 14px;
   border: 1px solid rgb(32 32 32 / 16%);
@@ -391,7 +391,8 @@
 
 .careLinks > a b {
   color: #5d5d5d;
-  overflow-wrap: anywhere;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .companyDetails {
