@@ -1,0 +1,14 @@
+[Unit]
+Description=Deploy the latest ASAYA main branch
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+Environment=ASAYA_REPO_DIR=/opt/asaya-shop
+ExecStart=/opt/asaya-shop/deploy/deploy-from-github.sh
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

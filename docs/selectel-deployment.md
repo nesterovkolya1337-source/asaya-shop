@@ -42,6 +42,30 @@ docker compose up -d --build
 docker image prune -f
 ```
 
+## Automatic updates from GitHub
+
+The production server can check the public `main` branch every two minutes and
+deploy only when a new commit appears. Install the timer once after cloning the
+repository:
+
+```sh
+cd /opt/asaya-shop
+git pull --ff-only origin main
+chmod +x deploy/deploy-from-github.sh deploy/install-autodeploy.sh
+sudo ./deploy/install-autodeploy.sh
+```
+
+After that, the normal publishing flow is: verify locally, push to `main`, and
+wait up to two minutes for Selectel to rebuild and restart the site. No GitHub
+or Selectel password is stored in the repository.
+
+Check the latest automatic deployment with:
+
+```sh
+systemctl status asaya-autodeploy.timer --no-pager
+journalctl -u asaya-autodeploy.service -n 100 --no-pager
+```
+
 ## Verification
 
 ```sh
