@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type MouseEvent, type PointerEvent, useRef, useState } from "react";
+import { type MouseEvent, type PointerEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ProductCard } from "@/components/product-card";
 import { useShop } from "@/components/shop-provider";
 import styles from "./product-rail.module.css";
@@ -12,8 +12,35 @@ export function ProductRail() {
   const { products } = useShop();
   const [state, setState] = useState<FeaturedState>("Бестселлер");
   const [dragging, setDragging] = useState(false);
+  const [railState, setRailState] = useState({ hasOverflow: false, canScrollLeft: false, canScrollRight: false });
+  const railRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ active: false, moved: false, pointerId: -1, startX: 0, startY: 0, scrollLeft: 0 });
   const visibleProducts = products.filter((product) => product.active && product.badge === state);
+  const updateRailState = useCallback(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const maxScroll = Math.max(0, rail.scrollWidth - rail.clientWidth);
+    setRailState({
+      hasOverflow: maxScroll > 2,
+      canScrollLeft: rail.scrollLeft > 2,
+      canScrollRight: rail.scrollLeft < maxScroll - 2,
+    });
+  }, []);
+
+  useEffect(() => {
+    const animationFrame = requestAnimationFrame(updateRailState);
+    window.addEventListener("resize", updateRailState);
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", updateRailState);
+    };
+  }, [state, visibleProducts.length, updateRailState]);
+
+  const scrollRail = (direction: -1 | 1) => {
+    const rail = railRef.current;
+    if (!rail) return;
+    rail.scrollBy({ left: direction * Math.max(280, rail.clientWidth * 0.86), behavior: "smooth" });
+  };
   const startDrag = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary || event.pointerType !== "mouse" || event.button !== 0) return;
     drag.current = {
@@ -59,7 +86,13 @@ export function ProductRail() {
         <div className={styles.tabs} aria-label="Подборка товаров">
           {(["Бестселлер", "Новинка"] as FeaturedState[]).map((item) => <button aria-pressed={state === item} className={state === item ? styles.active : ""} key={item} onClick={() => setState(item)} type="button">{item === "Бестселлер" ? "Бестселлеры" : "Новинки"}</button>)}
         </div>
-        <Link href="/catalog">Весь каталог →</Link>
+        <div className={styles.headingActions}>
+          {railState.hasOverflow && <div className={styles.railControls} aria-label="Навигация по товарам">
+            <button aria-label="Предыдущие товары" disabled={!railState.canScrollLeft} onClick={() => scrollRail(-1)} type="button">←</button>
+            <button aria-label="Следующие товары" disabled={!railState.canScrollRight} onClick={() => scrollRail(1)} type="button">→</button>
+          </div>}
+          <Link href="/catalog">Весь каталог →</Link>
+        </div>
       </div>
       <div
         className={`${styles.rail} ${dragging ? styles.dragging : ""}`}
@@ -70,6 +103,8 @@ export function ProductRail() {
         onLostPointerCapture={stopDrag}
         onPointerMove={moveDrag}
         onPointerUp={stopDrag}
+        onScroll={updateRailState}
+        ref={railRef}
       >
         {visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)}
       </div>

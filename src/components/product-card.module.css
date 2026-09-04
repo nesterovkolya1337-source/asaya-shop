@@ -17,6 +17,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
+  pointer-events: none;
 }
 
 .badges span {
@@ -90,6 +91,7 @@
   align-items: end;
   justify-content: space-between;
   gap: 16px;
+  pointer-events: none;
 }
 
 .rating {
@@ -109,6 +111,7 @@
 }
 
 .meta h3 a {
+  pointer-events: auto;
   transition: opacity 160ms ease;
 }
 
