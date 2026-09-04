@@ -76,15 +76,11 @@ export default function Home() {
           </section>
 
           <section className={styles.manifesto}>
-            <Image
-              alt="Модель ASAYA с кудрявыми волосами"
-              className={styles.coverImage}
-              fill
-              sizes="(max-width: 1280px) 94vw, 1160px"
-              src={assetPath("/images/figma/asaya-6139.webp")}
-            />
-            <p>Не подстраивайся под уход. Выбирай уход под себя.</p>
-            <Link className={styles.aboutButton} href="/about">Узнать об ASAYA</Link>
+            <div className={styles.manifestoCopy}>
+              <h2>ASAYA — косметика под настроение</h2>
+              <p>Уход, аромат и эстетика — под то, как хочется чувствовать себя сегодня.</p>
+              <Link className={styles.aboutButton} href="/about">Узнать об ASAYA</Link>
+            </div>
           </section>
 
           <section className={styles.categoryGrid} aria-label="Категории каталога">
@@ -101,28 +97,6 @@ export default function Home() {
                 <span>{category.name}</span>
               </Link>
             ))}
-          </section>
-
-          <section className={styles.careSection}>
-            <div className={styles.careImageWrap}>
-              <Image
-                alt="Девушка с мульти-спреем ASAYA"
-                className={styles.careImage}
-                fill
-                sizes="(max-width: 760px) 92vw, 580px"
-                src={assetPath("/images/drive/home-care-model.jpg")}
-              />
-            </div>
-            <div className={styles.careCopy}>
-              <h2>Увлажняй на ходу</h2>
-              <p>
-                Мульти спрей для волос удобно взять с собой в сумочку. Его легко
-                нанести и освежить причёску в любое время.
-              </p>
-              <Link className={styles.darkButton} href="/catalog/hair">
-                К продуктам
-              </Link>
-            </div>
           </section>
 
           <section className={styles.community} aria-labelledby="community-title">

@@ -13,7 +13,6 @@
 }
 
 .hero::after,
-.manifesto::after,
 .categoryCard::after {
   position: absolute;
   inset: 0;
@@ -121,66 +120,62 @@
 }
 
 .manifesto {
-  position: relative;
-  min-height: 585px;
-  overflow: hidden;
-  margin-top: 16px;
+  display: grid;
+  min-height: clamp(360px, 38vw, 480px);
+  margin-top: clamp(54px, 7vw, 86px);
+  place-items: center;
+  padding: clamp(54px, 8vw, 96px) clamp(24px, 7vw, 84px);
   border-radius: var(--radius-card);
+  background: var(--color-light-gray);
 }
 
-.manifesto::after {
-  background: rgb(0 0 0 / 15%);
+.manifestoCopy {
+  display: grid;
+  max-width: 850px;
+  justify-items: center;
+  text-align: center;
 }
 
-.manifesto .coverImage {
-  object-position: center 41%;
+.manifesto h2 {
+  font-size: clamp(42px, 6.4vw, 76px);
+  font-weight: 500;
+  line-height: .95;
+  letter-spacing: -.045em;
 }
 
 .manifesto p {
-  position: absolute;
-  z-index: 2;
-  top: 50%;
-  left: 50%;
-  width: min(82%, 760px);
-  transform: translate(-50%, -50%);
-  color: white;
-  font-size: clamp(22px, 2.7vw, 34px);
-  font-weight: 500;
-  line-height: 1.03;
-  text-align: center;
-  text-transform: uppercase;
+  max-width: 610px;
+  margin-top: 28px;
+  color: var(--color-gray);
+  font-size: clamp(17px, 2vw, 22px);
+  line-height: 1.35;
 }
 
 .aboutButton {
-  position: absolute;
-  z-index: 3;
-  bottom: 34px;
-  left: 50%;
   display: inline-flex;
   min-height: 44px;
   align-items: center;
   justify-content: center;
+  margin-top: 34px;
   padding: 0 22px;
-  transform: translateX(-50%);
-  border: 1px solid white;
+  border: 1px solid var(--color-foreground);
   border-radius: 999px;
   color: white;
-  background: rgb(0 0 0 / 14%);
-  backdrop-filter: blur(8px);
+  background: var(--color-foreground);
   white-space: nowrap;
 }
 
 .aboutButton:hover,
 .aboutButton:focus-visible {
   color: var(--color-foreground);
-  background: white;
+  background: var(--color-pink);
 }
 
 .categoryGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  margin-top: 10px;
+  margin-top: clamp(54px, 7vw, 86px);
 }
 
 .categoryCard {
@@ -281,7 +276,7 @@
 }
 
 .community {
-  margin-top: 10px;
+  margin-top: clamp(54px, 7vw, 86px);
   padding: clamp(30px, 5vw, 58px);
   overflow: hidden;
   border-radius: var(--radius-card);
@@ -318,7 +313,7 @@
   }
 
   .categoryGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .categoryCard {
@@ -326,8 +321,8 @@
   }
 
   .categoryCard:last-child {
-    grid-column: 1 / -1;
-    aspect-ratio: 2 / 1;
+    grid-column: auto;
+    aspect-ratio: 1;
   }
 
   .careSection {
@@ -375,39 +370,34 @@
   }
 
   .manifesto {
-    min-height: 410px;
+    min-height: 360px;
   }
 
-  .manifesto::after {
-    background: rgb(0 0 0 / 38%);
-  }
-
+  .manifesto h2,
   .manifesto p {
-    width: 84%;
-    font-size: clamp(24px, 7.2vw, 31px);
-    line-height: 1.02;
+    width: 100%;
   }
 
   .aboutButton {
-    bottom: 22px;
+    margin-top: 28px;
   }
 
   .categoryGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 
   .categoryCard {
-    aspect-ratio: .74;
+    aspect-ratio: 1;
   }
 
   .categoryCard:last-child {
-    grid-column: 1 / -1;
-    aspect-ratio: 1.72;
+    grid-column: auto;
+    aspect-ratio: 1;
   }
 
   .categoryCard span {
-    font-size: 24px;
+    font-size: clamp(14px, 4.4vw, 20px);
   }
 
   .categoryImage.hair,
