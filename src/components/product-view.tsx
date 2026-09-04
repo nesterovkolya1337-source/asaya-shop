@@ -29,6 +29,7 @@ export function ProductView({ productId }: { productId: string }) {
   const [reviewNotice, setReviewNotice] = useState("");
   const [recommendationDragging, setRecommendationDragging] = useState(false);
   const recommendationDrag = useRef({ active: false, moved: false, pointerId: -1, startX: 0, startY: 0, scrollLeft: 0 });
+  const ugcRail = useRef<HTMLDivElement>(null);
   const product = products.find((item) => item.id === productId);
 
   if (!product) {
@@ -116,6 +117,9 @@ export function ProductView({ productId }: { productId: string }) {
     setReviewText("");
     setReviewPhotos([]);
     setReviewNotice("Отзыв отправлен менеджеру на модерацию.");
+  };
+  const scrollUgc = (direction: -1 | 1) => {
+    ugcRail.current?.scrollBy({ left: direction * Math.max(280, ugcRail.current.clientWidth * 0.72), behavior: "smooth" });
   };
 
   return (
@@ -218,30 +222,15 @@ export function ProductView({ productId }: { productId: string }) {
         </div>
       </section>
 
-      <section className={styles.sensory} aria-labelledby="sensory-title">
-        <div>
-          <p>Сенсорный профиль</p>
-          <h2 id="sensory-title">Комфорт, который ощущается</h2>
-          <span>Мы описываем не обещание «идеального результата», а характер продукта во время и после использования.</span>
-        </div>
-        <div className={styles.sensoryMetrics}>
-          {product.sensory.map((metric) => (
-            <div key={metric.label}>
-              <span>{metric.label}</span>
-              <div aria-label={`${metric.label}: ${metric.value} из 5`} className={styles.sensoryDots}>
-                {Array.from({ length: 5 }, (_, index) => <i className={index < metric.value ? styles.filledDot : ""} key={index} />)}
-              </div>
-            </div>
-          ))}
-          <small>Сенсорное описание, а не лабораторная оценка эффективности.</small>
-        </div>
-      </section>
-
       <section className={styles.ugc} aria-labelledby="ugc-title">
         <div className={styles.sectionHeading}>
-          <div><p>Съёмки и сообщество бренда</p><h2 id="ugc-title">ASAYA в жизни</h2></div>
+          <h2 id="ugc-title">Ты + ASAYA</h2>
+          <div className={styles.ugcArrows}>
+            <button aria-label="Предыдущие фотографии" onClick={() => scrollUgc(-1)} type="button">←</button>
+            <button aria-label="Следующие фотографии" onClick={() => scrollUgc(1)} type="button">→</button>
+          </div>
         </div>
-        <div className={styles.ugcGrid}>
+        <div className={styles.ugcGrid} ref={ugcRail}>
           {ugcImages.map((image, index) => (
             <div className={styles.ugcImage} key={image}><Image alt={`ASAYA в жизни — кадр ${index + 1}`} fill sizes="(max-width: 620px) 46vw, 25vw" src={image} /></div>
           ))}
@@ -290,6 +279,28 @@ export function ProductView({ productId }: { productId: string }) {
           )}
           {approvedReviews.length > 0 && <div className={styles.reviewList}>{approvedReviews.map((review) => <article key={review.id}><header><strong>{review.email.split("@")[0]}</strong><span>{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span></header><p>{review.text}</p>{review.photos.length > 0 && <div>{review.photos.map((photo, index) => <span key={`${review.id}-${index}`}><Image alt={`Фото покупателя ${index + 1}`} fill sizes="110px" src={photo} unoptimized /></span>)}</div>}<small>{new Intl.DateTimeFormat("ru-RU").format(new Date(review.createdAt))}</small></article>)}</div>}
           <small>Мы не публикуем рекламные тексты под видом отзывов покупателей.</small>
+        </div>
+      </section>
+
+      <section className={styles.sensory} aria-labelledby="sensory-title">
+        <div className={styles.sensoryCopy}>
+          <p>Ощущения и результат</p>
+          <h2 id="sensory-title">Комфорт на уровне ощущений</h2>
+          <span>Характер продукта во время нанесения и результат, который остаётся после ежедневного ритуала.</span>
+          <div className={styles.sensoryMetrics}>
+            {product.sensory.map((metric) => (
+              <div key={metric.label}>
+                <span>{metric.label}</span>
+                <div aria-label={`${metric.label}: ${metric.value} из 5`} className={styles.sensoryDots}>
+                  {Array.from({ length: 5 }, (_, index) => <i className={index < metric.value ? styles.filledDot : ""} key={index} />)}
+                </div>
+              </div>
+            ))}
+            <small>Сенсорное описание, а не лабораторная оценка эффективности.</small>
+          </div>
+        </div>
+        <div className={styles.sensoryVisual}>
+          <Image alt={`${product.name} — настроение и текстура`} fill sizes="(max-width: 900px) 100vw, 50vw" src={gallery[2] ?? gallery[1] ?? gallery[0]} />
         </div>
       </section>
 
