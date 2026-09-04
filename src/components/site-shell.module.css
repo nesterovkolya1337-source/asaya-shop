@@ -29,35 +29,23 @@
   transition: color 420ms ease, background 420ms ease, border-color 420ms ease, box-shadow 420ms ease;
 }
 
-.overlayPlacement {
-  position: relative;
-  top: auto;
+.header.overlayPlacement {
+  position: fixed;
+  top: var(--header-top, 52px);
+  left: 50%;
+  width: min(calc(100% - (var(--page-gutter) * 2)), var(--content-width));
+  color: rgb(var(--header-ink, 255) var(--header-ink, 255) var(--header-ink, 255));
+  border-color: rgb(32 32 32 / var(--header-border-alpha, 0));
+  background: rgb(255 255 255 / var(--header-bg-alpha, 0));
+  box-shadow: 0 8px 28px rgb(0 0 0 / var(--header-shadow-alpha, 0));
+  backdrop-filter: blur(var(--header-blur, 0));
+  transform: translateX(-50%);
+  transition: top 90ms linear, color 90ms linear, background 90ms linear, border-color 90ms linear, box-shadow 90ms linear, backdrop-filter 90ms linear;
 }
 
 .heroHeaderSlot {
-  height: 64px;
-  margin-bottom: 10px;
-}
-
-.floatingHeader {
-  position: fixed;
-  top: 10px;
-  left: 50%;
-  width: min(calc(100% - (var(--page-gutter) * 2)), var(--content-width));
-  margin-bottom: 0;
-  transform: translateX(-50%);
-  animation: header-in 420ms ease both;
-}
-
-@keyframes header-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -18px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
+  height: 0;
+  margin: 0;
 }
 
 .navigation {
@@ -96,6 +84,10 @@
   width: 114px;
   height: auto;
   filter: brightness(0);
+}
+
+.header.overlayPlacement .brandLogo {
+  filter: brightness(0) invert(var(--header-logo-invert, 1));
 }
 
 .mobileMenu {
@@ -154,6 +146,10 @@
 
 .mobileMenuPanel a:hover {
   background: var(--color-light-gray);
+}
+
+.mobileMenuPrimary {
+  display: none;
 }
 
 .iconLink {
@@ -667,13 +663,8 @@
   }
 
   .heroHeaderSlot {
-    height: 54px;
-    margin-bottom: 8px;
-  }
-
-  .floatingHeader {
-    top: 8px;
-    width: calc(100% - 20px);
+    height: 0;
+    margin: 0;
   }
 
   .navigation {
@@ -687,6 +678,10 @@
 
   .navigationStart .navigationSide {
     display: none;
+  }
+
+  .mobileMenuPrimary {
+    display: block;
   }
 
   .navigationStart {
@@ -757,6 +752,12 @@
     min-height: 24px;
   }
 
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header.overlayPlacement {
+    transition: none;
+  }
 }
 
 @media (max-width: 480px) {

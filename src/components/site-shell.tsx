@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CookieConsent } from "@/components/cookie-consent";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
@@ -13,7 +13,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   const { cartCount, favorites, products } = useShop();
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [solidHeader, setSolidHeader] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
   const sitePages = [
     ["Каталог", "/catalog"], ["О бренде", "/about"], ["Инструкции", "/instructions"],
     ["Доставка и оплата", "/delivery"], ["Где купить", "/where-to-buy"],
@@ -27,22 +27,44 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
 
   useEffect(() => {
     if (!overlay) return;
+    let animationFrame = 0;
+
     const updateHeader = () => {
-      const hero = document.querySelector<HTMLElement>("[data-site-hero]");
-      const solidAt = Math.min(260, window.innerHeight * 0.28);
-      setSolidHeader(hero ? hero.getBoundingClientRect().bottom <= solidAt : window.scrollY > window.innerHeight * 0.62);
+      cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(() => {
+        const header = headerRef.current;
+        const hero = document.querySelector<HTMLElement>("[data-site-hero]");
+        const promo = document.querySelector<HTMLElement>("[data-site-promo]");
+        if (!header || !hero) return;
+
+        const fadeDistance = Math.max(220, Math.min(hero.offsetHeight * 0.72, 520));
+        const progress = Math.min(1, Math.max(0, (window.scrollY - 12) / fadeDistance));
+        const restingTop = window.innerWidth <= 720 ? 8 : 10;
+        const promoGap = window.innerWidth <= 720 ? 8 : 10;
+        const headerTop = Math.max(restingTop, (promo?.getBoundingClientRect().bottom ?? 0) + promoGap);
+        const ink = Math.round(255 - progress * 223);
+
+        header.style.setProperty("--header-top", `${headerTop}px`);
+        header.style.setProperty("--header-bg-alpha", (progress * 0.96).toFixed(3));
+        header.style.setProperty("--header-border-alpha", (progress * 0.08).toFixed(3));
+        header.style.setProperty("--header-shadow-alpha", (progress * 0.08).toFixed(3));
+        header.style.setProperty("--header-blur", `${Math.round(progress * 14)}px`);
+        header.style.setProperty("--header-ink", `${ink}`);
+        header.style.setProperty("--header-logo-invert", `${1 - progress}`);
+      });
     };
     updateHeader();
     window.addEventListener("scroll", updateHeader, { passive: true });
     window.addEventListener("resize", updateHeader);
     return () => {
+      cancelAnimationFrame(animationFrame);
       window.removeEventListener("scroll", updateHeader);
       window.removeEventListener("resize", updateHeader);
     };
   }, [overlay]);
 
   return (
-    <header className={`${styles.header} ${overlay ? styles.overlayPlacement : ""} ${overlay && solidHeader ? styles.floatingHeader : ""}`}>
+    <header className={`${styles.header} ${overlay ? styles.overlayPlacement : ""}`} ref={headerRef}>
       <nav aria-label="Основная навигация" className={styles.navigation}>
         <div className={styles.navigationStart}>
           <details className={styles.mobileMenu}>
@@ -52,15 +74,16 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
               <span />
             </summary>
             <div className={styles.mobileMenuPanel}>
-              <Link href="/catalog">Каталог</Link>
+              <Link className={styles.mobileMenuPrimary} href="/catalog">Каталог</Link>
               <Link href="/favorites">Избранное</Link>
-              <Link href="/about">О бренде</Link>
+              <Link className={styles.mobileMenuPrimary} href="/about">О бренде</Link>
               <Link href="/delivery">Доставка и оплата</Link>
               <Link href="/where-to-buy">Где купить</Link>
               <Link href="/instructions">Инструкции</Link>
               <Link href="/faq">Вопросы и ответы</Link>
               <Link href="/order-status">Статус заказа</Link>
               <Link href="/support">Служба заботы</Link>
+              <Link href="/returns">Возвраты и претензии</Link>
             </div>
           </details>
           <div className={styles.navigationSide}>
@@ -106,7 +129,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
 export function SiteChrome({ overlay = false }: { overlay?: boolean }) {
   return (
     <>
-      <div className={styles.promo}>Бесплатная доставка при заказе от 1500 ₽</div>
+      <div className={styles.promo} data-site-promo>Бесплатная доставка при заказе от 1500 ₽</div>
       {overlay ? <div className={styles.heroHeaderSlot}><SiteHeader overlay /></div> : <SiteHeader />}
     </>
   );
