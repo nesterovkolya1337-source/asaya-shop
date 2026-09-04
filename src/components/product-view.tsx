@@ -29,7 +29,7 @@ export function ProductView({ productId }: { productId: string }) {
   const [reviewNotice, setReviewNotice] = useState("");
   const [recommendationDragging, setRecommendationDragging] = useState(false);
   const recommendationDrag = useRef({ active: false, moved: false, pointerId: -1, startX: 0, startY: 0, scrollLeft: 0 });
-  const ugcRail = useRef<HTMLDivElement>(null);
+  const recommendationRail = useRef<HTMLDivElement>(null);
   const product = products.find((item) => item.id === productId);
 
   if (!product) {
@@ -48,12 +48,6 @@ export function ProductView({ productId }: { productId: string }) {
   const pendingReview = reviews.find((review) => review.productId === product.id && review.email === userEmail && review.status === "pending");
   const recommendations = product.recommendations.map((id) => products.find((item) => item.id === id)).filter((item) => item?.active && item.id !== product.id).filter((item): item is NonNullable<typeof item> => Boolean(item));
   const gallery = product.gallery.length ? product.gallery : [product.image];
-  const ugcImages = [
-    assetPath("/images/figma/ugc-000012160039.webp"),
-    assetPath("/images/figma/ugc-img3456.webp"),
-    assetPath("/images/figma/ugc-img5872.webp"),
-    assetPath("/images/figma/ugc-red-product.webp"),
-  ];
   const hasReviews = product.reviews > 0;
   const ratingRows = [5, 4, 3, 2, 1];
   const buyNow = () => {
@@ -118,8 +112,8 @@ export function ProductView({ productId }: { productId: string }) {
     setReviewPhotos([]);
     setReviewNotice("Отзыв отправлен менеджеру на модерацию.");
   };
-  const scrollUgc = (direction: -1 | 1) => {
-    ugcRail.current?.scrollBy({ left: direction * Math.max(280, ugcRail.current.clientWidth * 0.72), behavior: "smooth" });
+  const scrollRecommendations = (direction: -1 | 1) => {
+    recommendationRail.current?.scrollBy({ left: direction * Math.max(300, recommendationRail.current.clientWidth * 0.72), behavior: "smooth" });
   };
 
   return (
@@ -222,21 +216,6 @@ export function ProductView({ productId }: { productId: string }) {
         </div>
       </section>
 
-      <section className={styles.ugc} aria-labelledby="ugc-title">
-        <div className={styles.sectionHeading}>
-          <h2 id="ugc-title">Ты + ASAYA</h2>
-          <div className={styles.ugcArrows}>
-            <button aria-label="Предыдущие фотографии" onClick={() => scrollUgc(-1)} type="button">←</button>
-            <button aria-label="Следующие фотографии" onClick={() => scrollUgc(1)} type="button">→</button>
-          </div>
-        </div>
-        <div className={styles.ugcGrid} ref={ugcRail}>
-          {ugcImages.map((image, index) => (
-            <div className={styles.ugcImage} key={image}><Image alt={`ASAYA в жизни — кадр ${index + 1}`} fill sizes="(max-width: 620px) 46vw, 25vw" src={image} /></div>
-          ))}
-        </div>
-      </section>
-
       <section className={styles.reviews} aria-labelledby="reviews-title">
         <div className={styles.reviewSummary}>
           <p>Отзывы</p>
@@ -307,7 +286,13 @@ export function ProductView({ productId }: { productId: string }) {
       <section className={styles.recommendations} aria-labelledby="recommendations-title">
         <div className={styles.sectionHeading}>
           <h2 id="recommendations-title">Рекомендуем</h2>
-          <Link href="/catalog">Весь каталог</Link>
+          <div className={styles.recommendationActions}>
+            <Link href="/catalog">Весь каталог</Link>
+            <div className={styles.sliderArrows}>
+              <button aria-label="Предыдущие рекомендации" onClick={() => scrollRecommendations(-1)} type="button">←</button>
+              <button aria-label="Следующие рекомендации" onClick={() => scrollRecommendations(1)} type="button">→</button>
+            </div>
+          </div>
         </div>
         <div
           className={`${styles.recommendationGrid} ${recommendationDragging ? styles.recommendationDragging : ""}`}
@@ -318,6 +303,7 @@ export function ProductView({ productId }: { productId: string }) {
           onPointerDown={startRecommendationDrag}
           onPointerMove={moveRecommendationDrag}
           onPointerUp={stopRecommendationDrag}
+          ref={recommendationRail}
         >
           {recommendations.map((item) => <ProductCard key={item.id} product={item} />)}
         </div>

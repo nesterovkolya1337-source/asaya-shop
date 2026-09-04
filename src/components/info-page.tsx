@@ -1,11 +1,12 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { SiteChrome, SiteFooter } from "@/components/site-shell";
 import styles from "./info-page.module.css";
 
 type InfoSection = {
   number: string;
   title: string;
-  text: string;
+  text: ReactNode;
 };
 
 export function InfoPage({

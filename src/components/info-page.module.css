@@ -96,6 +96,13 @@
   line-height: 1.45;
 }
 
+.grid p a {
+  color: var(--color-foreground);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
 @media (max-width: 800px) {
   .grid {
     grid-template-columns: 1fr;

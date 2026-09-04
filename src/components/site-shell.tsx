@@ -18,6 +18,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
     ["Каталог", "/catalog"], ["О бренде", "/about"], ["Инструкции", "/instructions"],
     ["Доставка и оплата", "/delivery"], ["Где купить", "/where-to-buy"],
     ["Вопросы и ответы", "/faq"], ["Служба заботы", "/support"],
+    ["Возврат и претензии", "/returns"], ["Реквизиты", "/requisites"],
   ];
   const normalizedSearch = search.trim().toLocaleLowerCase("ru");
   const searchResults = useMemo(() => normalizedSearch ? products.filter((product) => (
@@ -84,6 +85,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
               <Link href="/order-status">Статус заказа</Link>
               <Link href="/support">Служба заботы</Link>
               <Link href="/returns">Возвраты и претензии</Link>
+              <Link href="/requisites">Реквизиты</Link>
             </div>
           </details>
           <div className={styles.navigationSide}>
@@ -150,28 +152,23 @@ export function SiteFooter() {
             </div>
           </div>
 
-          <div className={styles.careLinks}>
-            <p>Служба заботы ASAYA</p>
-            <a href="https://t.me/asayahelp" rel="noreferrer" target="_blank"><span>Telegram</span><b>@asayahelp ↗</b></a>
-            <Link href="/support"><span>MAX</span><b>Написать →</b></Link>
-            <a href={companyData.emailHref}><span>Почта</span><b>{companyData.email}</b></a>
-          </div>
-
           <nav className={styles.footerNav} aria-label="Навигация в подвале">
             <div>
               <p>Покупателям</p>
               <Link href="/catalog">Каталог</Link>
               <Link href="/delivery">Доставка и оплата</Link>
+              <Link href="/order-status">Статус заказа</Link>
               <Link href="/instructions">Инструкции</Link>
               <Link href="/faq">Вопросы и ответы</Link>
               <Link href="/returns">Возврат и претензии</Link>
+              <Link href="/support">Служба заботы</Link>
             </div>
             <div>
               <p>ASAYA</p>
               <Link href="/about">О бренде</Link>
               <Link href="/where-to-buy">Где купить</Link>
               <Link href="/account">Личный кабинет</Link>
-              <Link href="/order-status">Статус заказа</Link>
+              <Link href="/requisites">Реквизиты</Link>
             </div>
           </nav>
         </div>
@@ -191,8 +188,7 @@ export function SiteFooter() {
           <strong>Служба заботы</strong>
           <span>Подбор ухода, вопросы по применению, заказу или повреждённому товару.</span>
           <a href="https://t.me/asayahelp" rel="noreferrer" target="_blank">Telegram · @asayahelp</a>
-          <a href={companyData.emailHref}>{companyData.email}</a>
-          <a href={companyData.phoneHref}>{companyData.phone}</a>
+          <a href={companyData.supportEmailHref}>{companyData.supportEmail}</a>
         </div>
       </details>
       <CookieConsent />
