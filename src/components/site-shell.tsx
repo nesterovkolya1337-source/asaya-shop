@@ -119,12 +119,11 @@ export function SiteFooter() {
         <div className={styles.footerColumns}>
           <div className={styles.footerIntro}>
             <p className={styles.footerEyebrow}>ASAYA рядом</p>
-            <h2 className={styles.footerLead}>Следите за нами</h2>
-            <span className={styles.footerText}>Новости, съёмки и настроение бренда — в наших социальных сетях.</span>
+            <h2 className={styles.footerLead}>Следи за нами</h2>
             <div className={styles.socials} aria-label="Социальные сети ASAYA">
-              <a href="https://t.me/asayabeauty" rel="noreferrer" target="_blank"><span>Telegram</span><b>↗</b></a>
-              <a href="https://vk.com/asaya.beauty" rel="noreferrer" target="_blank"><span>ВКонтакте</span><b>↗</b></a>
-              <a href="https://instagram.com/asaya.beauty" rel="noreferrer" target="_blank"><span>Instagram</span><b>↗</b></a>
+              <a aria-label="ASAYA в Telegram" href="https://t.me/asayabeauty" rel="noreferrer" target="_blank" title="Telegram"><span aria-hidden="true">TG</span></a>
+              <a aria-label="ASAYA во ВКонтакте" href="https://vk.com/asaya.beauty" rel="noreferrer" target="_blank" title="ВКонтакте"><span aria-hidden="true">VK</span></a>
+              <a aria-label="ASAYA в Instagram" href="https://instagram.com/asaya.beauty" rel="noreferrer" target="_blank" title="Instagram"><span aria-hidden="true">IG</span></a>
             </div>
           </div>
 
@@ -145,10 +144,10 @@ export function SiteFooter() {
               <Link href="/order-status">Статус заказа</Link>
             </div>
             <div className={styles.careLinks}>
-              <p>Служба заботы</p>
+              <p>Служба заботы ASAYA</p>
               <a href="https://t.me/asayahelp" rel="noreferrer" target="_blank"><span>Telegram</span><b>@asayahelp ↗</b></a>
-              <a href={companyData.phoneHref}><span>Телефон</span><b>{companyData.phone}</b></a>
-              <a href={companyData.emailHref}><span>Email</span><b>{companyData.email}</b></a>
+              <Link href="/support"><span>MAX</span><b>Написать →</b></Link>
+              <a href={companyData.emailHref}><span>Почта</span><b>{companyData.email}</b></a>
             </div>
           </nav>
         </div>
