@@ -231,8 +231,9 @@
 
 .footerColumns {
   display: grid;
-  grid-template-columns: .8fr 1.2fr;
-  gap: clamp(40px, 8vw, 100px);
+  grid-template-columns: minmax(240px, .72fr) minmax(0, 1.28fr);
+  gap: clamp(40px, 7vw, 90px);
+  align-items: start;
 }
 
 .searchBackdrop {
@@ -411,8 +412,11 @@
 
 .footerNav {
   display: grid;
-  grid-template-columns: .7fr .7fr 1.6fr;
-  gap: 36px;
+  grid-template-columns: repeat(2, minmax(160px, 220px));
+  gap: clamp(36px, 7vw, 80px);
+  margin-top: 44px;
+  padding-top: 28px;
+  border-top: 1px solid rgb(32 32 32 / 18%);
 }
 
 .footerNav > div {
@@ -434,12 +438,15 @@
   text-underline-offset: 4px;
 }
 
-.footerNav .careLinks {
-  gap: 7px;
+.careLinks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .careLinks > p {
-  margin-bottom: 12px;
+  grid-column: 1 / -1;
+  margin-bottom: 10px;
   color: var(--color-foreground);
   font-size: 13px;
   font-weight: 600;
@@ -447,13 +454,12 @@
 
 .careLinks > a {
   display: grid;
-  min-height: 54px;
-  grid-template-columns: 66px minmax(0, 1fr);
-  gap: 8px;
-  align-items: center;
-  padding: 8px 14px;
+  min-height: 88px;
+  align-content: space-between;
+  gap: 16px;
+  padding: 16px;
   border: 1px solid rgb(32 32 32 / 16%);
-  border-radius: 12px;
+  border-radius: 16px;
   background: rgb(255 255 255 / 46%);
   font-size: 13px;
 }
@@ -467,7 +473,7 @@
 .careLinks > a b {
   color: #5d5d5d;
   font-size: 12px;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .legalRow {
@@ -740,7 +746,15 @@
   }
 
   .careLinks {
-    grid-column: 1 / -1;
+    grid-template-columns: 1fr;
+  }
+
+  .careLinks > p {
+    grid-column: auto;
+  }
+
+  .careLinks > a {
+    min-height: 72px;
   }
 
 }
