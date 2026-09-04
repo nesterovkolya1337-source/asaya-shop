@@ -438,34 +438,37 @@
 .careLinks {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 6px;
+  align-content: start;
+  gap: 8px;
 }
 
 .careLinks > p {
-  margin-bottom: 6px;
-  color: var(--color-foreground);
-  font-size: 13px;
-  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--color-gray);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 
 .careLinks > a {
-  display: grid;
-  min-height: 48px;
-  grid-template-columns: 72px minmax(0, 1fr);
+  display: flex;
+  min-height: 22px;
   align-items: center;
-  align-content: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid rgb(32 32 32 / 16%);
-  border-radius: 16px;
-  background: rgb(255 255 255 / 46%);
-  font-size: 13px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14px;
 }
 
 .careLinks > a:hover,
 .careLinks > a:focus-visible {
-  background: var(--color-pink);
-  text-decoration: none;
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 .careLinks > a b {
@@ -751,10 +754,7 @@
   }
 
   .careLinks > a {
-    min-height: 56px;
-    grid-template-columns: 72px minmax(0, 1fr);
-    gap: 10px;
-    align-items: center;
+    min-height: 24px;
   }
 
 }
