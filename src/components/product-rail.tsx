@@ -15,7 +15,7 @@ export function ProductRail() {
   const drag = useRef({ active: false, moved: false, pointerId: -1, startX: 0, startY: 0, scrollLeft: 0 });
   const visibleProducts = products.filter((product) => product.active && product.badge === state);
   const startDrag = (event: PointerEvent<HTMLDivElement>) => {
-    if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+    if (!event.isPrimary || event.pointerType !== "mouse" || event.button !== 0) return;
     drag.current = {
       active: true,
       moved: false,

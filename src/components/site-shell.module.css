@@ -32,7 +32,11 @@
 .overlayPlacement {
   position: relative;
   top: auto;
-  margin-bottom: -64px;
+}
+
+.heroHeaderSlot {
+  height: 64px;
+  margin-bottom: 10px;
 }
 
 .floatingHeader {
@@ -650,7 +654,12 @@
   }
 
   .overlayPlacement {
-    margin-bottom: -54px;
+    margin-bottom: 0;
+  }
+
+  .heroHeaderSlot {
+    height: 54px;
+    margin-bottom: 8px;
   }
 
   .floatingHeader {

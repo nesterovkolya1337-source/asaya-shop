@@ -107,7 +107,7 @@ export function SiteChrome({ overlay = false }: { overlay?: boolean }) {
   return (
     <>
       <div className={styles.promo}>Бесплатная доставка при заказе от 1500 ₽</div>
-      <SiteHeader overlay={overlay} />
+      {overlay ? <div className={styles.heroHeaderSlot}><SiteHeader overlay /></div> : <SiteHeader />}
     </>
   );
 }
