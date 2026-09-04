@@ -93,9 +93,10 @@ export default function Home() {
                 <Image
                   alt={category.name}
                   className={`${styles.categoryImage} ${styles[category.position]}`}
-                  fill
+                  height={2700}
                   sizes="(max-width: 760px) 92vw, 370px"
                   src={category.image}
+                  width={1800}
                 />
                 <span>{category.name}</span>
               </Link>
