@@ -133,25 +133,25 @@ export function SiteFooter() {
             <Link href="/support"><span>MAX</span><b>Написать →</b></Link>
             <a href={companyData.emailHref}><span>Почта</span><b>{companyData.email}</b></a>
           </div>
-        </div>
 
-        <nav className={styles.footerNav} aria-label="Навигация в подвале">
-          <div>
-            <p>Покупателям</p>
-            <Link href="/catalog">Каталог</Link>
-            <Link href="/delivery">Доставка и оплата</Link>
-            <Link href="/instructions">Инструкции</Link>
-            <Link href="/faq">Вопросы и ответы</Link>
-            <Link href="/returns">Возврат и претензии</Link>
-          </div>
-          <div>
-            <p>ASAYA</p>
-            <Link href="/about">О бренде</Link>
-            <Link href="/where-to-buy">Где купить</Link>
-            <Link href="/account">Личный кабинет</Link>
-            <Link href="/order-status">Статус заказа</Link>
-          </div>
-        </nav>
+          <nav className={styles.footerNav} aria-label="Навигация в подвале">
+            <div>
+              <p>Покупателям</p>
+              <Link href="/catalog">Каталог</Link>
+              <Link href="/delivery">Доставка и оплата</Link>
+              <Link href="/instructions">Инструкции</Link>
+              <Link href="/faq">Вопросы и ответы</Link>
+              <Link href="/returns">Возврат и претензии</Link>
+            </div>
+            <div>
+              <p>ASAYA</p>
+              <Link href="/about">О бренде</Link>
+              <Link href="/where-to-buy">Где купить</Link>
+              <Link href="/account">Личный кабинет</Link>
+              <Link href="/order-status">Статус заказа</Link>
+            </div>
+          </nav>
+        </div>
         <div className={styles.legalRow}>
           <span>© 2026 ASAYA</span>
           <div>
