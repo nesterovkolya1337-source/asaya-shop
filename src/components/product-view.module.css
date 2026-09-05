@@ -433,43 +433,30 @@
   line-height: 1.4;
 }
 
-.sensoryMetrics {
+.sensoryBenefits {
   display: grid;
-  gap: 14px;
+  gap: 0;
   margin-top: 26px;
+  padding: 0;
+  list-style: none;
 }
 
-.sensoryMetrics > div {
-  display: grid;
-  gap: 9px;
-  padding-bottom: 14px;
+.sensoryBenefits li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
   border-bottom: 1px solid rgb(32 32 32 / 28%);
-}
-
-.sensoryMetrics > div > span {
   font-size: 18px;
 }
 
-.sensoryDots {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 7px;
-}
-
-.sensoryDots i {
-  height: 9px;
-  border: 1px solid rgb(32 32 32 / 40%);
-  border-radius: 999px;
-}
-
-.sensoryDots .filledDot {
-  border-color: var(--color-foreground);
-  background: var(--color-foreground);
-}
-
-.sensoryMetrics small {
-  color: #575757;
-  font-size: 11px;
+.sensoryBenefits li::before {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--color-pink);
+  content: "";
 }
 
 .sliderArrows {

@@ -225,11 +225,24 @@
   background: var(--color-light-gray);
 }
 
+.footerBrand {
+  display: flex;
+  justify-content: center;
+  padding: clamp(8px, 1vw, 14px) 0 clamp(24px, 3vw, 38px);
+  border-bottom: 1px solid rgb(32 32 32 / 25%);
+}
+
+.footerWordmark {
+  width: min(100%, 1040px);
+  height: auto;
+}
+
 .footerColumns {
   display: grid;
   grid-template-columns: minmax(170px, .7fr) minmax(420px, 1.3fr);
   gap: clamp(24px, 3vw, 42px);
   align-items: start;
+  padding-top: clamp(24px, 3vw, 38px);
 }
 
 .searchBackdrop {
@@ -367,29 +380,59 @@
   font-size: 24px;
   font-weight: 500;
   line-height: 1.15;
+  font-family: var(--font-gramatika);
+}
+
+.footerSocialRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
 }
 
 .socials {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 16px;
+  gap: 7px;
+  margin-top: 8px;
 }
 
 .socials a {
   display: grid;
-  width: 50px;
-  height: 50px;
+  width: 36px;
+  height: 36px;
   flex: none;
   place-items: center;
   padding: 0;
   border: 1px solid var(--color-foreground);
   border-radius: 50%;
   background: rgb(255 255 255 / 54%);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .06em;
   transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.socials svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.socials a:first-child svg path:last-child,
+.socials a:last-child svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.socials a:first-child svg path:last-child {
+  stroke: white;
+  stroke-width: 1.2;
+}
+
+.socials .socialDot {
+  fill: currentColor;
+  stroke: none;
 }
 
 .careLinks b {
@@ -410,6 +453,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(120px, 1fr));
   gap: clamp(20px, 3vw, 34px);
+  font-family: var(--font-gramatika);
 }
 
 .footerNav > div {
@@ -771,8 +815,11 @@
 
   .footerColumns {
     gap: 24px;
-    margin-top: 12px;
-    padding-top: 12px;
+    padding-top: 22px;
+  }
+
+  .footerBrand {
+    padding-bottom: 22px;
   }
 
   .footerLead {

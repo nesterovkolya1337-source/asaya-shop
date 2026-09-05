@@ -13,7 +13,9 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   const { cartCount, favorites, products } = useShop();
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLDetailsElement>(null);
   const sitePages = [
     ["Каталог", "/catalog"], ["О бренде", "/about"], ["Инструкции", "/instructions"],
     ["Доставка и оплата", "/delivery"], ["Где купить", "/where-to-buy"],
@@ -25,6 +27,23 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
     `${product.name} ${product.description} ${product.aroma} ${product.features.join(" ")}`.toLocaleLowerCase("ru").includes(normalizedSearch)
   )).slice(0, 8) : [], [normalizedSearch, products]);
   const pageResults = normalizedSearch ? sitePages.filter(([label]) => label.toLocaleLowerCase("ru").includes(normalizedSearch)) : sitePages.slice(0, 4);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeFromOutside = (event: PointerEvent) => {
+      if (!window.matchMedia("(min-width: 721px)").matches) return;
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    const closeFromKeyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && window.matchMedia("(min-width: 721px)").matches) setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", closeFromOutside);
+    document.addEventListener("keydown", closeFromKeyboard);
+    return () => {
+      document.removeEventListener("pointerdown", closeFromOutside);
+      document.removeEventListener("keydown", closeFromKeyboard);
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!overlay) return;
@@ -68,24 +87,24 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
     <header className={`${styles.header} ${overlay ? styles.overlayPlacement : ""}`} ref={headerRef}>
       <nav aria-label="Основная навигация" className={styles.navigation}>
         <div className={styles.navigationStart}>
-          <details className={styles.mobileMenu}>
-            <summary aria-label="Открыть меню" role="button">
+          <details className={styles.mobileMenu} open={menuOpen} ref={menuRef}>
+            <summary aria-expanded={menuOpen} aria-label={menuOpen ? "Закрыть меню" : "Открыть меню"} onClick={(event) => { event.preventDefault(); setMenuOpen((open) => !open); }} role="button">
               <span />
               <span />
               <span />
             </summary>
             <div className={styles.mobileMenuPanel}>
-              <Link className={styles.mobileMenuPrimary} href="/catalog">Каталог</Link>
-              <Link href="/favorites">Избранное</Link>
-              <Link className={styles.mobileMenuPrimary} href="/about">О бренде</Link>
-              <Link href="/delivery">Доставка и оплата</Link>
-              <Link href="/where-to-buy">Где купить</Link>
-              <Link href="/instructions">Инструкции</Link>
-              <Link href="/faq">Вопросы и ответы</Link>
-              <Link href="/order-status">Статус заказа</Link>
-              <Link href="/support">Служба заботы</Link>
-              <Link href="/returns">Возвраты и претензии</Link>
-              <Link href="/requisites">Реквизиты</Link>
+              <Link className={styles.mobileMenuPrimary} href="/catalog" onClick={() => setMenuOpen(false)}>Каталог</Link>
+              <Link href="/favorites" onClick={() => setMenuOpen(false)}>Избранное</Link>
+              <Link className={styles.mobileMenuPrimary} href="/about" onClick={() => setMenuOpen(false)}>О бренде</Link>
+              <Link href="/delivery" onClick={() => setMenuOpen(false)}>Доставка и оплата</Link>
+              <Link href="/where-to-buy" onClick={() => setMenuOpen(false)}>Где купить</Link>
+              <Link href="/instructions" onClick={() => setMenuOpen(false)}>Инструкции</Link>
+              <Link href="/faq" onClick={() => setMenuOpen(false)}>Вопросы и ответы</Link>
+              <Link href="/order-status" onClick={() => setMenuOpen(false)}>Статус заказа</Link>
+              <Link href="/support" onClick={() => setMenuOpen(false)}>Служба заботы</Link>
+              <Link href="/returns" onClick={() => setMenuOpen(false)}>Возвраты и претензии</Link>
+              <Link href="/requisites" onClick={() => setMenuOpen(false)}>Реквизиты</Link>
             </div>
           </details>
           <div className={styles.navigationSide}>
@@ -141,14 +160,19 @@ export function SiteFooter() {
   return (
     <footer className={styles.footer} id="about">
       <div className={styles.footerInner}>
+        <div className={styles.footerBrand}>
+          <Image alt="ASAYA" className={styles.footerWordmark} height={256} src={assetPath("/images/figma/footer-wordmark.svg")} width={1040} />
+        </div>
         <div className={styles.footerColumns}>
           <div className={styles.footerIntro}>
             <p className={styles.footerEyebrow}>ASAYA рядом</p>
-            <h2 className={styles.footerLead}>Следи за нами</h2>
-            <div className={styles.socials} aria-label="Социальные сети ASAYA">
-              <a aria-label="ASAYA в Telegram" href="https://t.me/asayabeauty" rel="noreferrer" target="_blank" title="Telegram"><span aria-hidden="true">TG</span></a>
-              <a aria-label="ASAYA во ВКонтакте" href="https://vk.com/asaya.beauty" rel="noreferrer" target="_blank" title="ВКонтакте"><span aria-hidden="true">VK</span></a>
-              <a aria-label="ASAYA в Instagram" href="https://instagram.com/asaya.beauty" rel="noreferrer" target="_blank" title="Instagram"><span aria-hidden="true">IG</span></a>
+            <div className={styles.footerSocialRow}>
+              <h2 className={styles.footerLead}>Следи за нами</h2>
+              <div className={styles.socials} aria-label="Социальные сети ASAYA">
+                <a aria-label="ASAYA в Telegram" href="https://t.me/asayabeauty" rel="noreferrer" target="_blank" title="Telegram"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.7 3.5 3.8 10c-1.2.5-1.2 1.1-.2 1.4l4.3 1.3 1.7 5.2c.2.6.1.9.8.9.5 0 .8-.2 1.1-.5l2.2-2.1 4.5 3.3c.8.5 1.4.2 1.6-.8l2.9-13.8c.3-1.2-.5-1.8-1.5-1.4Z"/><path d="m8 12.6 10.2-6.4-8.4 7.7-.3 3.3"/></svg></a>
+                <a aria-label="ASAYA во ВКонтакте" href="https://vk.com/asaya.beauty" rel="noreferrer" target="_blank" title="ВКонтакте"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3.2 5.8h3.2c.3 0 .6.2.7.5.7 2.3 1.9 4.4 3.5 6V6.6c0-.5.4-.8.8-.8h3c.4 0 .8.4.8.8v3.2c1.4-1.3 2.5-2.6 3.2-3.6.2-.3.5-.4.8-.4h3c.7 0 1.1.8.7 1.3-1 1.6-2.3 3.2-3.8 4.7 1.6 1.5 3 3.2 4.1 5 .4.6 0 1.4-.7 1.4h-3.2c-.3 0-.6-.1-.8-.4-1-1.3-2-2.5-3.3-3.5v3.1c0 .4-.4.8-.8.8h-1.6c-4.6 0-8.7-3.9-10.4-11.3-.1-.5.3-1.1.8-1.1Z"/></svg></a>
+                <a aria-label="ASAYA в Instagram" href="https://instagram.com/asaya.beauty" rel="noreferrer" target="_blank" title="Instagram"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.8" r=".8" className={styles.socialDot}/></svg></a>
+              </div>
             </div>
           </div>
 

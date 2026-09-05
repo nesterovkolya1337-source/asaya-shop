@@ -1,3 +1,35 @@
+@font-face {
+  font-family: "Gramatika";
+  src: url("/fonts/gramatika/Gramatika-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Gramatika";
+  src: url("/fonts/gramatika/Gramatika-Bold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Gramatika";
+  src: url("/fonts/gramatika/Gramatika-Slanted.ttf") format("truetype");
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Gramatika";
+  src: url("/fonts/gramatika/Gramatika-BoldSlanted.ttf") format("truetype");
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+}
+
 :root {
   --color-background: #ffffff;
   --color-foreground: #202020;
@@ -5,9 +37,11 @@
   --color-gray: #9c9c9b;
   --color-light-gray: #f0f0f0;
   --radius-card: 10px;
-  --page-gutter: clamp(16px, 3vw, 40px);
-  --content-width: 1200px;
+  --page-gutter: clamp(16px, 2vw, 30px);
+  --content-width: 1440px;
   --font-involve: "Involve", Arial, Helvetica, sans-serif;
+  --font-gramatika: "Gramatika", "Involve", Arial, Helvetica, sans-serif;
+  --section-gap: clamp(28px, 2.5vw, 38px);
 }
 
 html {

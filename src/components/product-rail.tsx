@@ -51,8 +51,6 @@ export function ProductRail() {
       startY: event.clientY,
       scrollLeft: event.currentTarget.scrollLeft,
     };
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setDragging(true);
   };
   const moveDrag = (event: PointerEvent<HTMLDivElement>) => {
     if (!drag.current.active || drag.current.pointerId !== event.pointerId) return;
@@ -60,7 +58,11 @@ export function ProductRail() {
     const distanceY = event.clientY - drag.current.startY;
     if (!drag.current.moved && Math.abs(distanceX) < 6) return;
     if (!drag.current.moved && Math.abs(distanceY) > Math.abs(distanceX)) return;
-    drag.current.moved = true;
+    if (!drag.current.moved) {
+      drag.current.moved = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      setDragging(true);
+    }
     event.preventDefault();
     event.currentTarget.scrollLeft = drag.current.scrollLeft - distanceX;
   };
@@ -91,7 +93,10 @@ export function ProductRail() {
             <button aria-label="Предыдущие товары" disabled={!railState.canScrollLeft} onClick={() => scrollRail(-1)} type="button">←</button>
             <button aria-label="Следующие товары" disabled={!railState.canScrollRight} onClick={() => scrollRail(1)} type="button">→</button>
           </div>}
-          <Link href="/catalog">Весь каталог →</Link>
+          <Link href="/catalog">
+            <span>Весь каталог</span>
+            <svg aria-hidden="true" viewBox="0 0 18 18"><path d="M3 9h11M10 5l4 4-4 4" /></svg>
+          </Link>
         </div>
       </div>
       <div

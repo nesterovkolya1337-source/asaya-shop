@@ -94,30 +94,12 @@
   pointer-events: none;
 }
 
-.rating {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-bottom: 7px;
-  color: var(--color-gray);
-  font-size: 13px;
-}
-
 .meta h3 {
   max-width: 205px;
+  font-family: var(--font-gramatika);
   font-size: 16px;
   font-weight: 400;
   line-height: 1.1;
-}
-
-.meta h3 a {
-  pointer-events: auto;
-  transition: opacity 160ms ease;
-}
-
-.meta h3 a:hover,
-.meta h3 a:focus-visible {
-  opacity: 0.58;
 }
 
 .price {
@@ -138,13 +120,6 @@
 .price span {
   color: var(--color-gray);
   text-decoration: line-through;
-}
-
-.rating b {
-  color: var(--color-foreground);
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: .02em;
 }
 
 .addButton,
@@ -266,16 +241,6 @@
     left: 10px;
     display: grid;
     gap: 4px;
-  }
-
-  .rating {
-    gap: 4px;
-    margin-bottom: 4px;
-    font-size: 10px;
-  }
-
-  .rating b {
-    font-size: 9px;
   }
 
   .meta h3 {

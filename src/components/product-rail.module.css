@@ -15,10 +15,35 @@
 }
 
 .headingActions > a {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 7px;
   justify-self: end;
-  padding-bottom: 5px;
-  border-bottom: 1px solid;
+  padding: 0 3px;
   white-space: nowrap;
+  transition: opacity 160ms ease;
+}
+
+.headingActions > a svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.4;
+  transition: transform 160ms ease;
+}
+
+.headingActions > a:hover,
+.headingActions > a:focus-visible {
+  opacity: .62;
+}
+
+.headingActions > a:hover svg,
+.headingActions > a:focus-visible svg {
+  transform: translateX(3px);
 }
 
 .railControls {
@@ -69,6 +94,7 @@
   background: transparent;
   cursor: pointer;
   font-size: 13px;
+  font-family: var(--font-gramatika);
   transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
@@ -85,7 +111,7 @@
 
 .rail {
   display: grid;
-  grid-auto-columns: minmax(300px, 31.5%);
+  grid-auto-columns: calc((100% - 20px) / 3);
   grid-template-columns: none;
   grid-auto-flow: column;
   gap: 10px;

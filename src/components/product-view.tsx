@@ -64,8 +64,6 @@ export function ProductView({ productId }: { productId: string }) {
       startY: event.clientY,
       scrollLeft: event.currentTarget.scrollLeft,
     };
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setRecommendationDragging(true);
   };
   const moveRecommendationDrag = (event: PointerEvent<HTMLDivElement>) => {
     if (!recommendationDrag.current.active || recommendationDrag.current.pointerId !== event.pointerId) return;
@@ -73,7 +71,11 @@ export function ProductView({ productId }: { productId: string }) {
     const distanceY = event.clientY - recommendationDrag.current.startY;
     if (!recommendationDrag.current.moved && Math.abs(distanceX) < 6) return;
     if (!recommendationDrag.current.moved && Math.abs(distanceY) > Math.abs(distanceX)) return;
-    recommendationDrag.current.moved = true;
+    if (!recommendationDrag.current.moved) {
+      recommendationDrag.current.moved = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      setRecommendationDragging(true);
+    }
     event.preventDefault();
     event.currentTarget.scrollLeft = recommendationDrag.current.scrollLeft - distanceX;
   };
@@ -173,7 +175,7 @@ export function ProductView({ productId }: { productId: string }) {
             <strong>{formatPrice(product.price)}</strong>
             {product.oldPrice > product.price && <span>{formatPrice(product.oldPrice)}</span>}
           </div>
-          <p className={styles.stock}>{product.stock > 0 ? `В наличии · ${product.stock} шт.` : "Нет в наличии"}</p>
+          <p className={styles.stock}>{product.stock > 0 ? "В наличии" : "Нет в наличии"}</p>
 
           <div className={styles.buyArea}>
             {quantity ? (
@@ -265,18 +267,10 @@ export function ProductView({ productId }: { productId: string }) {
         <div className={styles.sensoryCopy}>
           <p>Ощущения и результат</p>
           <h2 id="sensory-title">Комфорт на уровне ощущений</h2>
-          <span>Характер продукта во время нанесения и результат, который остаётся после ежедневного ритуала.</span>
-          <div className={styles.sensoryMetrics}>
-            {product.sensory.map((metric) => (
-              <div key={metric.label}>
-                <span>{metric.label}</span>
-                <div aria-label={`${metric.label}: ${metric.value} из 5`} className={styles.sensoryDots}>
-                  {Array.from({ length: 5 }, (_, index) => <i className={index < metric.value ? styles.filledDot : ""} key={index} />)}
-                </div>
-              </div>
-            ))}
-            <small>Сенсорное описание, а не лабораторная оценка эффективности.</small>
-          </div>
+          <span>Коротко о свойствах и ощущениях именно этого средства.</span>
+          <ul className={styles.sensoryBenefits}>
+            {product.features.slice(0, 4).map((feature) => <li key={feature}>{feature}</li>)}
+          </ul>
         </div>
         <div className={styles.sensoryVisual}>
           <Image alt={`${product.name} — настроение и текстура`} fill sizes="(max-width: 900px) 100vw, 50vw" src={gallery[2] ?? gallery[1] ?? gallery[0]} />

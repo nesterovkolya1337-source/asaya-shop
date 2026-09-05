@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CommunityCarousel } from "@/components/community-carousel";
 import { ProductRail } from "@/components/product-rail";
 import { SiteChrome, SiteFooter } from "@/components/site-shell";
 import { assetPath } from "@/lib/asset-path";
@@ -58,7 +59,7 @@ export default function Home() {
               className={styles.heroImage}
               fill
               priority
-              sizes="(max-width: 1280px) 94vw, 1160px"
+              sizes="(max-width: 1480px) 96vw, 1440px"
               src={assetPath("/images/figma/hero.webp")}
             />
             <div className={styles.heroCopy}>
@@ -76,6 +77,13 @@ export default function Home() {
           </section>
 
           <section className={styles.manifesto}>
+            <Image
+              alt="Девушка с кудрявыми волосами — образ ASAYA"
+              className={styles.manifestoImage}
+              fill
+              sizes="(max-width: 1480px) 96vw, 1440px"
+              src={assetPath("/images/figma/asaya-6139.webp")}
+            />
             <div className={styles.manifestoCopy}>
               <h2>ASAYA — косметика под настроение</h2>
               <p>Уход, аромат и эстетика — под то, как хочется чувствовать себя сегодня.</p>
@@ -100,20 +108,7 @@ export default function Home() {
           </section>
 
           <section className={styles.community} aria-labelledby="community-title">
-            <h2 id="community-title">Ты + ASAYA</h2>
-            <div className={styles.communityGrid}>
-              {communityPhotos.map((photo) => (
-                <div className={styles.communityPhoto} key={photo.image}>
-                  <Image
-                    alt={photo.alt}
-                    className={styles.coverImage}
-                    fill
-                    sizes="(max-width: 760px) 44vw, 270px"
-                    src={photo.image}
-                  />
-                </div>
-              ))}
-            </div>
+            <CommunityCarousel photos={communityPhotos} titleId="community-title" />
           </section>
         </main>
       </div>
