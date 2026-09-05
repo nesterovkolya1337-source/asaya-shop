@@ -87,6 +87,22 @@ Compose project, verifies `/healthz`, and then disables the older GitHub polling
 timer. Until that first successful push, the existing timer remains active as a
 safe fallback.
 
+If the hosting network blocks direct SSH, install the signed HTTPS receiver:
+
+```sh
+cd /opt/asaya-shop
+git pull --ff-only origin main
+./deploy/install-https-deploy.sh
+```
+
+The receiver accepts only Git bundles signed by the dedicated ASAYA Ed25519
+key. It is exposed through the existing HTTPS site and a Unix socket, so no
+extra public server port is opened. Publish from the development laptop with:
+
+```powershell
+./deploy/publish-direct.ps1
+```
+
 ## Verification
 
 ```sh

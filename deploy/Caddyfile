@@ -1,6 +1,13 @@
 asaya.ru, www.asaya.ru {
   encode zstd gzip
-  reverse_proxy web:80
+
+  handle /_asaya_deploy/* {
+    reverse_proxy unix//run/asaya-deploy/deploy.sock
+  }
+
+  handle {
+    reverse_proxy web:80
+  }
 
   header {
     Strict-Transport-Security "max-age=31536000"
