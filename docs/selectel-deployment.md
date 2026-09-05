@@ -66,6 +66,27 @@ systemctl status asaya-autodeploy.timer --no-pager
 journalctl -u asaya-autodeploy.service -n 100 --no-pager
 ```
 
+## Direct deployment without GitHub
+
+The project can also be pushed directly from the development laptop to a
+restricted Git receiver on Selectel. The dedicated SSH key can only invoke
+`git-receive-pack` for `/opt/asaya.git`; it cannot open an interactive root
+shell.
+
+Install the receiver once from the Selectel console:
+
+```sh
+cd /opt/asaya-shop
+git pull --ff-only origin main
+chmod +x deploy/install-direct-deploy.sh
+./deploy/install-direct-deploy.sh
+```
+
+After a successful direct push, the post-receive hook builds the same Docker
+Compose project, verifies `/healthz`, and then disables the older GitHub polling
+timer. Until that first successful push, the existing timer remains active as a
+safe fallback.
+
 ## Verification
 
 ```sh
