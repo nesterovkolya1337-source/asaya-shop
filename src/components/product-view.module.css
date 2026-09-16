@@ -27,10 +27,12 @@
 
 .product {
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
-  gap: 10px;
+  grid-template-columns: minmax(0, 540fr) minmax(0, 600fr);
+  gap: 20px;
+  align-items: stretch;
 }
 
+.galleryColumn,
 .gallery,
 .details {
   border-radius: var(--radius-card);
@@ -38,12 +40,14 @@
 }
 
 .galleryColumn {
+  position: relative;
   display: grid;
   min-width: 0;
+  min-height: 530px;
   grid-template-columns: 92px minmax(0, 1fr);
   grid-template-areas: "thumbnails gallery";
   gap: 10px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .gallery {
@@ -59,7 +63,7 @@
 }
 
 .lifestyleImage {
-  object-fit: cover;
+  object-fit: contain;
   padding: 0;
 }
 
@@ -103,11 +107,14 @@
 }
 
 .thumbnails {
+  position: absolute;
+  inset: 0 auto 0 0;
   display: grid;
   grid-area: thumbnails;
+  width: 92px;
   grid-auto-rows: 104px;
+  align-content: start;
   gap: 8px;
-  max-height: clamp(680px, 74vh, 920px);
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -164,11 +171,12 @@
 }
 
 .titleRow h1 {
+  font-family: var(--font-gramatika);
   max-width: 580px;
   font-size: clamp(36px, 3.4vw, 48px);
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: -0.035em;
+  font-weight: 400;
+  line-height: 1.06;
+  letter-spacing: 0;
 }
 
 .favorite {
@@ -411,18 +419,22 @@
 .sensoryCopy > p,
 .ugc .sectionHeading p,
 .reviewSummary > p {
+  font-family: var(--font-involve);
+  font-weight: 500;
   font-size: 12px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
   text-transform: uppercase;
 }
 
 .sensory h2 {
+  font-family: var(--font-gramatika);
   max-width: 650px;
   margin-top: 10px;
   font-size: clamp(34px, 4vw, 50px);
   font-weight: 400;
-  line-height: 0.94;
-  letter-spacing: -0.055em;
+  line-height: 1.06;
+  letter-spacing: 0;
 }
 
 .sensoryCopy > span {
@@ -469,7 +481,8 @@
   width: 42px;
   height: 42px;
   place-items: center;
-  border: 1px solid var(--color-foreground);
+  padding: 0;
+  border: 0;
   border-radius: 50%;
   background: white;
   cursor: pointer;
@@ -777,9 +790,11 @@
 }
 
 .sectionHeading h2 {
+  font-family: var(--font-gramatika);
   font-size: clamp(34px, 4vw, 50px);
   font-weight: 500;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
+  line-height: 1.06;
 }
 
 .sectionHeading a {
@@ -794,11 +809,12 @@
 }
 
 .recommendationGrid {
+  composes: layout from "./product-layout.module.css";
   display: grid;
-  grid-auto-columns: 370px;
+  grid-auto-columns: var(--product-rail-column);
   grid-template-columns: none;
   grid-auto-flow: column;
-  gap: 10px;
+  gap: var(--product-gap);
   padding-bottom: 2px;
   overflow-x: auto;
   scroll-padding-inline: 2px;
@@ -927,10 +943,6 @@
     margin-top: 0;
   }
 
-  .recommendationGrid {
-    grid-auto-columns: 47%;
-  }
-
   .sensory,
   .reviews {
     grid-template-columns: 1fr;
@@ -948,6 +960,7 @@
   }
 
   .galleryColumn {
+    min-height: 0;
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "gallery" "thumbnails";
   }
@@ -1037,13 +1050,14 @@
   }
 
   .recommendationGrid {
-    gap: 8px;
-    grid-auto-columns: 47vw;
     margin-inline: -10px;
     padding-inline: 10px;
   }
 
   .thumbnails {
+    position: static;
+    inset: auto;
+    width: auto;
     grid-auto-columns: 80px;
     grid-auto-rows: auto;
     grid-auto-flow: column;

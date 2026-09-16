@@ -1,0 +1,45 @@
+import {before,after,beforeEach,test} from 'node:test';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {testDatabase} from './postgres.js';
+import {AdminReadiness} from '../src/admin-readiness.js';
+import {AdminCatalog,emptyContent} from '../src/admin-catalog.js';
+import {buildApp} from '../src/app.js';
+import {DisabledOtpSender} from '../src/auth.js';
+let ctx:Awaited<ReturnType<typeof testDatabase>>;
+before(async()=>{ctx=await testDatabase();});after(async()=>{await ctx?.stop();});
+beforeEach(async()=>{await ctx.db.pool.query('TRUNCATE products,warehouses,users CASCADE');});
+test('readiness distinguishes publication from delivery and never changes the catalog',async()=>{
+ const actor=randomUUID(),id=randomUUID(),warehouse=randomUUID();
+ await ctx.db.pool.query("INSERT INTO users(id,role) VALUES($1,'admin')",[actor]);
+ const c=new AdminCatalog(ctx.db),s=new AdminReadiness(ctx.db,true,false);
+ const draft={sku:'A',name:'Cream',slug:'cream',regularMinor:100,finalMinor:90,weightG:null,widthMm:null,heightMm:null,depthMm:null,content:{...emptyContent,description:'d',volume:'300 ml',image:'/images/cream.webp',usage:'u',ingredients:'i'}};
+ await c.save(actor,id,{...draft,revision:0});
+ const before=await c.detail(id),r=await s.get(actor,{});
+ assert.deepEqual(r.items[0].publicationIssues,[]);assert.deepEqual(r.items[0].deliveryIssues,['dimensions','stock']);
+ assert.equal(r.catalogOnly,true);assert.equal(r.ycpConfigured,false);assert.equal(r.publishedCount,0);assert.deepEqual(await c.detail(id),before);
+ await c.publish(actor,id,{revision:1});assert.equal((await s.get(actor,{})).publishedCount,1);
+ await ctx.db.pool.query("INSERT INTO warehouses(id,code,name,active) VALUES($1,'W','Warehouse',true)",[warehouse]);
+ await ctx.db.pool.query('INSERT INTO inventory_balances(product_id,warehouse_id,on_hand,reserved) VALUES($1,$2,2,2)',[id,warehouse]);
+ assert.ok((await s.get(actor,{})).items[0].deliveryIssues.includes('stock'));
+ await ctx.db.pool.query('UPDATE inventory_balances SET reserved=1');
+ assert.deepEqual((await s.get(actor,{})).items[0].deliveryIssues,['dimensions']);
+ await ctx.db.pool.query('UPDATE warehouses SET active=false');
+ assert.ok((await s.get(actor,{})).items[0].deliveryIssues.includes('stock'));
+ await c.save(actor,id,{...draft,content:{...draft.content,ingredients:''},revision:2});
+ assert.ok((await s.get(actor,{})).items[0].publicationIssues.includes('ingredients'));
+ await assert.rejects(c.publish(actor,id,{revision:3}),/PUBLISH_INCOMPLETE/);
+});
+test('readiness paginates drafts, projects no secrets, and restricts access',async()=>{
+ const actor=randomUUID(),buyer=randomUUID();await ctx.db.pool.query("INSERT INTO users(id,role) VALUES($1,'admin'),($2,'customer')",[actor,buyer]);
+ for(let i=0;i<51;i++)await ctx.db.pool.query('INSERT INTO products(id,sku,name) VALUES($1,$2,$3)',[randomUUID(),String(i).padStart(3,'0'),'Item']);
+ const s=new AdminReadiness(ctx.db,true,false),a=await s.get(actor,{}),b=await s.get(actor,{offset:50});
+ assert.equal(a.total,51);assert.equal(a.items.length,50);assert.equal(a.nextOffset,50);assert.equal(b.items.length,1);assert.equal(b.nextOffset,null);assert.equal(new Set([...a.items,...b.items].map(p=>p.id)).size,51);
+ assert.ok(a.items[0].publicationIssues.includes('image'));assert.ok(a.items[0].publicationIssues.includes('price'));
+ assert.deepEqual(Object.keys(a.items[0]).sort(),['deliveryIssues','id','name','publicationIssues','published','sku']);
+ const empty=await s.get(actor,{offset:99});assert.equal(empty.items.length,0);assert.equal(empty.total,51);
+ await assert.rejects(s.get(buyer,{}),/FORBIDDEN/);await assert.rejects(s.get(actor,{offset:-1}));
+ await ctx.db.pool.query('UPDATE users SET disabled=true WHERE id=$1',[actor]);await assert.rejects(s.get(actor,{}),/FORBIDDEN/);
+ const app=await buildApp({db:ctx.db,deploymentMode:'catalog',otpSecret:'o'.repeat(32),staffSecret:'s'.repeat(32),otpSender:new DisabledOtpSender(),origin:'https://example.test',secureCookies:true});
+ try{assert.equal((await app.inject('/api/admin/v1/readiness')).statusCode,401);}finally{await app.close();}
+});

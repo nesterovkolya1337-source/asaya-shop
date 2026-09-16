@@ -156,7 +156,7 @@
   font-weight: 400;
 }
 
-.heroCopy h1 {
+.heroCopy :is(h1, h2) {
   max-width: 620px;
   margin-top: 14px;
   font-size: clamp(58px, 7vw, 100px);

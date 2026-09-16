@@ -1,0 +1,23 @@
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY backend/package*.json ./
+RUN npm ci --ignore-scripts
+COPY backend/tsconfig.json ./
+COPY backend/src ./src
+COPY backend/scripts ./scripts
+COPY backend/tests ./tests
+RUN npm run build && npm prune --omit=dev --ignore-scripts
+
+FROM node:22-alpine
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY backend/package.json ./
+COPY backend/migrations ./migrations
+COPY backend/data/storefront-mapping.json backend/data/mapping-approvals.json ./data/
+# Deployment archives may have private source modes. Runtime code stays root-owned,
+# but the unprivileged application must be able to read its SQL and mapping files.
+RUN chmod -R a+rX /app/migrations /app/data && chmod a+r /app/package.json
+USER node
+CMD ["node", "dist/src/server.js"]

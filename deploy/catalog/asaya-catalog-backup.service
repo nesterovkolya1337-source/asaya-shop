@@ -1,0 +1,8 @@
+[Unit]
+Description=ASAYA catalog database and configuration backup
+Requires=docker.service
+After=docker.service
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/bin/sh /opt/asaya-catalog/current/deploy/catalog/backup.sh

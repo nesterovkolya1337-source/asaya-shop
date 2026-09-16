@@ -1,7 +1,7 @@
 .card {
+  composes: cardFrame from "./product-layout.module.css";
   position: relative;
   min-width: 0;
-  height: 500px;
   scroll-snap-align: start;
   overflow: hidden;
   border-radius: var(--radius-card);
@@ -96,10 +96,10 @@
 
 .meta h3 {
   max-width: 205px;
-  font-family: var(--font-gramatika);
+  font-family: var(--font-involve);
   font-size: 16px;
   font-weight: 400;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
 .price {
@@ -200,13 +200,6 @@
 }
 
 @media (max-width: 620px) {
-  .card {
-    width: 100%;
-    height: 340px;
-    aspect-ratio: auto;
-    min-height: 340px;
-  }
-
   .badges {
     top: 8px;
     left: 8px;
@@ -246,7 +239,7 @@
   .meta h3 {
     max-width: none;
     font-size: 13px;
-    line-height: 1.1;
+    line-height: 1.2;
   }
 
   .price {

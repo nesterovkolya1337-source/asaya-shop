@@ -1,0 +1,112 @@
+[
+  {
+    "slug": "multi-hair-spray",
+    "image": "/images/figma/page2-packshots/multi-hair-spray.webp",
+    "gallery": [
+      "/images/figma/page2-packshots/multi-hair-spray.webp",
+      "/images/figma/product-galleries/multi-hair-spray/1.webp",
+      "/images/figma/product-galleries/multi-hair-spray/2.webp",
+      "/images/figma/product-galleries/multi-hair-spray/3.webp"
+    ]
+  },
+  {
+    "slug": "coconut-body-cream",
+    "image": "/images/figma/page2-packshots/coconut-body-cream.webp",
+    "gallery": [
+      "/images/figma/page2-packshots/coconut-body-cream.webp",
+      "/images/figma/product-galleries/coconut-body-cream/1.webp",
+      "/images/figma/product-galleries/coconut-body-cream/2.webp",
+      "/images/figma/product-galleries/coconut-body-cream/3.webp"
+    ]
+  },
+  {
+    "slug": "hair-balm",
+    "image": "/images/figma/page2-packshots/hair-balm.webp",
+    "gallery": [
+      "/images/figma/page2-packshots/hair-balm.webp",
+      "/images/figma/product-galleries/hair-balm/1.webp",
+      "/images/figma/product-galleries/hair-balm/2.webp",
+      "/images/figma/product-galleries/hair-balm/3.webp"
+    ]
+  },
+  {
+    "slug": "restoring-face-cream",
+    "image": "/images/figma/page2-packshots/restoring-face-cream.webp",
+    "gallery": [
+      "/images/figma/page2-packshots/restoring-face-cream.webp",
+      "/images/figma/product-galleries/restoring-face-cream/1.webp",
+      "/images/figma/product-galleries/restoring-face-cream/2.webp",
+      "/images/figma/product-galleries/restoring-face-cream/3.webp"
+    ]
+  },
+  {
+    "slug": "hair-shampoo",
+    "image": "/images/figma/page2-packshots/hair-shampoo.webp",
+    "gallery": [
+      "/images/figma/page2-packshots/hair-shampoo.webp",
+      "/images/figma/product-galleries/hair-shampoo/1.webp",
+      "/images/figma/product-galleries/hair-shampoo/2.webp",
+      "/images/figma/product-galleries/hair-shampoo/3.webp"
+    ]
+  },
+  {
+    "slug": "kiwi-shower-gel",
+    "image": "/images/figma/page2-packshots/kiwi-shower-gel.webp",
+    "gallery": [
+      "/images/figma/page2-packshots/kiwi-shower-gel.webp",
+      "/images/figma/product-galleries/kiwi-shower-gel/1.webp",
+      "/images/figma/product-galleries/kiwi-shower-gel/2.webp",
+      "/images/figma/product-galleries/kiwi-shower-gel/3.webp"
+    ]
+  },
+  {
+    "slug": "hair-mask",
+    "image": "/images/figma/page2-packshots/hair-mask.webp",
+    "gallery": [
+      "/images/figma/page2-packshots/hair-mask.webp",
+      "/images/figma/product-galleries/hair-mask/1.webp",
+      "/images/figma/product-galleries/hair-mask/2.webp",
+      "/images/figma/product-galleries/hair-mask/3.webp"
+    ]
+  },
+  {
+    "slug": "guava-shower-gel",
+    "image": "/images/figma/page2-packshots/guava-shower-gel.webp",
+    "gallery": [
+      "/images/figma/page2-packshots/guava-shower-gel.webp",
+      "/images/figma/product-galleries/guava-shower-gel/1.webp",
+      "/images/figma/product-galleries/guava-shower-gel/2.webp",
+      "/images/figma/product-galleries/guava-shower-gel/3.webp"
+    ]
+  },
+  {
+    "slug": "hair-cream-spray",
+    "image": "/images/figma/page2-packshots/hair-cream-spray.webp",
+    "gallery": [
+      "/images/figma/page2-packshots/hair-cream-spray.webp",
+      "/images/figma/product-galleries/hair-cream-spray/1.webp",
+      "/images/figma/product-galleries/hair-cream-spray/2.webp",
+      "/images/figma/product-galleries/hair-cream-spray/3.webp"
+    ]
+  },
+  {
+    "slug": "yuzu-shower-gel",
+    "image": "/images/figma/page2-packshots/yuzu-shower-gel.webp",
+    "gallery": [
+      "/images/figma/page2-packshots/yuzu-shower-gel.webp",
+      "/images/figma/product-galleries/yuzu-shower-gel/1.webp",
+      "/images/figma/product-galleries/yuzu-shower-gel/2.webp",
+      "/images/figma/product-galleries/yuzu-shower-gel/3.webp"
+    ]
+  },
+  {
+    "slug": "lifting-face-cream",
+    "image": "/images/figma/page2-packshots/lifting-face-cream.webp",
+    "gallery": [
+      "/images/figma/page2-packshots/lifting-face-cream.webp",
+      "/images/figma/product-galleries/lifting-face-cream/1.webp",
+      "/images/figma/product-galleries/lifting-face-cream/2.webp",
+      "/images/figma/product-galleries/lifting-face-cream/3.webp"
+    ]
+  }
+]

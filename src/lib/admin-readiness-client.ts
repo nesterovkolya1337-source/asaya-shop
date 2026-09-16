@@ -1,0 +1,15 @@
+import {AuthClientError,createStoreRequest} from './auth-client.ts';
+export const publicationLabels:Record<string,string>={name:'Название',slug:'Адрес карточки',description:'Описание',volume:'Объём',image:'Основная фотография',usage:'Применение',ingredients:'Состав',price:'Обычная цена и цена продажи',price_order:'Цена продажи превышает обычную',set_kind:'Категория и тип набора не согласованы',card_data:'Проверьте формат данных карточки',components:'Нужно настроить продажу набора как готового товара',slug_taken:'Адрес карточки занят другим товаром',slug_changed:'Адрес уже опубликованной карточки изменён',missing_media:'Загруженная фотография отсутствует'};
+export const deliveryLabels:Record<string,string>={dimensions:'Не указаны вес и размеры упаковки',stock:'Доступный остаток товара пока не подтверждён в системе'};
+export type Readiness={total:number;publishedCount:number;warehouseCount:number;catalogOnly:boolean;ycpConfigured:boolean;items:Array<{id:string;sku:string;name:string;published:boolean;publicationIssues:string[];deliveryIssues:string[]}>;nextOffset:number|null};
+const obj=(v:unknown):Record<string,unknown>=>{if(!v||typeof v!=='object'||Array.isArray(v))throw new AuthClientError('INVALID_RESPONSE');return v as Record<string,unknown>;};
+const integer=(v:unknown):v is number=>Number.isSafeInteger(v)&&Number(v)>=0;
+function issues(v:unknown,labels:Record<string,string>):string[]{if(!Array.isArray(v)||v.some(k=>typeof k!=='string'||!Object.hasOwn(labels,k))||new Set(v).size!==v.length)throw new AuthClientError('INVALID_RESPONSE');return v;}
+export function parseReadiness(raw:unknown):Readiness{
+ const r=obj(raw);
+ if(!integer(r.total)||!integer(r.publishedCount)||r.publishedCount>r.total||!integer(r.warehouseCount)||typeof r.catalogOnly!=='boolean'||typeof r.ycpConfigured!=='boolean'||!Array.isArray(r.items)||r.items.length>50||r.items.length>r.total||!(r.nextOffset===null||integer(r.nextOffset)&&r.nextOffset>0&&r.nextOffset<r.total))throw new AuthClientError('INVALID_RESPONSE');
+ const items=r.items.map(v=>{const p=obj(v);if(typeof p.id!=='string'||!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(p.id)||typeof p.sku!=='string'||!p.sku||p.sku.length>100||typeof p.name!=='string'||p.name.length>300||typeof p.published!=='boolean')throw new AuthClientError('INVALID_RESPONSE');return {id:p.id,sku:p.sku,name:p.name,published:p.published,publicationIssues:issues(p.publicationIssues,publicationLabels),deliveryIssues:issues(p.deliveryIssues,deliveryLabels)};});
+ if(new Set(items.map(p=>p.id)).size!==items.length)throw new AuthClientError('INVALID_RESPONSE');
+ return {total:r.total,publishedCount:r.publishedCount,warehouseCount:r.warehouseCount,catalogOnly:r.catalogOnly,ycpConfigured:r.ycpConfigured,items,nextOffset:r.nextOffset};
+}
+export function createReadinessClient(base:string,fetcher:typeof fetch=fetch){const request=createStoreRequest(base,fetcher);return {async get(offset=0){const r=parseReadiness(await request('readiness?offset='+offset,'GET'));if(r.nextOffset!==null&&r.nextOffset!==offset+r.items.length)throw new AuthClientError('INVALID_RESPONSE');return r;}};}

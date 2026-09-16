@@ -5,6 +5,10 @@ export type ProductCategory = "hair" | "body" | "face" | "sets";
 export const badgeOptions = ["", "Бестселлер", "Новинка", "Выбор ASAYA", "Лимитированная серия"] as const;
 
 export type Product = {
+  placement?: {catalogOrder:number;bestsellerOrder:number|null;newOrder:number|null};
+  safety?: string;
+  setKind?: 'none' | 'combo' | 'gift';
+  sku?: string;
   id: string;
   name: string;
   description: string;

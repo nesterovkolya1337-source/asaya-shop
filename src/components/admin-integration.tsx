@@ -1,0 +1,18 @@
+"use client";
+import {useEffect,useRef,useState} from 'react';
+import {assetPath} from '@/lib/asset-path';
+import {AuthClientError} from '@/lib/auth-client';
+import {createIntegrationClient,type Issue} from '@/lib/admin-integration-client';
+import {reviewSignalLabels} from '@/lib/admin-orders-client';
+import styles from './server-admin.module.css';
+import {AdminReadiness} from './admin-readiness';
+const api=createIntegrationClient(assetPath('/api/admin/v1'));
+const states:Record<string,string>={pending:'Ожидает обработки',processing:'Обрабатывается',done:'Событие обработано',failed:'Повторы исчерпаны'};
+export function AdminIntegration({onExpired,onOrder}:{onExpired:()=>void;onOrder:(id:string)=>void}){
+ const [filter,setFilter]=useState('all'),[cursor,setCursor]=useState<string|undefined>(),[revision,setRevision]=useState(0),[data,setData]=useState<{items:Issue[];nextCursor:string|null}|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState('');
+ const expired=useRef(onExpired);useEffect(()=>{expired.current=onExpired;},[onExpired]);
+ useEffect(()=>{let active=true;async function load(){setLoading(true);setError('');try{const r=await api.list(filter,cursor);if(active)setData(r);}catch(e){if(active){setData(null);setError('Не удалось загрузить события. Попробуйте обновить список.');if(e instanceof AuthClientError&&['UNAUTHENTICATED','FORBIDDEN'].includes(e.code))expired.current();}}finally{if(active)setLoading(false);}}void load();return()=>{active=false;};},[filter,cursor,revision]);
+ return <section aria-label="Проверка интеграции"><h2>Проверка интеграции</h2><p>Ошибки обработки и события, требующие сверки. Обработанное событие не означает, что деньги возвращены или вопрос решён.</p><div className={styles.actions}><label>Показать<select value={filter} onChange={e=>{setFilter(e.target.value);setCursor(undefined);}}><option value="all">Все события для проверки</option><option value="errors">Ошибки обработки</option><option value="review">Сверка заказов и оплаты</option></select></label><button disabled={loading} onClick={()=>{setCursor(undefined);setRevision(v=>v+1);}}>Обновить</button></div>
+ {loading?<p role="status">Загружаем события…</p>:error?<p role="alert">{error}</p>:data&&<>{!data.items.length?<p>По выбранному фильтру событий нет.</p>:data.items.map(i=><article key={i.id} className={styles.notice}><h3>{i.order?'Заказ '+i.order.number:'Событие без связанного заказа'}</h3><p>{reviewSignalLabels[i.kind]??'Не удалось обработать событие интеграции. Требуется техническая проверка.'}</p><p>{new Date(i.createdAt).toLocaleString('ru-RU')} · {states[i.status]} · Попыток обработки: {i.attempts}</p>{i.error&&<p>Ошибка обработчика. Подробности нужно проверить по журналу.</p>}{i.nextAttemptAt&&<p>Повтор разрешён с {new Date(i.nextAttemptAt).toLocaleString('ru-RU')}, если запущен соответствующий обработчик.</p>}{i.attempts===0&&<p>Обработка ещё не запускалась.</p>}<details><summary>Данные для технической проверки</summary><p>Событие: {i.id}</p>{i.ycp&&<><p>Сессия Яндекса: {i.ycp.sessionId}</p><p>Заказ Яндекса: {i.ycp.orderId??'Ещё не присвоен'}</p></>}</details>{i.order&&<button onClick={()=>onOrder(i.order!.id)}>Открыть заказ</button>}</article>)}<div className={styles.actions}>{cursor&&<button onClick={()=>setCursor(undefined)}>К началу</button>}{data.nextCursor&&<button onClick={()=>setCursor(data.nextCursor!)}>Следующие события</button>}</div></>}
+ <AdminReadiness onExpired={onExpired}/></section>;
+}

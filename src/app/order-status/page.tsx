@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { OrderStatusView } from "@/components/order-status-view";
-import { SiteChrome, SiteFooter } from "@/components/site-shell";
-import styles from "./order-status.module.css";
+import {LegacyPageRedirect} from '@/components/legacy-page-redirect';
 
-export const metadata: Metadata = { title: "Статус заказа" };
+export const metadata: Metadata = { title: "Мои заказы", robots:{index:false,follow:false} };
 
 export default function OrderStatusPage() {
-  return <><div className={styles.page}><SiteChrome /><OrderStatusView /></div><SiteFooter /></>;
+  return <LegacyPageRedirect href="/account/#orders" label="Мои заказы"/>;
 }

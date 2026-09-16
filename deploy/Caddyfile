@@ -1,6 +1,36 @@
 asaya.ru, www.asaya.ru {
   encode zstd gzip
 
+  @www host www.asaya.ru
+  redir @www https://asaya.ru{uri} 308
+
+  # OAuth authorization codes are one-use credentials. Keep the callback out of
+  # access logs and prevent its URL becoming a referrer on the following page.
+  @customer_oauth path /api/store/v1/auth/yandex/*
+  log_skip @customer_oauth
+  header @customer_oauth >Referrer-Policy "no-referrer"
+
+  @cdek_callback path /api/integrations/cdek/*
+  log_skip @cdek_callback
+  handle @cdek_callback {
+    header X-Robots-Tag "noindex, nofollow"
+    reverse_proxy asaya-catalog-api:3100
+  }
+
+  @admin_entry path /admin /admin/ /manage
+  redir @admin_entry /manage/admin/ 302
+
+  handle /manage/* {
+    header X-Robots-Tag "noindex, nofollow"
+    reverse_proxy asaya-catalog-web:3200
+  }
+
+  @catalog_api path /api/admin/v1/* /api/store/v1/*
+  handle @catalog_api {
+    header X-Robots-Tag "noindex, nofollow"
+    reverse_proxy asaya-catalog-api:3100
+  }
+
   handle /_asaya_deploy/* {
     reverse_proxy unix//run/asaya-deploy/deploy.sock
   }

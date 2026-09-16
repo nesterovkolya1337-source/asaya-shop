@@ -416,8 +416,8 @@
   fill: currentColor;
 }
 
-.socials a:first-child svg path:last-child,
-.socials a:last-child svg {
+.socials svg[data-social="telegram"] path:last-child,
+.socials svg[data-social="outline"] {
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
@@ -425,7 +425,7 @@
   stroke-width: 1.7;
 }
 
-.socials a:first-child svg path:last-child {
+.socials svg[data-social="telegram"] path:last-child {
   stroke: white;
   stroke-width: 1.2;
 }
@@ -457,7 +457,7 @@
 }
 
 .footerNav > div {
-  display: grid;
+    display: grid;
   align-content: start;
   gap: 8px;
 }
@@ -536,7 +536,16 @@
   gap: 12px 22px;
 }
 
-.legalRow a:hover {
+.cookieSettings {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.legalRow a:hover,
+.cookieSettings:hover {
   color: var(--color-foreground);
 }
 
@@ -860,3 +869,12 @@
     grid-template-columns: 1fr;
   }
 }
+.brandLogo{max-height:36px;object-fit:contain}
+.brandLogo.customLogo,.header.overlayPlacement .customLogo{filter:none}
+.footerWordmark{max-height:256px;object-fit:contain}
+.footerSocialRow{overflow-wrap:anywhere}
+
+.footerNav:only-child{grid-column:1/-1}
+.footerNav>div,.legalRow{overflow-wrap:anywhere}
+.navigationStart .navigationSide{min-width:0}
+.navigationStart .navigationSide>a{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}

@@ -1,14 +1,24 @@
 .hero {
   position: relative;
-  min-height: clamp(420px, 49vw, 595px);
+  aspect-ratio: 1160 / 595;
   overflow: hidden;
   margin-top: 10px;
   border-radius: var(--radius-card);
   background: var(--color-light-gray);
 }
 
+.heroFrame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  aspect-ratio: 1160 / 595;
+  transform: translate(-50%, -50%);
+}
+
 .heroImage {
-  object-fit: cover;
+  max-width: none;
+  object-fit: fill;
 }
 
 .heroShade {
@@ -27,8 +37,9 @@
   font-size: clamp(42px, 4.5vw, 54px);
   font-style: italic;
   font-weight: 500;
-  line-height: .94;
-  letter-spacing: -.035em;
+  font-family: var(--font-involve);
+  line-height: 1.04;
+  letter-spacing: 0;
   text-align: center;
   white-space: pre-line;
 }
@@ -150,14 +161,15 @@
 }
 
 .grid {
+  composes: layout from "./product-layout.module.css";
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(var(--product-columns), minmax(0, 1fr));
+  gap: var(--product-gap);
 }
 
 .editorialCard {
+  composes: cardFrame from "./product-layout.module.css";
   position: relative;
-  height: 500px;
   overflow: hidden;
   border-radius: var(--radius-card);
   background: var(--color-light-gray);
@@ -236,17 +248,16 @@
   border: 0;
 }
 
-@media (max-width: 900px) {
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-}
-
 @media (max-width: 620px) {
   .hero {
-    min-height: 430px;
+    height: 430px;
+    aspect-ratio: auto;
     margin-top: 8px;
+  }
+
+  .heroFrame {
+    width: auto;
+    height: 100%;
   }
 
   .hero h1 {
@@ -270,7 +281,7 @@
 
   .utilityControls {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .filters {
@@ -290,14 +301,6 @@
 
   .sort select {
     flex: 1;
-  }
-
-  .grid {
-    gap: 8px;
-  }
-
-  .editorialCard {
-    height: 340px;
   }
 
   .editorialCopy {

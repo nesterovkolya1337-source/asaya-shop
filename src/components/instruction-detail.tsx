@@ -37,10 +37,10 @@ function getSafety(productId: string, category: string) {
 }
 
 export function InstructionDetail({ productId }: { productId: string }) {
-  const { products } = useShop();
+  const { products, catalogOnly, catalogStatus } = useShop();
   const product = products.find((item) => item.id === productId);
-  if (!product) return null;
-  const safety = getSafety(product.id, product.category);
+  if (!product) return <main><p>{catalogStatus==='loading'?'Загружаем инструкцию…':'Инструкция пока недоступна.'}</p><Link href="/catalog">В каталог</Link></main>;
+  const safety = product.safety!==undefined?{title:'Указания для этого продукта',text:product.safety}:getSafety(product.id, product.category);
   const isHairSpray = product.id === "multi-hair-spray" || product.id === "hair-cream-spray";
   const stepImages = isHairSpray
     ? [product.gallery[1], product.gallery[3], product.gallery[2], product.image].filter(Boolean)
@@ -58,20 +58,21 @@ export function InstructionDetail({ productId }: { productId: string }) {
           <Link href={`/product/${product.id}`}>Перейти к товару</Link>
         </div>
       </section>
-      <section className={`${styles.steps} ${isHairSpray ? styles.visualSteps : ""}`} aria-labelledby="steps-title">
+      {product.instruction.steps.length>0&&<section className={`${styles.steps} ${isHairSpray ? styles.visualSteps : ""}`} aria-labelledby="steps-title">
         <header><p>Пошагово</p><h2 id="steps-title">Как использовать</h2></header>
         <ol>{product.instruction.steps.map((step, index) => <li key={step}>{stepImages[index] && <figure className={index === 3 ? styles.packshotStep : undefined}><Image alt={`${product.name}: шаг ${index + 1}`} fill sizes="(max-width: 760px) 74vw, 260px" src={stepImages[index]} /></figure>}<span>{step}</span></li>)}</ol>
       </section>
-      <section className={styles.safety} aria-labelledby="safety-title">
+      }
+      {safety.text&&<section className={styles.safety} aria-labelledby="safety-title">
         <span aria-hidden="true">!</span>
         <div><p>Важно перед применением</p><h2 id="safety-title">{safety.title}</h2><small>{safety.text}</small></div>
-      </section>
+      </section>}
       <section className={styles.notes}>
-        <article><p>Сколько средства</p><h2>{product.instruction.amount}</h2></article>
-        <article><p>Полезный приём</p><h2>{product.instruction.tip}</h2></article>
-        <article className={styles.aroma}><p>Аромат</p><h2>{product.aroma}</h2></article>
+        {product.instruction.amount&&<article><p>Сколько средства</p><h2>{product.instruction.amount}</h2></article>}
+        {product.instruction.tip&&<article><p>Полезный приём</p><h2>{product.instruction.tip}</h2></article>}
+        {product.aroma&&<article className={styles.aroma}><p>Аромат</p><h2>{product.aroma}</h2></article>}
       </section>
-      <p className={styles.disclaimer}>Инструкция составлена по официальной карточке продукта. Если указания на вашей упаковке отличаются, следуйте маркировке конкретного флакона.</p>
+      <p className={styles.disclaimer}>{catalogOnly?'Информация из карточки товара. Сверяйте указания с маркировкой на упаковке.':'Инструкция составлена по официальной карточке продукта. Если указания на вашей упаковке отличаются, следуйте маркировке конкретного флакона.'}</p>
     </main>
   );
 }

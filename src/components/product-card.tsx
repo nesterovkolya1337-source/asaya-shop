@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
 import { formatPrice, type Product } from "@/lib/store-data";
+import { getMetrika } from '@/lib/metrika';
 import styles from "./product-card.module.css";
 
 export function ProductCard({ product }: { product: Product }) {
-  const { addToCart, cart, changeQuantity, favorites, toggleFavorite } = useShop();
+  const { addToCart, cart, changeQuantity, favorites, toggleFavorite, catalogOnly, checkoutEnabled } = useShop();
   const isFavorite = favorites.includes(product.id);
   const quantity = cart[product.id] ?? 0;
 
@@ -18,7 +19,7 @@ export function ProductCard({ product }: { product: Product }) {
         {product.badge && <span>{product.badge}</span>}
         {product.discount > 0 && <span className={styles.discountBadge}>−{product.discount}%</span>}
       </div>
-      <Link className={styles.visualLink} href={`/product/${product.id}`} aria-label={`Открыть ${product.name}`}>
+      <Link className={styles.visualLink} href={`/product/${product.id}`} aria-label={`Открыть ${product.name}`} onClick={() => getMetrika()?.productClick(product)}>
         <Image
           alt={product.name}
           className={styles.image}
@@ -56,11 +57,11 @@ export function ProductCard({ product }: { product: Product }) {
       ) : (
         <button
           className={styles.addButton}
-          disabled={!product.stock}
+          disabled={(catalogOnly && !checkoutEnabled) || !product.stock}
           onClick={() => addToCart(product.id)}
           type="button"
         >
-          {!product.stock ? "Нет в наличии" : "В корзину"}
+          {catalogOnly && !checkoutEnabled ? "Продажи пока закрыты" : !product.stock ? "Нет в наличии" : "В корзину"}
         </button>
       )}
     </article>

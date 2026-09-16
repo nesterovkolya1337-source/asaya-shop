@@ -1,8 +1,10 @@
 "use client";
 
+import {placedProducts} from '@/lib/product-placement';
 import Link from "next/link";
 import { type MouseEvent, type PointerEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ProductCard } from "@/components/product-card";
+import { CarouselArrow } from "@/components/carousel-arrow";
 import { useShop } from "@/components/shop-provider";
 import styles from "./product-rail.module.css";
 
@@ -15,7 +17,7 @@ export function ProductRail() {
   const [railState, setRailState] = useState({ hasOverflow: false, canScrollLeft: false, canScrollRight: false });
   const railRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ active: false, moved: false, pointerId: -1, startX: 0, startY: 0, scrollLeft: 0 });
-  const visibleProducts = products.filter((product) => product.active && product.badge === state);
+  const visibleProducts = placedProducts(products,state==='Бестселлер'?'bestsellers':'new');
   const updateRailState = useCallback(() => {
     const rail = railRef.current;
     if (!rail) return;
@@ -90,8 +92,8 @@ export function ProductRail() {
         </div>
         <div className={styles.headingActions}>
           {railState.hasOverflow && <div className={styles.railControls} aria-label="Навигация по товарам">
-            <button aria-label="Предыдущие товары" disabled={!railState.canScrollLeft} onClick={() => scrollRail(-1)} type="button">←</button>
-            <button aria-label="Следующие товары" disabled={!railState.canScrollRight} onClick={() => scrollRail(1)} type="button">→</button>
+            <button aria-label="Предыдущие товары" disabled={!railState.canScrollLeft} onClick={() => scrollRail(-1)} type="button"><CarouselArrow previous /></button>
+            <button aria-label="Следующие товары" disabled={!railState.canScrollRight} onClick={() => scrollRail(1)} type="button"><CarouselArrow /></button>
           </div>}
           <Link href="/catalog">
             <span>Весь каталог</span>

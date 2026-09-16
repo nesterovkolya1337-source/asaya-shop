@@ -1,0 +1,17 @@
+FROM node:22-alpine AS build
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1 NEXT_PUBLIC_CATALOG_SOURCE=backend NEXT_PUBLIC_YANDEX_BUTTON=false NEXT_PUBLIC_BASE_PATH=/manage ASAYA_BACKEND_ORIGIN=http://asaya-catalog-api:3100
+COPY package*.json ./
+RUN npm ci
+COPY next.config.ts tsconfig.json ./
+COPY src ./src
+COPY backend/src/site-content-format.ts backend/src/site-content-defaults.ts backend/src/site-legal-defaults.ts backend/src/image-crop.ts backend/src/customer-phone.ts ./backend/src/
+COPY public ./public
+RUN npm run build
+
+FROM node:22-alpine
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 NEXT_PUBLIC_CATALOG_SOURCE=backend NEXT_PUBLIC_YANDEX_BUTTON=false NEXT_PUBLIC_BASE_PATH=/manage ASAYA_BACKEND_ORIGIN=http://asaya-catalog-api:3100
+COPY --from=build --chown=node:node /app /app
+USER node
+CMD ["node", "node_modules/next/dist/bin/next", "start", "-H", "0.0.0.0", "-p", "3200"]

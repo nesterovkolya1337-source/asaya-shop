@@ -933,3 +933,12 @@
     justify-items: start;
   }
 }
+.adminHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 28px 0;
+  border-bottom: 1px solid #deded8;
+}

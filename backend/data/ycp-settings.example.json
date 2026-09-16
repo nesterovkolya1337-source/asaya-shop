@@ -1,0 +1,8 @@
+{
+  "accountId": "REPLACE_WITH_YCP_ACCOUNT_ID",
+  "environment": "test",
+  "publicOrigin": "https://asaya.ru",
+  "priceUnit": null,
+  "vat": null,
+  "warehouses": []
+}

@@ -6,9 +6,12 @@ import { type FormEvent, useMemo, useState } from "react";
 import { useShop } from "@/components/shop-provider";
 import { formatPrice } from "@/lib/store-data";
 import styles from "./checkout-view.module.css";
+import {ServerCheckoutView} from './server-checkout-view';
+import {ServerCartView} from './server-cart-view';
+import {FREE_CDEK_PICKUP_FROM_RUB} from '@/lib/store-policy';
 
 export function CheckoutView() {
-  const { cart, clearCart, products, promoCode } = useShop();
+  const { cart, clearCart, products, promoCode, catalogOnly, checkoutEnabled, yandexCheckoutEnabled } = useShop();
   const [placed, setPlaced] = useState(false);
   const cartProducts = products.filter((product) => cart[product.id]);
   const itemCount = cartProducts.reduce((sum, product) => sum + cart[product.id], 0);
@@ -18,7 +21,7 @@ export function CheckoutView() {
   const promoDiscount = promoCode === "ASAYA10" ? Math.round(subtotal * 0.1) : 0;
   const productDiscount = oldSubtotal - subtotal;
   const total = subtotal + deliveryPrice - promoDiscount;
-  const hasFreeDelivery = total >= 1500;
+  const hasFreeDelivery = total >= FREE_CDEK_PICKUP_FROM_RUB;
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -26,6 +29,10 @@ export function CheckoutView() {
     setPlaced(true);
     clearCart();
   }
+
+  if (yandexCheckoutEnabled) return <ServerCartView />;
+  if (catalogOnly && checkoutEnabled) return <ServerCheckoutView />;
+  if (catalogOnly) return <main className={styles.success}><h1>Оформление заказов пока закрыто</h1><p>Сейчас доступен просмотр каталога.</p><Link href="/catalog">Вернуться в каталог</Link></main>;
 
   if (placed) {
     return (
@@ -79,7 +86,7 @@ export function CheckoutView() {
               <small>После подключения службы здесь появятся доступные ПВЗ, курьерские интервалы, точный срок и стоимость. Мы не показываем выдуманные варианты доставки до ответа логистического сервиса.</small>
               <button onClick={(event) => { event.preventDefault(); document.getElementById("pickup")?.focus(); }} type="button">Указать желаемый ПВЗ</button>
               <label className={styles.pickupField} htmlFor="pickup">Пункт выдачи<input id="pickup" placeholder="Адрес, метро или район" required={cartProducts.length > 0} /></label>
-              <em>{hasFreeDelivery ? "Доставка будет бесплатной: сумма товаров от 1 500 ₽" : "Точную стоимость рассчитает служба доставки"}</em>
+              <em>{hasFreeDelivery ? "Стандартная доставка в ПВЗ СДЭК бесплатная: сумма товаров от 1 000 ₽" : "Точную стоимость рассчитает служба доставки"}</em>
             </div>
           </section>
 

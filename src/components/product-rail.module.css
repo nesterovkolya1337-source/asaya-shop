@@ -56,13 +56,22 @@
   width: 34px;
   height: 34px;
   place-items: center;
-  border: 1px solid var(--color-foreground);
+  padding: 0;
+  border: 0;
   border-radius: 50%;
   color: white;
   background: var(--color-foreground);
   cursor: pointer;
   font-size: 17px;
   transition: color 160ms ease, background 160ms ease, opacity 160ms ease, transform 160ms ease;
+}
+
+.railControls button > img {
+  filter: brightness(0) invert(1);
+}
+
+.railControls button:is(:hover, :focus-visible):not(:disabled) > img {
+  filter: none;
 }
 
 .railControls button:hover:not(:disabled),
@@ -94,7 +103,7 @@
   background: transparent;
   cursor: pointer;
   font-size: 13px;
-  font-family: var(--font-gramatika);
+  font-family: var(--font-involve);
   transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
@@ -110,11 +119,12 @@
 }
 
 .rail {
+  composes: layout from "./product-layout.module.css";
   display: grid;
-  grid-auto-columns: calc((100% - 20px) / 3);
+  grid-auto-columns: var(--product-rail-column);
   grid-template-columns: none;
   grid-auto-flow: column;
-  gap: 10px;
+  gap: var(--product-gap);
   padding-bottom: 2px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
@@ -141,12 +151,6 @@
 .dragging {
   cursor: grabbing;
   scroll-snap-type: none;
-}
-
-@media (max-width: 900px) {
-  .rail {
-    grid-auto-columns: minmax(245px, 47%);
-  }
 }
 
 @media (max-width: 620px) {
@@ -181,10 +185,8 @@
   }
 
   .rail {
-    grid-auto-columns: minmax(168px, 47vw);
     grid-template-columns: none;
     grid-auto-flow: column;
-    gap: 8px;
     margin-inline: -10px;
     padding-inline: 10px;
     overflow-x: auto;

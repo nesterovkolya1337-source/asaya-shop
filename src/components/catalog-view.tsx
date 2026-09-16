@@ -1,5 +1,6 @@
 "use client";
 
+import {placedProducts} from '@/lib/product-placement';
 import Image from "next/image";
 import Link from "next/link";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -17,36 +18,38 @@ const filters: { id: Filter; label: string }[] = [
   ...Object.entries(categoryLabels).map(([id, label]) => ({ id: id as ProductCategory, label })),
 ];
 
-const presentations: Record<Filter, { title: string; image: string; position: string }> = {
+// Original Figma crops, relative to a 1160 × 595 frame. Keep the image and
+// frame proportions together instead of re-cropping every photo with cover.
+const presentations: Record<Filter, { title: string; image: string; crop: { width: string; height: string; left: string; top: string } }> = {
   all: {
     title: "Уходовая косметика\nASAYA",
     image: assetPath("/images/figma/catalog-heroes/all.webp"),
-    position: "50% 38%",
+    crop: { width: "123.32%", height: "360.17%", left: "-15.9%", top: "-117.22%" },
   },
   hair: {
     title: "Уходовая косметика\nдля волос",
     image: assetPath("/images/figma/catalog-heroes/hair.webp"),
-    position: "50% 43%",
+    crop: { width: "171.8%", height: "418.69%", left: "-19.07%", top: "-67.18%" },
   },
   body: {
     title: "Уходовая косметика\nдля тела",
     image: assetPath("/images/figma/catalog-heroes/body.webp"),
-    position: "50% 48%",
+    crop: { width: "156.27%", height: "444.14%", left: "-17.98%", top: "-124.41%" },
   },
   face: {
     title: "Уходовая косметика\nдля лица",
     image: assetPath("/images/figma/catalog-heroes/face.webp"),
-    position: "50% 37%",
+    crop: { width: "104.27%", height: "253.68%", left: "-2.14%", top: "-49.49%" },
   },
   sets: {
     title: "Наборы уходовой\nкосметики",
     image: assetPath("/images/figma/catalog-heroes/sets.webp"),
-    position: "50% 43%",
+    crop: { width: "122.67%", height: "299.17%", left: "-11.33%", top: "-194.05%" },
   },
 };
 
 export function CatalogView({ initialFilter = "all" }: { initialFilter?: Filter }) {
-  const { products } = useShop();
+  const { products, catalogOnly, catalogStatus } = useShop();
   const [filter, setFilter] = useState<Filter>(initialFilter);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<Sort>("featured");
@@ -58,7 +61,7 @@ export function CatalogView({ initialFilter = "all" }: { initialFilter?: Filter 
     }
   }, []);
 
-  const visibleProducts = useMemo(() => products.filter((product) => {
+  const visibleProducts = useMemo(() => placedProducts(products,'catalog').filter((product) => {
     const matchesFilter = filter === "all" ? product.category !== "sets" : product.category === filter;
     const matchesSearch = product.name.toLocaleLowerCase("ru").includes(search.trim().toLocaleLowerCase("ru"));
     return product.active && matchesFilter && matchesSearch;
@@ -75,15 +78,17 @@ export function CatalogView({ initialFilter = "all" }: { initialFilter?: Filter 
   return (
     <main>
       <section className={styles.hero} aria-labelledby="catalog-title">
+        <div className={styles.heroFrame}>
         <Image
           alt=""
           className={styles.heroImage}
           fill
           priority
-          sizes="(max-width: 1280px) 100vw, 1200px"
+          sizes="(max-width: 620px) 1440px, 200vw"
           src={presentation.image}
-          style={{ objectPosition: presentation.position }}
+          style={presentation.crop}
         />
+        </div>
         <div className={styles.heroShade} />
         <h1 id="catalog-title">{presentation.title}</h1>
       </section>
@@ -143,8 +148,8 @@ export function CatalogView({ initialFilter = "all" }: { initialFilter?: Filter 
           </div>
         ) : (
           <div className={styles.empty}>
-            <p>По этому запросу ничего не найдено.</p>
-            <button onClick={() => { setSearch(""); setFilter("all"); }} type="button">Показать все продукты</button>
+            <p>{catalogOnly && !products.length ? (catalogStatus === 'loading' ? 'Загружаем товары…' : catalogStatus === 'error' ? 'Каталог временно недоступен.' : 'Пока нет товаров, доступных для продажи.') : 'По этому запросу ничего не найдено.'}</p>
+            {products.length > 0 && <button onClick={() => { setSearch(""); setFilter("all"); }} type="button">Показать все продукты</button>}
           </div>
         )}
       </section>

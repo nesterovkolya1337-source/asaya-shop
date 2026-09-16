@@ -1,0 +1,67 @@
+name: asaya-catalog
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    env_file: /opt/asaya-catalog/secrets/db.env
+    volumes:
+      - catalog_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/10-asaya.sh:ro
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U asaya_bootstrap -d asaya']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging: &logs
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+  migrate:
+    profiles: [tools]
+    build: {context: ../.., dockerfile: deploy/catalog/Dockerfile.api}
+    image: asaya-catalog-api:20260908-readiness
+    env_file: /opt/asaya-catalog/secrets/migrate.env
+    command: [node, dist/scripts/migrate.js]
+    networks: [database]
+    depends_on:
+      db: {condition: service_healthy}
+    logging: *logs
+  api:
+    build: {context: ../.., dockerfile: deploy/catalog/Dockerfile.api}
+    image: asaya-catalog-api:20260908-readiness
+    init: true
+    restart: unless-stopped
+    env_file: /opt/asaya-catalog/secrets/api.env
+    networks:
+      database:
+      proxy:
+        aliases: [asaya-catalog-api]
+    depends_on:
+      db: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3100/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    logging: *logs
+  web:
+    build: {context: ../.., dockerfile: deploy/catalog/Dockerfile.web}
+    image: asaya-catalog-web:20260908-cdek-copy
+    init: true
+    restart: unless-stopped
+    networks:
+      proxy:
+        aliases: [asaya-catalog-web]
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3200/manage/admin/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    logging: *logs
+networks:
+  database: {internal: true}
+  proxy: {external: true, name: asaya-shop_asaya}
+volumes:
+  catalog_data:

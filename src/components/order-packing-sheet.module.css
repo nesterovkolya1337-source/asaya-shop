@@ -1,0 +1,13 @@
+.dialog{box-sizing:border-box;width:min(850px,95vw);max-height:90vh;margin:auto;padding:28px;border:1px solid #aaa;border-radius:16px;background:white;color:#222;overflow:auto;font:16px/1.5 Arial,sans-serif}
+.dialog::backdrop{background:#0008}
+.actions{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap}
+.actions button{font:inherit;border:1px solid #777;border-radius:10px;padding:10px 16px;background:white;color:#222;cursor:pointer}
+.actions button:focus-visible{outline:3px solid #806b4d;outline-offset:3px}
+.dialog h2{font-size:28px;margin:10px 0}.dialog h3{font-size:18px;margin:16px 0 4px}.dialog p{margin:8px 0;overflow-wrap:anywhere}
+.dialog table{border-collapse:collapse;width:100%;margin:24px 0;table-layout:fixed}.dialog caption{text-align:left;font-weight:bold;margin-bottom:8px}.dialog th,.dialog td{border:1px solid #888;padding:10px;text-align:left;overflow-wrap:anywhere}.dialog th:first-child{width:60%}.dialog td span{font-size:13px}.dialog footer{margin-top:28px}.dialog footer p:last-child{font-size:13px}.warning{border:2px solid #444;padding:12px;font-weight:bold}
+@media(max-width:600px){.dialog{padding:16px;font-size:14px}.dialog th:first-child{width:48%}.dialog th,.dialog td{padding:6px}}
+@media print{
+ :global(body):has(.dialog) > :not(.dialog){display:none!important}
+ .dialog{position:static!important;display:block!important;width:100%;max-width:none;max-height:none;overflow:visible;margin:0;padding:0;border:0;border-radius:0;font-size:11pt;box-shadow:none}
+ .dialog::backdrop{display:none}.actions{display:none}.dialog thead{display:table-header-group}.dialog tr,.dialog footer{break-inside:avoid}.dialog h2,.dialog h3,.dialog caption{break-after:avoid}
+}

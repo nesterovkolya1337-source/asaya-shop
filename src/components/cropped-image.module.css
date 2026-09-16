@@ -1,0 +1,18 @@
+.cropped {
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none;
+  object-fit: cover !important;
+  object-position: var(--crop-x) var(--crop-y) !important;
+  transform: scale(var(--crop-zoom)) !important;
+  transform-origin: var(--crop-x) var(--crop-y) !important;
+}
+@media (max-width: 620px) {
+  .cropped {
+    object-position: var(--crop-mobile-x) var(--crop-mobile-y) !important;
+    transform: scale(var(--crop-mobile-zoom)) !important;
+    transform-origin: var(--crop-mobile-x) var(--crop-mobile-y) !important;
+  }
+}

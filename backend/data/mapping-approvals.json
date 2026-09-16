@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "scope": "storefront_to_catalog_mapping_only",
+  "approvedOn": "2026-09-06",
+  "evidence": "User confirmed the 11 displayed storefront-to-article mappings after clarification of SKU meaning.",
+  "sourceSha256": "349f6e2bcdfa1592837fa11d3b90aeaef8de59d05a9a2e73c6d9f6c73f0eacb7",
+  "databaseApplied": false,
+  "saleActivationApproved": false,
+  "pricesApproved": false,
+  "inventoryApproved": false,
+  "mappings": [
+    {
+      "slug": "multi-hair-spray",
+      "sku": "1S-HK-02",
+      "status": "approved"
+    },
+    {
+      "slug": "coconut-body-cream",
+      "sku": "1S-BA-03",
+      "status": "approved"
+    },
+    {
+      "slug": "hair-balm",
+      "sku": "1S-HK-03",
+      "status": "approved"
+    },
+    {
+      "slug": "restoring-face-cream",
+      "sku": "1S-FL-01",
+      "status": "approved"
+    },
+    {
+      "slug": "hair-shampoo",
+      "sku": "1S-HK-01",
+      "status": "approved"
+    },
+    {
+      "slug": "kiwi-shower-gel",
+      "sku": "1S-BA-02-04",
+      "status": "approved"
+    },
+    {
+      "slug": "hair-mask",
+      "sku": "1S-HK-05",
+      "status": "approved"
+    },
+    {
+      "slug": "guava-shower-gel",
+      "sku": "1S-BA-02-02",
+      "status": "approved"
+    },
+    {
+      "slug": "hair-cream-spray",
+      "sku": "1S-HK-04",
+      "status": "approved"
+    },
+    {
+      "slug": "yuzu-shower-gel",
+      "sku": "1S-BA-02-05",
+      "status": "approved"
+    },
+    {
+      "slug": "lifting-face-cream",
+      "sku": "1S-FL-02",
+      "status": "approved"
+    }
+  ],
+  "pendingSlugs": [
+    "avocado-body-cream",
+    "strawberry-shower-gel",
+    "blueberry-shower-gel",
+    "hair-duo-set",
+    "hair-trio-spray-set",
+    "hair-trio-mask-set"
+  ]
+}

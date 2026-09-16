@@ -1,0 +1,32 @@
+/* Shared by the catalogue and both product rails. TZ v3: 370 x 500,
+   three cards with 24.75px gaps in a 1159.5px desktop container. */
+.layout {
+  --product-columns: 3;
+  --product-gap: 24.75px;
+  --product-rail-column: calc((100% - 2 * var(--product-gap)) / 3);
+}
+
+.cardFrame {
+  width: 100%;
+  aspect-ratio: 370 / 500;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    --product-columns: 2;
+    --product-gap: 12px;
+    --product-rail-column: minmax(245px, 47%);
+  }
+}
+
+@media (max-width: 620px) {
+  .layout {
+    --product-gap: 8px;
+    --product-rail-column: minmax(168px, 47vw);
+  }
+
+  .cardFrame {
+    aspect-ratio: auto;
+    min-height: 340px;
+  }
+}

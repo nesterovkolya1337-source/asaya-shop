@@ -18,7 +18,7 @@
   text-transform: uppercase;
 }
 
-.heading h1 {
+.heading :is(h1, h2) {
   max-width: 980px;
   margin-top: 10px;
   font-size: clamp(58px, 9vw, 116px);
@@ -123,7 +123,7 @@
     padding: 48px 4px;
   }
 
-  .heading h1 {
+  .heading :is(h1, h2) {
     font-size: 54px;
   }
 

@@ -1,9 +1,19 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { getMetrika } from '@/lib/metrika';
 import { defaultProducts, type Product } from "@/lib/store-data";
+import { readBackendCatalog } from "@/lib/backend-catalog";
+import { assetPath } from "@/lib/asset-path";
+import {repeatOrderPlan} from '@/lib/repeat-order';
 
 type ShopState = {
+  yandexCheckoutEnabled: boolean;
+  checkoutEnabled: boolean;
+  catalogOnly: boolean;
+  catalogStatus: "demo" | "loading" | "ready" | "error";
+  reloadCatalog: () => void;
+  repeatOrder: (lines:Array<{sku:string;name_snapshot:string;quantity:number}>,signal:AbortSignal)=>Promise<{added:number;skipped:string[]}>;
   products: Product[];
   cart: Record<string, number>;
   favorites: string[];
@@ -25,6 +35,10 @@ type ShopState = {
 };
 
 const STORAGE_KEY = "asaya-shop-state-v3";
+const CATALOG_ONLY = process.env.NEXT_PUBLIC_CATALOG_SOURCE === "backend";
+const YANDEX_CHECKOUT_ENABLED = CATALOG_ONLY && process.env.NEXT_PUBLIC_YANDEX_BUTTON === 'true';
+const CHECKOUT_ENABLED = CATALOG_ONLY && (YANDEX_CHECKOUT_ENABLED || process.env.NEXT_PUBLIC_TEST_CHECKOUT === 'true');
+const CART_KEY='asaya-backend-cart-v1';
 const LEGACY_STORAGE_KEYS = ["asaya-shop-state-v2", "asaya-shop-state-v1"];
 const ShopContext = createContext<ShopState | null>(null);
 
@@ -68,15 +82,32 @@ type SavedShopState = Partial<Pick<ShopState, "cart" | "favorites" | "promoCode"
 };
 
 export function ShopProvider({ children }: { children: React.ReactNode }) {
-  const [products, setProducts] = useState(defaultProducts);
+  const [products, setProducts] = useState<Product[]>(CATALOG_ONLY ? [] : defaultProducts);
+  const [catalogStatus, setCatalogStatus] = useState<ShopState["catalogStatus"]>(CATALOG_ONLY ? "loading" : "demo");
+  const [catalogAttempt, setCatalogAttempt] = useState(0);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
   const [promoCode, setPromoCode] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [ready, setReady] = useState(false);
+  const [cartReady,setCartReady]=useState(false);
+  const analyticsCart = useRef<Record<string, number> | null>(null);
+
+  useEffect(()=>{
+    if(!CHECKOUT_ENABLED)return;
+    let saved:Record<string,number>={};
+    try {
+      const raw:unknown=JSON.parse(sessionStorage.getItem(CART_KEY)??'{}');
+      if(raw&&typeof raw==='object'&&!Array.isArray(raw)) saved=Object.fromEntries(Object.entries(raw).filter(([id,n])=>
+        /^[a-z0-9][a-z0-9-]{0,79}$/.test(id)&&Number.isInteger(n)&&n>0&&n<=100).slice(0,50));
+    } catch { /* Invalid saved carts start empty. */ }
+    queueMicrotask(()=>{setCart(saved);setCartReady(true);});
+  },[]);
+  useEffect(()=>{if(CHECKOUT_ENABLED&&cartReady){try{sessionStorage.setItem(CART_KEY,JSON.stringify(cart));}catch{/* In-memory cart still works. */}}},[cart,cartReady]);
 
   useEffect(() => {
+    if (CATALOG_ONLY) return;
     let savedState: SavedShopState = {};
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
@@ -112,7 +143,23 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!CATALOG_ONLY) return;
+    const controller = new AbortController();
+    let disposed = false;
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    fetch(assetPath('/api/store/v1/products'), { signal: controller.signal, cache: 'no-store', credentials: 'omit' })
+      .then(async response => {
+        if (!response.ok) throw new Error('CATALOG_UNAVAILABLE');
+        return readBackendCatalog(await response.json(), defaultProducts);
+      })
+      .then(items => { if (!disposed) { setProducts(items); setCatalogStatus('ready'); } })
+      .catch(() => { if (!disposed) { setProducts([]); setCatalogStatus('error'); } })
+      .finally(() => clearTimeout(timeout));
+    return () => { disposed = true; clearTimeout(timeout); controller.abort(); };
+  }, [catalogAttempt]);
+
+  useEffect(() => {
+    if (!ready || CATALOG_ONLY) return;
     const productOverrides = Object.fromEntries(products.map((product) => [product.id, {
       name: product.name,
       description: product.description,
@@ -135,14 +182,36 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ cart, favorites, promoCode, productOverrides, reviews, userEmail }));
   }, [cart, favorites, products, promoCode, ready, reviews, userEmail]);
 
-  const productsWithReviews = useMemo(() => products.map((product) => {
+  const productsWithReviews = useMemo(() => CATALOG_ONLY ? products : products.map((product) => {
     const approved = reviews.filter((review) => review.productId === product.id && review.status === "approved");
     if (!approved.length) return { ...product, reviews: 0, rating: 5 };
     const rating = approved.reduce((sum, review) => sum + review.rating, 0) / approved.length;
     return { ...product, reviews: approved.length, rating };
   }), [products, reviews]);
 
+  useEffect(() => {
+    if (!CATALOG_ONLY || !cartReady || catalogStatus !== 'ready') return;
+    const before = analyticsCart.current;
+    analyticsCart.current = cart;
+    // Hydration/restoration establishes a baseline, not an add-to-cart event.
+    if (before) getMetrika()?.cartChanged(before, cart, productsWithReviews);
+  }, [cart, cartReady, catalogStatus, productsWithReviews]);
+
   const value = useMemo<ShopState>(() => ({
+    checkoutEnabled: CHECKOUT_ENABLED,
+    yandexCheckoutEnabled: YANDEX_CHECKOUT_ENABLED,
+    catalogOnly: CATALOG_ONLY,
+    catalogStatus,
+    reloadCatalog: () => { setProducts([]); setCatalogStatus('loading'); setCatalogAttempt(current => current + 1); },
+    repeatOrder: async (lines,signal)=>{
+      if(!CHECKOUT_ENABLED)throw Error('Оформление заказов пока недоступно.');
+      const response=await fetch(assetPath('/api/store/v1/products'),{cache:'no-store',credentials:'omit',signal:AbortSignal.any([signal,AbortSignal.timeout(8000)])});
+      if(!response.ok)throw Error('Не удалось проверить актуальные цены и остатки. Повторите позже.');
+      const fresh=readBackendCatalog(await response.json(),[]),result=repeatOrderPlan(lines,fresh,cart);
+      signal.throwIfAborted();
+      setProducts(fresh);setCatalogStatus('ready');setCart(current=>repeatOrderPlan(lines,fresh,current).cart);
+      return {added:result.added,skipped:result.skipped};
+    },
     products: productsWithReviews,
     cart,
     favorites,
@@ -150,32 +219,36 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     userEmail,
     reviews,
     cartCount: Object.values(cart).reduce((sum, quantity) => sum + quantity, 0),
-    addToCart: (id) => setCart((current) => ({ ...current, [id]: (current[id] ?? 0) + 1 })),
-    addReview: (review) => setReviews((current) => [{
+    addToCart: (id) => { if (!CATALOG_ONLY || CHECKOUT_ENABLED) setCart((current) => {
+      const product=productsWithReviews.find(item=>item.id===id);
+      if(!product?.active||product.stock<1)return current;
+      return {...current,[id]:Math.min((current[id]??0)+1,product.stock,100)};
+    }); },
+    addReview: (review) => { if (!CATALOG_ONLY) setReviews((current) => [{
       ...review,
       id: `review-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       createdAt: new Date().toISOString(),
       status: "pending",
-    }, ...current]),
+    }, ...current]); },
     changeQuantity: (id, quantity) => setCart((current) => {
       const next = { ...current };
       if (quantity <= 0) delete next[id];
-      else next[id] = quantity;
+      else {const product=productsWithReviews.find(item=>item.id===id);if(product?.active&&Number.isInteger(quantity))next[id]=Math.min(quantity,product.stock,100);}
       return next;
     }),
     clearCart: () => { setCart({}); setPromoCode(""); },
-    login: (email) => setUserEmail(email.trim().toLocaleLowerCase("ru")),
+    login: (email) => { if (!CATALOG_ONLY) setUserEmail(email.trim().toLocaleLowerCase("ru")); },
     logout: () => setUserEmail(null),
     moderateReview: (id, status) => setReviews((current) => current.map((review) => review.id === id ? { ...review, status } : review)),
-    resetProducts: () => setProducts(defaultProducts),
+    resetProducts: () => { if (!CATALOG_ONLY) setProducts(defaultProducts); },
     setPromoCode,
     toggleFavorite: (id) => setFavorites((current) => current.includes(id)
       ? current.filter((favorite) => favorite !== id)
       : [...current, id]),
-    updateProduct: (id, updates) => setProducts((current) => current.map((product) => (
+    updateProduct: (id, updates) => { if (!CATALOG_ONLY) setProducts((current) => current.map((product) => (
       product.id === id ? { ...product, ...updates } : product
-    ))),
-  }), [cart, favorites, productsWithReviews, promoCode, reviews, userEmail]);
+    ))); },
+  }), [cart, favorites, productsWithReviews, promoCode, reviews, userEmail, catalogStatus]);
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;
 }

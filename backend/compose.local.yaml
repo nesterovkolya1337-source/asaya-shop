@@ -1,0 +1,21 @@
+# Optional local database. This file is not included in the storefront deployment.
+name: asaya-backend-local
+services:
+  postgres:
+    image: postgres:18.4
+    environment:
+      POSTGRES_DB: asaya_local
+      POSTGRES_USER: asaya_local
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a local database password}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - local_pg:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U asaya_local -d asaya_local"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  local_pg:

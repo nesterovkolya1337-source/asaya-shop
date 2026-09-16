@@ -6,10 +6,17 @@
 
 .hero {
   position: relative;
-  min-height: clamp(560px, 50vw, 760px);
+  min-height: clamp(560px, 54vw, 780px);
   overflow: hidden;
   border-radius: var(--radius-card);
   background: #202020;
+}
+
+@media (min-width: 901px) {
+  .hero {
+    min-height: 0;
+    aspect-ratio: 1159 / 594.9448;
+  }
 }
 
 .hero::after,
@@ -32,7 +39,9 @@
 }
 
 .heroImage {
-  object-position: center 12%;
+  /* Page 2 / 148:1237: source height 243.57%, offset -35.35%.
+     object-position = 35.35 / (243.57 - 100). Same source image. */
+  object-position: center 24.6235%;
 }
 
 .heroCopy {
@@ -40,37 +49,42 @@
   z-index: 3;
   bottom: 55px;
   left: 55px;
-  max-width: 360px;
+  max-width: min(520px, 48%);
   color: white;
 }
 
 .heroCopy > p {
   margin-bottom: 14px;
   font-size: 12px;
-  letter-spacing: .08em;
+  letter-spacing: .04em;
+  line-height: 1.5;
   text-transform: uppercase;
 }
 
-.heroCopy h1 {
+.heroCopy :is(h1, h2) {
   max-width: 520px;
-  font-size: clamp(40px, 4.5vw, 54px);
-  font-weight: 500;
-  line-height: 0.93;
-  letter-spacing: -0.04em;
+  font-size: clamp(48px, 5.2vw, 72px);
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: 0;
   font-family: var(--font-gramatika);
 }
 
 .lightButton,
-.darkButton {
+.darkButton,
+.aboutButton {
   display: inline-flex;
-  min-height: 31px;
+  min-height: 44px;
+  min-width: 190px;
   align-items: center;
   justify-content: center;
   margin-top: 30px;
-  padding: 0 16px;
+  padding: 10px 24px;
   border-radius: 999px;
   font-size: 16px;
-  line-height: 1;
+  font-family: var(--font-involve);
+  font-weight: 500;
+  line-height: 22px;
   transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
@@ -135,6 +149,13 @@
   pointer-events: none;
 }
 
+@media (min-width: 901px) {
+  .manifesto {
+    min-height: 0;
+    aspect-ratio: 1160 / 550;
+  }
+}
+
 .manifestoImage {
   object-fit: cover;
   object-position: center 41%;
@@ -144,7 +165,7 @@
   position: relative;
   z-index: 2;
   display: grid;
-  max-width: 850px;
+  max-width: 1000px;
   justify-items: center;
   color: white;
   text-align: center;
@@ -152,10 +173,11 @@
 
 .manifesto h2 {
   font-family: var(--font-gramatika);
-  font-size: clamp(42px, 5.2vw, 72px);
-  font-weight: 500;
-  line-height: .95;
-  letter-spacing: -.045em;
+  font-size: clamp(42px, 5.5vw, 76px);
+  font-weight: 400;
+  line-height: 1.06;
+  letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .manifesto p {
@@ -167,14 +189,7 @@
 }
 
 .aboutButton {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  margin-top: 34px;
-  padding: 0 22px;
   border: 1px solid white;
-  border-radius: 999px;
   color: white;
   background: transparent;
   white-space: nowrap;
@@ -278,10 +293,11 @@
 }
 
 .careCopy h2 {
+  font-family: var(--font-gramatika);
   font-size: clamp(38px, 5vw, 64px);
   font-weight: 500;
-  line-height: 0.95;
-  letter-spacing: -0.04em;
+  line-height: 1.04;
+  letter-spacing: 0;
 }
 
 .careCopy p {
@@ -340,7 +356,8 @@
   width: 42px;
   height: 42px;
   place-items: center;
-  border: 1px solid var(--color-foreground);
+  padding: 0;
+  border: 0;
   border-radius: 50%;
   background: transparent;
   cursor: pointer;
@@ -366,8 +383,10 @@
 }
 
 @media (max-width: 900px) {
-  .heroImage {
-    object-position: center 14%;
+  .heroCopy {
+    bottom: 40px;
+    left: 32px;
+    max-width: 58%;
   }
 
   .categoryGrid {
@@ -404,23 +423,28 @@
   }
 
   .heroImage {
-    object-position: 55% center;
+    object-position: 55% top;
+  }
+
+  .hero::after {
+    background: linear-gradient(180deg, transparent 42%, rgb(0 0 0 / 65%) 100%);
   }
 
   .heroCopy {
+    max-width: none;
     right: 20px;
     bottom: 32px;
     left: 20px;
   }
 
-  .heroCopy h1 {
-    max-width: 300px;
-    font-size: clamp(38px, 10vw, 48px);
+  .heroCopy :is(h1, h2) {
+    max-width: 340px;
+    font-size: clamp(38px, 10.5vw, 48px);
   }
 
   .lightButton,
-  .darkButton {
-    min-height: 38px;
+  .darkButton,
+  .aboutButton {
     padding-inline: 20px;
     font-size: 14px;
   }
@@ -433,6 +457,10 @@
   .manifesto h2,
   .manifesto p {
     width: 100%;
+  }
+
+  .manifesto h2 {
+    font-size: clamp(32px, 8.8vw, 46px);
   }
 
   .aboutButton {

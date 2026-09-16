@@ -1,0 +1,17 @@
+.contents{display:contents}.previewBlock{position:relative;cursor:pointer}.previewBlock:hover{outline:2px dashed #9365cc;outline-offset:-2px}.previewBlock[data-selected=true]{outline:3px solid #7651aa;outline-offset:-3px}.previewBlock::before{position:absolute;top:6px;right:6px;z-index:8;background:#7651aa;color:#fff;font:12px Arial,sans-serif;padding:5px 9px;border-radius:5px;content:attr(data-label);pointer-events:none;opacity:0}.previewBlock:hover::before,.previewBlock[data-selected=true]::before{opacity:1}.text{white-space:pre-line}.emptyImage{position:absolute;inset:0;background:#e9e5ef;display:grid;place-items:center;color:#635b71;font:16px Arial,sans-serif}.infoLink{display:inline-block;margin-top:12px;text-decoration:underline}.fallbackHeading{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.documentNotice{display:grid;max-width:850px;gap:8px;margin:40px 0;padding:24px;border-radius:var(--radius-card);background:var(--color-pink);line-height:1.45}
+.documentSections{display:grid;gap:8px;margin:40px 0}
+.documentSection{display:grid;grid-template-columns:50px 1fr 1fr;gap:20px;padding:26px;border-radius:var(--radius-card);background:var(--color-light-gray)}
+.documentSection>span{color:var(--color-gray)}.documentSection h2{font-size:22px;font-weight:500}.documentSection p{color:#666;line-height:1.45}
+@media(max-width:700px){.documentSection{grid-template-columns:34px 1fr}.documentSection>div{grid-column:2}}
+.legalSections{max-width:900px;line-height:1.65;overflow-wrap:anywhere}
+.legalSections h2{font-size:clamp(23px,3vw,32px);font-weight:500;line-height:1.25;margin-bottom:20px}
+.legalSections p,.legalSections ul{margin:0 0 16px}
+.legalSections ul{padding-left:24px;list-style:disc}
+.legalSections li{margin:8px 0}
+.legalTable{max-width:900px;margin:20px 0 48px;overflow-wrap:anywhere}
+.legalTable table{width:100%;border-collapse:collapse;font-size:15px;line-height:1.5;text-align:left}
+.legalTable th,.legalTable td{padding:14px;border:1px solid #dedede;vertical-align:top;white-space:pre-line}
+.legalTable thead{background:var(--color-light-gray)}
+.legalTable tbody th{width:32%;font-weight:500}
+@media(max-width:700px){.legalTable th,.legalTable td{padding:10px;font-size:13px}.legalTable tbody th{width:36%}}

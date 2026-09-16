@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SiteChrome } from "@/components/site-shell";
 import { integrationReadiness, orderStatuses } from "@/lib/commerce-contract";
 import { ProductEditor } from "./product-editor";
 import styles from "./admin.module.css";
+import {ServerAdmin} from '@/components/server-admin';
 
 export const metadata: Metadata = {
-  title: "Кабинет менеджера",
+  title: "Управление магазином",
   robots: { index: false, follow: false },
 };
 
 export default function AdminPage() {
+  if(process.env.NEXT_PUBLIC_CATALOG_SOURCE==='backend')return <ServerAdmin/>;
   const sections = [
     ["01", "Дашборд", "Продажи, заказы, средний чек и остатки"],
     ["02", "Товары", "Цена, скидка, статус, остаток, фото и характеристики"],
@@ -28,7 +29,7 @@ export default function AdminPage() {
 
   return (
     <div className={styles.page}>
-      <SiteChrome />
+      <header className={styles.adminHeader}><strong>ASAYA — управление магазином</strong><Link href="/catalog">Открыть витрину</Link></header>
       <main>
         <section className={styles.locked}>
           <span className={styles.lockIcon} aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>

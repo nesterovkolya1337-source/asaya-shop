@@ -1,84 +1,17 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { SiteChrome, SiteFooter } from "@/components/site-shell";
-import { companyData } from "@/lib/company-data";
-import styles from "./legal.module.css";
-
-const documents = {
-  privacy: {
-    title: "Политика конфиденциальности",
-    sections: [
-      { title: "Кто является оператором данных", text: `Оператор — ${companyData.fullName}, ИНН ${companyData.inn}, ОГРН ${companyData.ogrn}. Адрес: ${companyData.legalAddress}.` },
-      { title: "Какие данные и для чего обрабатываются", text: "Имя, телефон, электронная почта, адрес доставки, состав и история заказа используются для оформления и исполнения заказа, связи с покупателем и обработки обращений." },
-      { title: "Сроки хранения и способы защиты", text: "Данные хранятся не дольше, чем этого требуют цели обработки, договор и применимые требования законодательства. Доступ к ним должен предоставляться только уполномоченным сотрудникам и подключённым исполнителям." },
-      { title: "Передача сервисам оплаты и доставки", text: "После подключения оплаты и доставки им будут передаваться только данные, необходимые для платежа и исполнения заказа. Перечень выбранных сервисов будет указан перед запуском продаж." },
-      { title: "Права пользователя и контакты оператора", text: `Запросить сведения, исправление или удаление данных, а также отозвать согласие можно по адресу ${companyData.legalEmail}.` },
-    ],
-  },
-  "personal-data": {
-    title: "Согласие на обработку персональных данных",
-    sections: [
-      { title: "Перечень данных", text: "Пользователь разрешает обрабатывать данные, которые самостоятельно указывает в формах сайта: имя, телефон, электронную почту, адрес доставки, комментарий и сведения о заказе." },
-      { title: "Цели обработки", text: "Оформление, подтверждение и доставка заказа, возврат, ответы службы заботы, ведение личного кабинета и выполнение обязанностей продавца." },
-      { title: "Действия с данными", text: "Сбор, запись, систематизация, хранение, уточнение, использование, передача выбранным платёжным и логистическим исполнителям, блокирование и удаление." },
-      { title: "Срок действия согласия", text: "Согласие действует до достижения целей обработки либо до его отзыва, если более длительное хранение не требуется по закону." },
-      { title: "Порядок отзыва согласия", text: `Отзыв можно направить на ${companyData.legalEmail}. В обращении нужно указать данные, позволяющие найти ранее оставленную заявку или заказ.` },
-    ],
-  },
-  offer: {
-    title: "Публичная оферта",
-    sections: [
-      { title: "Сведения о продавце", text: `${companyData.fullName}\nИНН/КПП: ${companyData.inn}/${companyData.kpp} · ОГРН: ${companyData.ogrn}\nАдрес: ${companyData.legalAddress}\nEmail: ${companyData.legalEmail}` },
-      { title: "Предмет и момент заключения договора", text: "Сайт показывает ассортимент и условия покупки. Договор розничной купли-продажи считается заключённым после подтверждения заказа продавцом и оплаты выбранным способом." },
-      { title: "Цена, оплата и подтверждение заказа", text: "Цена товара, скидка, стоимость доставки и итоговая сумма показываются при оформлении. Оплата станет доступна после подключения платёжного провайдера; реквизиты банковской карты сайт ASAYA хранить не будет." },
-      { title: "Доставка и получение", text: "Доступные способы, пункт выдачи, стоимость и ориентировочный срок определяются для указанного покупателем адреса и показываются до подтверждения заказа." },
-      { title: "Возврат, претензии и ответственность", text: `По вопросам повреждения, несоответствия заказа и возврата нужно обратиться в службу заботы по адресу ${companyData.supportEmail}, сохранив товар, упаковку и подтверждение покупки.` },
-    ],
-  },
-  cookies: {
-    title: "Использование файлов cookie",
-    sections: [
-      { title: "Необходимые cookie", text: "Используются для работы корзины, избранного, выбранных настроек и основных функций сайта." },
-      { title: "Настройки и предпочтения", text: "Сайт может запоминать выбранные товары, согласие на cookie и другие настройки, чтобы не вводить их повторно." },
-      { title: "Аналитика", text: "Необязательная аналитика может быть подключена только после выбора конкретного сервиса и обновления этой страницы." },
-      { title: "Сроки хранения", text: "Срок зависит от назначения cookie. Сеансовые данные удаляются после завершения сеанса, постоянные — по истечении установленного срока или при очистке браузера." },
-      { title: "Как изменить выбор", text: "Cookie можно удалить или ограничить в настройках браузера. Отключение необходимых cookie может нарушить работу корзины и личного кабинета." },
-    ],
-  },
-} as const;
-
-type LegalSlug = keyof typeof documents;
-type LegalPageProps = { params: Promise<{ slug: string }> };
-
-export const dynamicParams = false;
-export function generateStaticParams() { return Object.keys(documents).map((slug) => ({ slug })); }
-
-export async function generateMetadata({ params }: LegalPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const document = documents[slug as LegalSlug];
-  return { title: document?.title ?? "Документ", robots: { index: false, follow: false } };
+import {notFound} from "next/navigation";
+import {SitePageContent} from "@/components/site-page-content";
+import {sitePageDefaults} from "@/lib/site-content-client";
+const legalSlugs=['privacy','personal-data','offer'] as const;
+type LegalSlug=typeof legalSlugs[number];
+type Props={params:Promise<{slug:string}>};
+export const dynamicParams=false;
+export function generateStaticParams(){return legalSlugs.map(slug=>({slug}));}
+export async function generateMetadata({params}:Props):Promise<Metadata>{
+ const {slug}=await params;
+ return {title:legalSlugs.includes(slug as LegalSlug)?sitePageDefaults[slug as LegalSlug].blocks[0].values.title:'Документ',robots:{index:false,follow:false}};
 }
-
-export default async function LegalPage({ params }: LegalPageProps) {
-  const { slug } = await params;
-  const document = documents[slug as LegalSlug];
-  if (!document) notFound();
-
-  return (
-    <>
-      <div className={styles.page}>
-        <SiteChrome />
-        <main>
-          <header><p>ASAYA / Документы</p><h1>{document.title}</h1></header>
-          <aside><strong>Реквизиты продавца добавлены</strong><span>Раздел заполнен по карточке компании. Перед запуском реальных заказов текст необходимо сверить с фактической схемой оплаты, доставки и обработки данных и передать на юридическую проверку.</span></aside>
-          <section>
-            {document.sections.map((section, index) => <article key={section.title}><span>0{index + 1}</span><h2>{section.title}</h2><p>{section.text}</p></article>)}
-          </section>
-          <Link href="/support">Задать вопрос службе заботы</Link>
-        </main>
-      </div>
-      <SiteFooter />
-    </>
-  );
+export default async function LegalPage({params}:Props){
+ const {slug}=await params;if(!legalSlugs.includes(slug as LegalSlug))notFound();
+ return <SitePageContent id={slug as LegalSlug}/>;
 }

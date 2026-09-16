@@ -1,10 +1,12 @@
 "use client";
+import { CarouselArrow } from "@/components/carousel-arrow";
 
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, type FormEvent, type MouseEvent, type PointerEvent, useRef, useState } from "react";
 import { ProductCard } from "@/components/product-card";
+import { YandexBuyButton } from "@/components/yandex-buy-button";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
 import { categoryLabels, formatPrice } from "@/lib/store-data";
@@ -20,7 +22,7 @@ function fileToDataUrl(file: File) {
 }
 
 export function ProductView({ productId }: { productId: string }) {
-  const { addReview, addToCart, cart, changeQuantity, favorites, products, reviews, toggleFavorite, userEmail } = useShop();
+  const { addReview, addToCart, cart, changeQuantity, favorites, products, reviews, toggleFavorite, userEmail, catalogOnly, catalogStatus, checkoutEnabled } = useShop();
   const router = useRouter();
   const [activeImage, setActiveImage] = useState(0);
   const [reviewRating, setReviewRating] = useState(5);
@@ -35,7 +37,7 @@ export function ProductView({ productId }: { productId: string }) {
   if (!product) {
     return (
       <main className={styles.notFound}>
-        <p>Товар не найден</p>
+        <p>{catalogStatus === 'loading' ? 'Загружаем товар…' : catalogStatus === 'error' ? 'Не удалось загрузить товар.' : catalogOnly ? 'Товар пока недоступен для продажи.' : 'Товар не найден'}</p>
         <h1>Вернёмся к каталогу?</h1>
         <Link href="/catalog">Смотреть все продукты</Link>
       </main>
@@ -47,7 +49,7 @@ export function ProductView({ productId }: { productId: string }) {
   const approvedReviews = reviews.filter((review) => review.productId === product.id && review.status === "approved");
   const pendingReview = reviews.find((review) => review.productId === product.id && review.email === userEmail && review.status === "pending");
   const recommendations = product.recommendations.map((id) => products.find((item) => item.id === id)).filter((item) => item?.active && item.id !== product.id).filter((item): item is NonNullable<typeof item> => Boolean(item));
-  const gallery = product.gallery.length ? product.gallery : [product.image];
+  const gallery = [...new Set([product.image, ...product.gallery].filter(Boolean))];
   const hasReviews = product.reviews > 0;
   const ratingRows = [5, 4, 3, 2, 1];
   const buyNow = () => {
@@ -185,13 +187,14 @@ export function ProductView({ productId }: { productId: string }) {
                 <button aria-label={`Увеличить количество ${product.name}`} disabled={quantity >= product.stock} onClick={() => changeQuantity(product.id, quantity + 1)} type="button">+</button>
               </div>
             ) : (
-              <button className={styles.addButton} disabled={!product.stock} onClick={() => addToCart(product.id)} type="button">
-                {product.stock ? "Добавить в корзину" : "Нет в наличии"}
+              <button className={styles.addButton} disabled={(catalogOnly && !checkoutEnabled) || !product.stock} onClick={() => addToCart(product.id)} type="button">
+                {catalogOnly && !checkoutEnabled ? "Продажи пока закрыты" : product.stock ? "Добавить в корзину" : "Нет в наличии"}
               </button>
             )}
             {quantity > 0 && <Link className={styles.checkoutLink} href="/checkout">Перейти к оформлению</Link>}
           </div>
 
+          <YandexBuyButton sku={product.sku} stock={product.stock} quantity={quantity || 1} />
           <ul className={styles.features}>
             {product.features.map((feature) => <li key={feature}>{feature}</li>)}
           </ul>
@@ -212,7 +215,7 @@ export function ProductView({ productId }: { productId: string }) {
             </details>
             <details>
               <summary>Доставка и оплата</summary>
-              <p>Для заказов от 1 500 ₽ доставка будет бесплатной. Доступные ПВЗ, курьер, стоимость и срок появятся после подключения Ozon Доставки и СДЭК.</p>
+              <p>Доставляем по России в ПВЗ СДЭК. При заказе от 1 000 ₽ стандартную доставку оплачивает ASAYA. Стоимость и срок для выбранного пункта выдачи уточняются при оформлении.</p>
             </details>
           </div>
         </div>
@@ -241,10 +244,10 @@ export function ProductView({ productId }: { productId: string }) {
           {userEmail ? (
             <>
               <h3>{pendingReview ? "Ваш отзыв уже на проверке" : "Поделитесь впечатлением"}</h3>
-              {!pendingReview && <form className={styles.reviewForm} onSubmit={submitReview}>
+              {!pendingReview && <form className={`${styles.reviewForm} ym-hide-content ym-disable-submit`} onSubmit={submitReview}>
                 <fieldset><legend>Оценка</legend><div>{[1, 2, 3, 4, 5].map((rating) => <button aria-label={`${rating} из 5`} aria-pressed={rating <= reviewRating} className={rating <= reviewRating ? styles.activeStar : ""} key={rating} onClick={() => setReviewRating(rating)} type="button">★</button>)}</div></fieldset>
-                <label>Ваш отзыв<textarea minLength={10} onChange={(event) => setReviewText(event.target.value)} placeholder="Расскажите о текстуре, аромате и результате" required rows={4} value={reviewText} /></label>
-                <label className={styles.photoInput}>До двух фото<input accept="image/*" multiple onChange={addPhotos} type="file" /></label>
+                <label>Ваш отзыв<textarea className="ym-disable-keys" minLength={10} onChange={(event) => setReviewText(event.target.value)} placeholder="Расскажите о текстуре, аромате и результате" required rows={4} value={reviewText} /></label>
+                <label className={styles.photoInput}>До двух фото<input className="ym-disable-keys" accept="image/*" multiple onChange={addPhotos} type="file" /></label>
                 {reviewPhotos.length > 0 && <div className={styles.reviewPhotos}>{reviewPhotos.map((photo, index) => <span key={`${photo.slice(0, 30)}-${index}`}><Image alt={`Фото к отзыву ${index + 1}`} fill sizes="90px" src={photo} unoptimized /></span>)}</div>}
                 <button className={styles.submitReview} type="submit">Отправить на модерацию</button>
               </form>}
@@ -263,7 +266,7 @@ export function ProductView({ productId }: { productId: string }) {
         </div>
       </section>
 
-      <section className={styles.sensory} aria-labelledby="sensory-title">
+      {product.features.length>0&&<section className={styles.sensory} aria-labelledby="sensory-title">
         <div className={styles.sensoryCopy}>
           <p>Ощущения и результат</p>
           <h2 id="sensory-title">Комфорт на уровне ощущений</h2>
@@ -277,14 +280,15 @@ export function ProductView({ productId }: { productId: string }) {
         </div>
       </section>
 
-      <section className={styles.recommendations} aria-labelledby="recommendations-title">
+      }
+      {recommendations.length>0&&<section className={styles.recommendations} aria-labelledby="recommendations-title">
         <div className={styles.sectionHeading}>
           <h2 id="recommendations-title">Рекомендуем</h2>
           <div className={styles.recommendationActions}>
             <Link href="/catalog">Весь каталог</Link>
             <div className={styles.sliderArrows}>
-              <button aria-label="Предыдущие рекомендации" onClick={() => scrollRecommendations(-1)} type="button">←</button>
-              <button aria-label="Следующие рекомендации" onClick={() => scrollRecommendations(1)} type="button">→</button>
+              <button aria-label="Предыдущие рекомендации" onClick={() => scrollRecommendations(-1)} type="button"><CarouselArrow previous /></button>
+              <button aria-label="Следующие рекомендации" onClick={() => scrollRecommendations(1)} type="button"><CarouselArrow /></button>
             </div>
           </div>
         </div>
@@ -302,10 +306,11 @@ export function ProductView({ productId }: { productId: string }) {
           {recommendations.map((item) => <ProductCard key={item.id} product={item} />)}
         </div>
       </section>
+      }
       <aside className={styles.stickyBuy} aria-label="Быстрая покупка">
         <div><small>{product.name}</small><strong>{formatPrice(product.price)}</strong></div>
-        <button className={styles.buyNow} disabled={!product.stock} onClick={buyNow} type="button">Купить сейчас</button>
-        <button className={styles.stickyCart} disabled={!product.stock || quantity >= product.stock} onClick={() => addToCart(product.id)} type="button">{quantity ? `В корзине · ${quantity}` : "В корзину"}</button>
+        <button className={styles.buyNow} disabled={(catalogOnly && !checkoutEnabled) || !product.stock} onClick={buyNow} type="button">{catalogOnly && !checkoutEnabled ? 'Продажи пока закрыты' : 'Купить сейчас'}</button>
+        <button className={styles.stickyCart} disabled={(catalogOnly && !checkoutEnabled) || !product.stock || quantity >= product.stock} onClick={() => addToCart(product.id)} type="button">{quantity ? `В корзине · ${quantity}` : "В корзину"}</button>
       </aside>
     </main>
   );

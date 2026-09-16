@@ -6,11 +6,13 @@ import { type FormEvent, useMemo, useState } from "react";
 import { useShop } from "@/components/shop-provider";
 import { formatPrice } from "@/lib/store-data";
 import styles from "./cart-view.module.css";
+import {ServerCartView} from './server-cart-view';
+import {FREE_CDEK_PICKUP_FROM_RUB} from '@/lib/store-policy';
 
-const FREE_DELIVERY = 1500;
+const FREE_DELIVERY = FREE_CDEK_PICKUP_FROM_RUB;
 
 export function CartView() {
-  const { addToCart, cart, changeQuantity, clearCart, products, promoCode, setPromoCode } = useShop();
+  const { addToCart, cart, changeQuantity, clearCart, products, promoCode, setPromoCode, catalogOnly } = useShop();
   const [promo, setPromo] = useState("");
   const promoApplied = promoCode === "ASAYA10";
   const cartProducts = products.filter((product) => cart[product.id] && product.active);
@@ -34,6 +36,7 @@ export function CartView() {
     setPromoCode(promo.trim().toUpperCase() === "ASAYA10" ? "ASAYA10" : "");
   }
 
+  if (catalogOnly) return <ServerCartView />;
   if (!cartProducts.length) {
     return (
       <main className={styles.main}>

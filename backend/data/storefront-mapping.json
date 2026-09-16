@@ -1,0 +1,19 @@
+[
+ {"slug":"avocado-body-cream","candidateSku":"1S-BA-01","confidence":"medium","reason":"Авокадо на сайте, Киви в учёте; требуется подтверждение"},
+ {"slug":"multi-hair-spray","candidateSku":"1S-HK-02","confidence":"high","reason":"Термозащитный спрей 200 мл"},
+ {"slug":"strawberry-shower-gel","candidateSku":"1S-BA-02-01","confidence":"low","reason":"Клубничный йогурт против Маршмелоу"},
+ {"slug":"coconut-body-cream","candidateSku":"1S-BA-03","confidence":"high","reason":"Кокос 300 мл"},
+ {"slug":"hair-balm","candidateSku":"1S-HK-03","confidence":"high","reason":"Бальзам 300 мл"},
+ {"slug":"restoring-face-cream","candidateSku":"1S-FL-01","confidence":"high","reason":"Восстанавливающий крем 50 мл"},
+ {"slug":"hair-shampoo","candidateSku":"1S-HK-01","confidence":"high","reason":"Шампунь 300 мл"},
+ {"slug":"kiwi-shower-gel","candidateSku":"1S-BA-02-04","confidence":"high","reason":"Киви 500 мл"},
+ {"slug":"hair-mask","candidateSku":"1S-HK-05","confidence":"high","reason":"Маска 300 мл"},
+ {"slug":"guava-shower-gel","candidateSku":"1S-BA-02-02","confidence":"high","reason":"Гуава 500 мл"},
+ {"slug":"hair-cream-spray","candidateSku":"1S-HK-04","confidence":"high","reason":"Спрей-маска 200 мл"},
+ {"slug":"yuzu-shower-gel","candidateSku":"1S-BA-02-05","confidence":"high","reason":"Юдзу 500 мл"},
+ {"slug":"lifting-face-cream","candidateSku":"1S-FL-02","confidence":"high","reason":"Лифтинг-крем 50 мл"},
+ {"slug":"blueberry-shower-gel","candidateSku":"1S-BA-02-03","confidence":"medium","reason":"Голубика против Черники"},
+ {"slug":"hair-duo-set","candidateSku":"2D-HK-02","confidence":"medium","reason":"Есть подарочный вариант 2D-HK-02-01"},
+ {"slug":"hair-trio-spray-set","candidateSku":"3D-HK-01","confidence":"medium","reason":"Уточнить тип спрея и подарочную упаковку"},
+ {"slug":"hair-trio-mask-set","candidateSku":null,"confidence":"unmatched","reason":"Набор с бальзамом отсутствует; 3D-HK-02 содержит маску вместо бальзама"}
+]
