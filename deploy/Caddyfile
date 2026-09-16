@@ -4,6 +4,16 @@ asaya.ru, www.asaya.ru {
   @www host www.asaya.ru
   redir @www https://asaya.ru{uri} 308
 
+  # Legal aliases must redirect at the HTTP layer, including the static build.
+  @legacy_cookies path /legal/cookies /legal/cookies/
+  redir @legacy_cookies /legal/privacy/ 301
+  @legacy_offer path /offer /offer/
+  redir @legacy_offer /legal/offer/ 301
+  @legacy_payment path /payment /payment/
+  redir @legacy_payment /delivery/ 301
+  @legacy_return path /return /return/
+  redir @legacy_return /returns/ 301
+
   # OAuth authorization codes are one-use credentials. Keep the callback out of
   # access logs and prevent its URL becoming a referrer on the following page.
   @customer_oauth path /api/store/v1/auth/yandex/*

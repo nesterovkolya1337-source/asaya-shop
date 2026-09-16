@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
   output: backendCatalog ? undefined : "export",
   ...(backendCatalog ? {async redirects(){return [
     {source:'/legal/cookies/:slash*',destination:'/legal/privacy/',statusCode:301},
+    {source:'/offer',destination:'/legal/offer/',statusCode:301},
+    {source:'/payment',destination:'/delivery/',statusCode:301},
+    {source:'/return',destination:'/returns/',statusCode:301},
     {source:'/order-status/:slash*',destination:'/account/#orders',statusCode:301},
   ];}} : {}),
   ...(backendCatalog ? { async rewrites() { return ['account/profile','content/:page','yandex/checkout-link','yandex/feed.xml','media/:id','products','auth/me','auth/methods','auth/yandex/start','auth/yandex/callback','auth/otp/request','auth/otp/verify','auth/logout','orders','orders/:id','orders/:id/cancel','delivery/quotes','checkouts','checkouts/by-key/:key']

@@ -26,6 +26,7 @@ Older specifications and preview notes are historical, not implementation author
 | CDEK status | `backend/src/cdek-delivery.ts`, `order-tracking.ts`, `cdek-webhook-setup.ts` |
 | Catalog | `backend/src/admin-catalog.ts`, `src/lib/backend-catalog.ts`, `shop-provider.tsx` |
 | Site editor and legal | `backend/src/site-content*.ts`, `site-legal-defaults.ts`, `src/components/admin-site-editor.tsx` |
+| Legal release | `backend/scripts/publish-legal-v10.ts`; explicit plan/apply, see `docs/TASK_2_LEGAL_RELEASE.md` |
 | Analytics | `backend/src/admin-statistics.ts`, `src/components/admin-statistics.tsx` |
 | Tests | `tests/*.test.mjs`, `backend/tests/*.test.ts` |
 

@@ -1,4 +1,5 @@
-// Generated from the user's final documents by work/import-v3-legal.py. Do not paraphrase.
+// Exact legal text verified against specification v10.1, Appendices A-C.
+// Edition: 13 September 2026. Do not paraphrase. See tests/fixtures/legal-v10.1.json.
 // privacy: SHA256 ab0ad0e98e37376c61966d7c431cd66463e89645783dda50855069e8f581a1c9
 // offer: SHA256 c06ac71ee3430ccfd1cef731f14523c83025eee0dd40d4a5efc677fd2f249570
 // personal-data: SHA256 b144e0ac59a92ad8687d292fea3344f0268f7ef5a5134aef07fd7599d338aad7
