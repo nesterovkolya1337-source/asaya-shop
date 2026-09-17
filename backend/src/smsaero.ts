@@ -27,8 +27,8 @@ export function smsAeroFromEnv(env:NodeJS.ProcessEnv){
  }
  const settings=settingsSchema.parse({email:env.SMSAERO_EMAIL,apiKey:env.SMSAERO_API_KEY,sign:env.SMSAERO_SIGN,mode:env.SMSAERO_MODE??'test',timeoutMs:env.SMSAERO_TIMEOUT_MS?Number(env.SMSAERO_TIMEOUT_MS):undefined});
  if(env.NODE_ENV==='production'&&enabled&&settings.mode!=='live')throw new Error('Production customer login requires live SMS delivery');
- if(env.NODE_ENV==='production'&&enabled&&/^sms\s*aero$/i.test(settings.sign))throw new Error('Production SMS requires a registered sender, not the provider test signature');
- if(env.NODE_ENV==='production'&&enabled&&env.SMSAERO_OTP_APPROVED!=='true')throw new Error('Production SMS requires confirmed sender/template and acceptable OTP delivery latency');
+ // v10.1 uses the ordinary SMS API with the sign available to this account.
+ // Do not require buying a branded sender or an operator authorization template.
  return {enabled,settings};
 }
 
@@ -45,7 +45,7 @@ export class SmsAeroSender implements OtpSender {
    const response=await this.request(`https://gate.smsaero.ru/v2/sms/${c.mode==='test'?'testsend':'send'}`,{
     method:'POST',redirect:'error',signal:AbortSignal.timeout(c.timeoutMs),
     headers:{'Authorization':'Basic '+Buffer.from(c.email+':'+c.apiKey).toString('base64'),'Content-Type':'application/json','Accept':'application/json'},
-    body:JSON.stringify({number:phone.slice(1),text:`Код для входа в ASAYA: ${input.code}. Никому его не сообщайте.`,sign:c.sign}),
+    body:JSON.stringify({number:phone.slice(1),text:`Код для входа в личный кабинет ASAYA: ${input.code}`,sign:c.sign}),
    });
    if(!response.ok){await response.body?.cancel();throw new Error('HTTP');}
    const reader=response.body?.getReader();if(!reader)throw new Error('BODY');

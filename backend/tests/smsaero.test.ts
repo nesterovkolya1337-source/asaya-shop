@@ -8,7 +8,7 @@ test('SMS Aero uses documented test endpoint and credentials only in header; ret
  const sender=new SmsAeroSender(settings,async(url,init)=>{
   calls++;assert.equal(url,'https://gate.smsaero.ru/v2/sms/testsend');assert.equal(init?.method,'POST');assert.equal(init?.redirect,'error');
   assert.equal((init?.headers as Record<string,string>).Authorization,'Basic '+Buffer.from(settings.email+':'+settings.apiKey).toString('base64'));
-  assert.deepEqual(JSON.parse(String(init?.body)),{number:'79991234567',text:'Код для входа в ASAYA: 042857. Никому его не сообщайте.',sign:'ASAYA'});
+  assert.deepEqual(JSON.parse(String(init?.body)),{number:'79991234567',text:'Код для входа в личный кабинет ASAYA: 042857',sign:'ASAYA'});
   return Response.json({success:true,data:{id:8123,status:0,text:input.code,number:input.destination,other:'private'}});
  });
  assert.deepEqual(await sender.sendOtp(input),{provider:'smsaero',messageId:'8123',status:'0'});assert.equal(calls,1);
@@ -38,11 +38,11 @@ test('SMS Aero rejects wrong recipients, multiple receipts and terminal or unkno
   await assert.rejects(sender.sendOtp(input),e=>e instanceof Error&&e.message==='OTP_DELIVERY_UNAVAILABLE');assert.equal(requests,1);
  }
 });
-test('customer SMS stays disabled by default, requires complete credentials and approved live delivery in production',()=>{
+test('customer SMS requires complete live credentials but not a paid sender/template or obsolete approval flag',()=>{
  assert.equal(smsAeroFromEnv({}).enabled,false);assert.throws(()=>smsAeroFromEnv({CUSTOMER_SMS_ENABLED:'true'}));
  const env={NODE_ENV:'production',CUSTOMER_SMS_ENABLED:'true',OTP_PROVIDER:'smsaero',SMSAERO_EMAIL:settings.email,SMSAERO_API_KEY:settings.apiKey,SMSAERO_SIGN:'ASAYA'};
- assert.throws(()=>smsAeroFromEnv(env));assert.throws(()=>smsAeroFromEnv({...env,SMSAERO_MODE:'live'}));
- assert.equal(smsAeroFromEnv({...env,SMSAERO_MODE:'live',SMSAERO_OTP_APPROVED:'true'}).enabled,true);
- assert.throws(()=>smsAeroFromEnv({...env,SMSAERO_MODE:'live',SMSAERO_OTP_APPROVED:'true',SMSAERO_SIGN:'SMS Aero'}),/registered sender/);
- assert.throws(()=>smsAeroFromEnv({...env,SMSAERO_MODE:'live',SMSAERO_OTP_APPROVED:'true',SMSAERO_SIGN:''}));
+ assert.throws(()=>smsAeroFromEnv(env));
+ assert.equal(smsAeroFromEnv({...env,SMSAERO_MODE:'live',SMSAERO_SIGN:'SMS Aero'}).enabled,true);
+ assert.equal(smsAeroFromEnv({...env,SMSAERO_MODE:'live',SMSAERO_OTP_APPROVED:'false'}).enabled,true);
+ assert.throws(()=>smsAeroFromEnv({...env,SMSAERO_MODE:'live',SMSAERO_SIGN:''}));
 });

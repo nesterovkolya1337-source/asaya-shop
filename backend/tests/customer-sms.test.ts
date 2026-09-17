@@ -80,3 +80,46 @@ test('production SMS opens only customer auth: secure cookies, origin, CSRF, ord
   assert.equal((await app.inject({url:'/api/store/v1/auth/me',cookies})).statusCode,401);
  }finally{await app.close();}
 });
+
+test('five wrong guesses consume the challenge; concurrent verification creates only one session and stores no plaintext code',async()=>{
+ const sender=new MemorySender(),auth=new AuthService(ctx.db,secret,sender,undefined,{},true);
+ const a=await auth.request('sms','+79991111111','one');const code=sender.messages[0]!.code;
+ const saved=(await ctx.db.pool.query('SELECT code_mac FROM otp_challenges WHERE id=$1',[a.challengeId])).rows[0];
+ assert.match(saved.code_mac,/^[a-f0-9]{64}$/);assert.notEqual(saved.code_mac,code);
+ for(let i=0;i<5;i++)await assert.rejects(auth.verify(a.challengeId,code==='000000'?'111111':'000000','one'),/INVALID_OTP/);
+ assert.ok((await ctx.db.pool.query('SELECT consumed_at FROM otp_challenges WHERE id=$1',[a.challengeId])).rows[0].consumed_at);
+ await assert.rejects(auth.verify(a.challengeId,code,'one'),/INVALID_OTP/);
+ const b=await auth.request('sms','+79992222222','two');
+ const results=await Promise.allSettled([auth.verify(b.challengeId,sender.messages[1]!.code,'two'),auth.verify(b.challengeId,sender.messages[1]!.code,'two')]);
+ assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
+ assert.equal((await ctx.db.pool.query('SELECT 1 FROM auth_sessions')).rowCount,1);
+});
+
+test('ambiguous SMS send is not retried, retains cooldown and invalidates the potentially delivered code',async()=>{
+ let calls=0,code='';const auth=new AuthService(ctx.db,secret,{sendOtp:async input=>{calls++;code=input.code;throw new Error('provider timeout after accepting');}},undefined,{},true);
+ await assert.rejects(auth.request('sms','+79991111111','ip'),/OTP_DELIVERY_UNAVAILABLE/);
+ await assert.rejects(auth.request('sms','+79991111111','other-ip'),/OTP_COOLDOWN/);assert.equal(calls,1);
+ const row=(await ctx.db.pool.query('SELECT * FROM otp_challenges')).rows[0];assert.equal(row.delivery_status,'failed');assert.ok(row.consumed_at);
+ await assert.rejects(auth.verify(row.id,code,'ip'),/INVALID_OTP/);
+ assert.equal((await ctx.db.pool.query('SELECT 1 FROM auth_sessions')).rowCount,0);
+});
+
+test('phone and IP limits cannot be evaded by normalization, another phone, or concurrent requests',async()=>{
+ let now=new Date();const sender=new MemorySender(),auth=new AuthService(ctx.db,secret,sender,()=>now,{sendPerPhonePerHour:1,sendPerIpPerHour:2},true);
+ await auth.request('sms','+79991111111','ip');now=new Date(+now+61000);
+ await assert.rejects(auth.request('sms','8 (999) 111-11-11','another-ip'),/RATE_LIMITED/);
+ const parallel=await Promise.allSettled([auth.request('sms','+79992222222','ip'),auth.request('sms','+79993333333','ip')]);
+ assert.equal(parallel.filter(r=>r.status==='fulfilled').length,1);assert.equal(sender.messages.length,2);
+ assert.ok((await ctx.db.pool.query('SELECT bucket_key FROM rate_limits')).rows.every(r=>!r.bucket_key.includes('7999')));
+});
+
+test('request-code shape is identical for a known profile and a new phone and does not authorize either',async()=>{
+ const user=randomUUID();await ctx.db.pool.query('INSERT INTO users(id) VALUES($1)',[user]);
+ await ctx.db.pool.query("INSERT INTO user_identities(channel,destination,user_id,verified_at) VALUES('sms','+79991111111',$1,now())",[user]);
+ const sender=new MemorySender(),auth=new AuthService(ctx.db,secret,sender,undefined,{},true);
+ const old=await auth.request('sms','+79991111111','ip'),fresh=await auth.request('sms','+79992222222','ip');
+ assert.deepEqual(Object.keys(old).sort(),Object.keys(fresh).sort());
+ assert.deepEqual({...old,challengeId:''},{...fresh,challengeId:''});
+ assert.equal((await ctx.db.pool.query('SELECT 1 FROM auth_sessions')).rowCount,0);
+ assert.equal((await ctx.db.pool.query('SELECT 1 FROM users WHERE NOT disabled')).rowCount,1);
+});

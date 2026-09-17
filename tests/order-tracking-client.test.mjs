@@ -8,3 +8,12 @@ test('customer tracking accepts only known statuses and numeric shipment numbers
  for(const change of [{status:'unknown'},{trackingNumber:'javascript:bad'},{updatedAt:'yesterday'},{history:[{status:'delivered',occurredAt:'wrong'}]}])assert.throws(()=>parseOrderDetail({...order,tracking:{...tracking,...change}}));
  assert.equal(parseOrderSummary({...order,customer_status:'ready_for_pickup'}).customer_status,'ready_for_pickup');assert.throws(()=>parseOrderSummary({...order,customer_status:'untrusted'}));
 });
+
+test('v10.1 statuses and optional delivery details survive parsing without leaking provider data',()=>{
+ for(const status of ['paid','processing','handed_to_delivery','in_transit','ready_for_pickup','delivered','delivery_problem','returning','returned','cancelled']){
+  const tracking={status,label:'PRIVATE',trackingNumber:'1234567890',updatedAt:'2026-09-17T12:00:00Z',lastStatusAt:'2026-09-17T11:00:00Z',pickupPoint:'MSK123',plannedDeliveryDate:'2026-10-01',history:[{status,occurredAt:'2026-09-17T11:00:00Z'}],recipient:{phone:'PRIVATE'}};
+  const parsed=parseOrderDetail({...order,customer_status:status,tracking});
+  assert.equal(parsed.tracking.plannedDeliveryDate,'2026-10-01');assert.equal(parsed.tracking.pickupPoint,'MSK123');assert.ok(!JSON.stringify(parsed).includes('PRIVATE'));
+  for(const change of [{plannedDeliveryDate:'2026-02-30'},{plannedDeliveryDate:'yesterday'},{pickupPoint:12},{lastStatusAt:'bad'}])assert.throws(()=>parseOrderDetail({...order,tracking:{...tracking,...change}}));
+ }
+});

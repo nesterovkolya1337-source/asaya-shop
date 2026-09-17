@@ -64,7 +64,10 @@ export class AuthService {
    const ch=(await tx.query('SELECT * FROM otp_challenges WHERE id=$1 FOR UPDATE',[id])).rows[0];
    if(!ch||ch.consumed_at||ch.delivery_status!=='sent'||ch.attempts>=this.policy.maxAttempts||new Date(ch.expires_at)<=now||this.smsOnly&&ch.channel!=='sms') return null;
    await tx.query('UPDATE otp_challenges SET attempts=attempts+1 WHERE id=$1',[id]);
-   if(!equal(ch.code_mac,mac(this.secret,`${id}:${code}`))) return null;
+   if(!equal(ch.code_mac,mac(this.secret,`${id}:${code}`))) {
+    if(ch.attempts+1>=this.policy.maxAttempts)await tx.query('UPDATE otp_challenges SET consumed_at=$2 WHERE id=$1',[id,now]);
+    return null;
+   }
    await tx.query('UPDATE otp_challenges SET consumed_at=$2 WHERE id=$1',[id,now]);
    await lock(tx,`user:${ch.channel}:${ch.destination}`);
    let identity=(await tx.query('SELECT user_id FROM user_identities WHERE channel=$1 AND destination=$2',[ch.channel,ch.destination])).rows[0];

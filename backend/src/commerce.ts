@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Database,lock,type Tx } from './db.js';
 import { canonical,hash,money,DomainError } from './core.js';
 import {trackingProjection} from './order-tracking.js';
+import {customerDelivery} from './customer-delivery.js';
 import {customerOrderStatus} from './cdek-status.js';
 
 export const cartSchema=z.array(z.object({sku:z.string().min(1).max(100),quantity:z.number().int().min(1).max(100)}).strict()).min(1).max(50);
@@ -123,7 +124,7 @@ export class CommerceService {
   const history=(await this.db.pool.query('SELECT kind,status,occurred_at FROM order_status_history WHERE order_id=$1 ORDER BY occurred_at,id',[id])).rows;
   const {delivery_snapshot:delivery,...summary}=row;
   const tracking=await trackingProjection(this.db,row);
-  return {...summary,...(tracking?{tracking}:{}),delivery:{label:typeof delivery?.label==='string'?delivery.label:'',city:typeof delivery?.address?.city==='string'?delivery.address?.city:'',address:typeof delivery?.address?.address==='string'?delivery.address.address:''},statusHistory:history,
+  return {...summary,...(tracking?{tracking}:{}),delivery:customerDelivery(delivery),statusHistory:history,
    shipment:dispatched?{carrier:dispatched.carrier,trackingNumber:dispatched.tracking_number}:null,subtotal_minor:money(row.subtotal_minor),delivery_minor:money(row.delivery_minor),total_minor:money(row.total_minor),
    canCancel:this.environment!=='production'&&row.status==='draft'&&['pending','failed'].includes(row.payment_status),
    items:items.map(r=>({...r,unit_minor:money(r.unit_minor),line_minor:money(r.line_minor)}))};

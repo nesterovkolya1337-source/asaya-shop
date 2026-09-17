@@ -7,6 +7,12 @@ const summary={id,public_number:'ASAYA-10001',status:'draft',payment_status:'pen
 const detail={...summary,shipment:null,subtotal_minor:50000,delivery_minor:10000,canCancel:true,items:[{sku:'TEST',name_snapshot:'Test saved name',quantity:2,unit_minor:25000,line_minor:50000}]};
 const reply=(body,status=200)=>new Response(JSON.stringify(body),{status});
 
+test('saved Yandex delivery dates work before a CDEK shipment exists and invalid ranges fail closed',()=>{
+ const delivery={label:'СДЭК',city:'Москва',address:'ПВЗ',pickupPoint:'MSK123',plannedStart:'2026-09-19',plannedEnd:'2026-09-21'};
+ assert.deepEqual(parseOrderDetail({...detail,delivery:{...delivery,private:'discard'}}).delivery,delivery);
+ for(const change of [{plannedStart:'2026-02-30'},{plannedEnd:'2026-09-18'},{plannedEnd:undefined},{pickupPoint:22}])assert.throws(()=>parseOrderDetail({...detail,delivery:{...delivery,...change}}));
+});
+
 test('shipment details are validated and arbitrary staff fields are discarded',()=>{
  const shipment={carrier:'Test carrier',trackingNumber:'TRACK-123'};
  assert.deepEqual(parseOrderDetail({...detail,shipment:{...shipment,dispatchedBy:id,secret:'private'},completion:{reason:'private'}}).shipment,shipment);
