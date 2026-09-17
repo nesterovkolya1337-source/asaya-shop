@@ -27,7 +27,7 @@ Older specifications and preview notes are historical, not implementation author
 | Catalog | `backend/src/admin-catalog.ts`, `src/lib/backend-catalog.ts`, `shop-provider.tsx` |
 | Site editor and legal | `backend/src/site-content*.ts`, `site-legal-defaults.ts`, `src/components/admin-site-editor.tsx` |
 | Legal release | `backend/scripts/publish-legal-v10.ts`; explicit plan/apply, see `docs/TASK_2_LEGAL_RELEASE.md` |
-| Analytics | `backend/src/admin-statistics.ts`, `src/components/admin-statistics.tsx` |
+| Analytics | `backend/src/analytics-report.ts`, `product-analytics.ts`, `src/components/admin-analytics.tsx`, `src/lib/product-analytics.ts`; legacy statistics API retained |
 | Tests | `tests/*.test.mjs`, `backend/tests/*.test.ts` |
 
 ## Commands
@@ -52,3 +52,10 @@ See `docs/V10_BASELINE_STATUS.md` before reusing existing code or installers.
 The production commit and migration ledger are not freshly verified: the audit
 SSH connection was rejected due to local key permissions. Existing deployment
 notes and release reports must not be mistaken for current server evidence.
+
+## Task 10 update, 17 September 2026
+
+See `docs/TASK_10_ANALYTICS.md` for AN-01–AN-07 implementation, metric definitions,
+tests and additive migration 027. This analytics update is not deployed and 027
+has only run on disposable test databases. Production publication and the full
+Task 11 reconciliation are separate steps. Catalog prices remain administrator-managed.

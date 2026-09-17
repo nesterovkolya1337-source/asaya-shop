@@ -1,0 +1,5 @@
+// Synthetic analytics fixture. No real customer or production data.
+const zero={orders:0,paidOrders:0,salesMinor:0,units:0,cancelled:0,returnedUnits:0,returnedMinor:0,impressions:0,opens:0,clicks:0,adds:0,checkouts:0};
+const sums={orders:3,paidOrders:2,salesMinor:100001,units:5,cancelled:1,returnedUnits:1,returnedMinor:null,impressions:20,opens:10,clicks:8,adds:5,checkouts:4};
+const metrics={ctr:40,addRate:50,paidConversion:20,averagePriceMinor:20000,aovMinor:50001};
+export const analyticsFixture={period:{from:'2026-09-11',to:'2026-09-17',days:7,sku:'',search:'',category:''},timezone:'Europe/Moscow',basis:'order_created_cohort',generatedAt:'2026-09-17T12:00:00.000Z',summary:{...sums,...metrics},daily:Array.from({length:7},(_,i)=>({date:`2026-09-${11+i}`,...(i===0?sums:zero)})),products:[{sku:'00123',name:'Тестовый шампунь',category:'hair',...sums,...metrics}],quality:{unknownRefundOrders:0,confirmedRefundMinor:15000,refundAllocationIncomplete:true,unknownCategory:false},eventCoverageStart:'2026-09-11T09:00:00.000Z'};

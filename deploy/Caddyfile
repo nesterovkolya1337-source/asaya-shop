@@ -35,6 +35,9 @@ asaya.ru, www.asaya.ru {
     reverse_proxy asaya-catalog-web:3200
   }
 
+  @product_analytics path /api/store/v1/analytics/events
+  log_skip @product_analytics
+
   @catalog_api path /api/admin/v1/* /api/store/v1/*
   handle @catalog_api {
     header X-Robots-Tag "noindex, nofollow"

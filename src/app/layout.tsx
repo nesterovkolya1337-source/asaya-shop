@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { ShopProvider } from "@/components/shop-provider";
 import { CatalogStatus } from "@/components/catalog-status";
+import { ProductAnalyticsBridge } from '@/components/product-analytics';
 import { YandexMetrika } from "@/components/yandex-metrika";
 import { SiteContentProvider } from "@/components/site-content-provider";
 import "./globals.css";
@@ -38,7 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html className={`${involve.variable} ${gramatika.variable}`} data-scroll-behavior="smooth" lang="ru">
       <body>
-        <ShopProvider><SiteContentProvider><YandexMetrika /><CatalogStatus />{children}</SiteContentProvider></ShopProvider>
+        <ShopProvider><SiteContentProvider><YandexMetrika /><ProductAnalyticsBridge /><CatalogStatus />{children}</SiteContentProvider></ShopProvider>
       </body>
     </html>
   );

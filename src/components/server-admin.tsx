@@ -11,7 +11,7 @@ import {useShop} from './shop-provider';
 import {AdminMediaEditor} from './admin-media-editor';
 import {AdminOrders} from './admin-orders';
 import {AdminIntegration} from './admin-integration';
-import {AdminStatistics} from './admin-statistics';
+import {AdminStatistics} from './admin-analytics';
 import styles from './server-admin.module.css';
 import shell from './admin-shell.module.css';
 import {AdminSiteEditor} from './admin-site-editor';

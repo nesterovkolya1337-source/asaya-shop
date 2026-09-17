@@ -1,5 +1,6 @@
 "use client";
 
+import {getProductAnalytics} from '@/lib/product-analytics';
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { getMetrika } from '@/lib/metrika';
 import { defaultProducts, type Product } from "@/lib/store-data";
@@ -195,7 +196,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     const before = analyticsCart.current;
     analyticsCart.current = cart;
     // Hydration/restoration establishes a baseline, not an add-to-cart event.
-    if (before) getMetrika()?.cartChanged(before, cart, productsWithReviews);
+    if (before) {getMetrika()?.cartChanged(before, cart, productsWithReviews);for(const [id,quantity] of Object.entries(cart))if(quantity>(before[id]??0))getProductAnalytics()?.track('add_to_cart',productsWithReviews.find(p=>p.id===id)?.sku);}
   }, [cart, cartReady, catalogStatus, productsWithReviews]);
 
   const value = useMemo<ShopState>(() => ({

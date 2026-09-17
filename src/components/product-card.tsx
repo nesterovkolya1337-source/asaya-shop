@@ -5,21 +5,24 @@ import Link from "next/link";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
 import { formatPrice, type Product } from "@/lib/store-data";
+import { useProductImpression } from './product-analytics';
+import { getProductAnalytics } from '@/lib/product-analytics';
 import { getMetrika } from '@/lib/metrika';
 import styles from "./product-card.module.css";
 
 export function ProductCard({ product }: { product: Product }) {
   const { addToCart, cart, changeQuantity, favorites, toggleFavorite, catalogOnly, checkoutEnabled } = useShop();
+  const analyticsRef=useProductImpression(product.sku);
   const isFavorite = favorites.includes(product.id);
   const quantity = cart[product.id] ?? 0;
 
   return (
-    <article className={styles.card} id={product.id}>
+    <article ref={analyticsRef} className={styles.card} id={product.id}>
       <div className={styles.badges}>
         {product.badge && <span>{product.badge}</span>}
         {product.discount > 0 && <span className={styles.discountBadge}>−{product.discount}%</span>}
       </div>
-      <Link className={styles.visualLink} href={`/product/${product.id}`} aria-label={`Открыть ${product.name}`} onClick={() => getMetrika()?.productClick(product)}>
+      <Link className={styles.visualLink} href={`/product/${product.id}`} aria-label={`Открыть ${product.name}`} onClick={() => {getMetrika()?.productClick(product);getProductAnalytics()?.track('product_click',product.sku);}}>
         <Image
           alt={product.name}
           className={styles.image}

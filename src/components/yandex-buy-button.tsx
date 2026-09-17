@@ -3,6 +3,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {assetPath} from '@/lib/asset-path';
 import {requestYandexCheckoutLink,trackCheckoutTransition} from '@/lib/yandex-checkout';
+import {getProductAnalytics} from '@/lib/product-analytics';
 import {getMetrika} from '@/lib/metrika';
 import styles from './yandex-buy-button.module.css';
 
@@ -22,7 +23,7 @@ export function YandexCheckoutButton({items,disabled=false,label='Купить �
   pending.current=true;setBusy(true);setError('');
   try{
    const url=await requestYandexCheckoutLink(assetPath('/api/store/v1/yandex/checkout-link'),items);
-   if(active.current){await trackCheckoutTransition(()=>getMetrika()?.checkoutRedirect());if(active.current)window.location.assign(url);}
+   if(active.current){for(const item of items)getProductAnalytics()?.track('checkout_started',item.sku);await trackCheckoutTransition(()=>getMetrika()?.checkoutRedirect());if(active.current)window.location.assign(url);}
   }
   catch(e){if(active.current)setError(e instanceof Error&&e.message.startsWith('Корзина')?e.message:'Оформление в Яндексе пока недоступно. Попробуйте позже.');}
   finally{pending.current=false;if(active.current)setBusy(false);}

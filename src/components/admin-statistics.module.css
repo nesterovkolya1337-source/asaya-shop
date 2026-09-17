@@ -20,4 +20,10 @@
 .table table { width: 100%; border-collapse: collapse; background: #fff; text-align: left; }
 .table th,.table td { padding: 12px; border-bottom: 1px solid #e5dce0; }
 .table th { font-size: 13px; color: #625d60; }
+.filters { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin:16px 0; }
+.filters label { display:grid; gap:6px; font-size:14px; }
+.filters input,.filters select { font:inherit; color:inherit; background:white; border:1px solid #d4c9ce; border-radius:8px; padding:10px; max-width:100%; }
+.filters input:focus-visible,.filters select:focus-visible { outline:3px solid #925469; outline-offset:2px; }
+.sku { display:block; white-space:nowrap; color:#625d60; }
+.notice { background:#fff3d8; border-radius:10px; padding:14px; line-height:1.6; }
 @media(max-width:500px){.cards{grid-template-columns:repeat(2,minmax(0,1fr));}.cards article{padding:12px;}.cards strong{font-size:20px;}.chart{padding:12px;}}

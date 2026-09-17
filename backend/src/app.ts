@@ -20,6 +20,8 @@ import {AdminPrivacy} from './admin-privacy.js';
 import {AdminIntegration} from './admin-integration.js';
 import {AdminReadiness} from './admin-readiness.js';
 import {AdminStatistics} from './admin-statistics.js';
+import {AnalyticsReport} from './analytics-report.js';
+import {ProductAnalytics} from './product-analytics.js';
 import {YcpCatalog,parseYcpSettings} from './ycp-catalog.js';
 import {YcpCheckout,YcpConflict} from './ycp-checkout.js';
 import {YcpOrders} from './ycp-orders.js';
@@ -76,6 +78,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
    if(!options.cdekTracking)throw new DomainError('NOT_FOUND',404);
    authorizeCdekWebhook((req.params as {key?:string}).key,options.cdekTracking.secret);return;
   }
+  const analyticsEvent=req.method==='POST'&&req.routeOptions.url==='/api/store/v1/analytics/events';
   const accountEdit=smsEnabled&&req.method==='PUT'&&req.routeOptions.url==='/api/store/v1/account/profile';
   const privacyEdit=req.method==='POST'&&req.routeOptions.url==='/api/admin/v1/orders/:id/privacy';
   const cdekRefresh=req.method==='POST'&&req.routeOptions.url==='/api/admin/v1/orders/:id/cdek/refresh';
@@ -83,7 +86,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
   if(options.deploymentMode==='catalog'&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!cdekRefresh&&!privacyEdit&&!accountEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout)|media|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
+   if(!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout)|media|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
   }
   if(liveYcp&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
@@ -92,7 +95,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
    // Yandex owns checkout/payments; CDEK callbacks have their own boundary. Do not enable the
    // local checkout or local-only order changes with customer SMS sign-in.
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!cdekRefresh&&!privacyEdit&&!ffRecheck&&!accountEdit&&!adminEdit&&!checkoutLink&&!customerLogin&&!req.routeOptions.config.ycp)throw new DomainError('YANDEX_CHECKOUT_ONLY',503);
+   if(!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!ffRecheck&&!accountEdit&&!adminEdit&&!checkoutLink&&!customerLogin&&!req.routeOptions.config.ycp)throw new DomainError('YANDEX_CHECKOUT_ONLY',503);
   }
   if(req.routeOptions.config.ycp){
    if(!ycp)throw new DomainError('YCP_UNAVAILABLE',503);
@@ -145,6 +148,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
   secured.post('/api/admin/v1/site-pages/:page/restore',async req=>siteContent.restore(await actor(req.cookies[staffCookie]),pageId(req.params),req.body));
   secured.get('/api/admin/v1/integration-issues',async req=>new AdminIntegration(options.db).list(await actor(req.cookies[staffCookie]),req.query));
   secured.get('/api/admin/v1/readiness',async req=>new AdminReadiness(options.db,options.deploymentMode==='catalog',!!ycp).get(await actor(req.cookies[staffCookie]),req.query));
+  secured.get('/api/admin/v1/analytics',async req=>new AnalyticsReport(options.db).get(await actor(req.cookies[staffCookie]),req.query));
   secured.get('/api/admin/v1/statistics',async req=>new AdminStatistics(options.db).get(await actor(req.cookies[staffCookie]),req.query));
   const id=(raw:unknown)=>z.object({id:z.uuid()}).parse(raw).id;
   secured.get('/api/admin/v1/warehouses',async()=>new Warehouses(options.db).list());
@@ -168,6 +172,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
   secured.post('/api/admin/v1/products/:id/stock',async req=>adminCatalog.stock(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   secured.get('/api/admin/v1/products/:id/history',async req=>adminCatalog.history(id(req.params)));
  });
+ app.post('/api/store/v1/analytics/events',{bodyLimit:8192},async req=>new ProductAnalytics(options.db).ingest(req.body));
  app.get('/health/live',async()=>({status:'ok'}));
  if(options.cdekTracking)app.post('/api/integrations/cdek/:key',{config:{cdekWebhook:true}},async req=>{await options.cdekTracking!.service.webhook(req.body);return {ok:true};});
  app.post('/api/store/v1/yandex/checkout-link',async req=>{
