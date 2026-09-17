@@ -25,7 +25,7 @@ const createSchema=z.object({session_id:id,warehouse_id:z.uuid(),
 }).strict().refine(b=>new Set(b.items.map(i=>i.id)).size===b.items.length,{message:'Duplicate SKU'});
 const placedSchema=z.object({session_id:id,order_id:id,order_number:z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
  payment_method:z.enum(['online','on_delivery']),online_payment_method:z.enum(['card','sbp','split','split_sbp']).optional(),acquiring_id:id.optional()
-}).strict().refine(b=>b.payment_method==='online'?Boolean(b.acquiring_id):!b.acquiring_id&&!b.online_payment_method,{message:'Payment details do not match payment method'});
+}).strict().refine(b=>b.payment_method==='online'||!b.acquiring_id&&!b.online_payment_method,{message:'Payment details do not match payment method'});
 export class YcpConflict extends DomainError {
  constructor(code:string,readonly details:Record<string,unknown>={}){super(code,409);}
 }
@@ -117,7 +117,10 @@ export class YcpCheckout {
    const phone=normalizeCustomerPhone(contact?.customer_snapshot?.phone??'');
    if(phone)await lock(tx,'customer-orders:'+phone);
    // Same payment lock order as CommerceService.recordPaid: payment, then order.
-   if(body.acquiring_id)await lock(tx,`payment:ycp:${this.settings.accountId}:${this.settings.environment}:${body.acquiring_id}`);
+   // Missing acquiring_id is allowed by the official placed schema. The fallback is an
+   // internal ledger reference, never an invented acquiring transaction identifier.
+   const paymentReference=body.acquiring_id??`placement:${body.order_id}`;
+   if(body.payment_method==='online')await lock(tx,`payment:ycp:${this.settings.accountId}:${this.settings.environment}:${paymentReference}`);
    await lock(tx,canonical(['ycp-order',...this.scope(),body.order_id]));
    await lock(tx,canonical(['ycp-order-number',...this.scope(),body.order_number]));
    const row=(await tx.query(`SELECT y.*,o.status,o.payment_status,o.total_minor,o.checkout_id FROM ycp_sessions y JOIN orders o ON o.id=y.order_id
@@ -134,13 +137,20 @@ export class YcpCheckout {
     if(missing)throw new YcpConflict('ORDER_RESERVATION_MISSING');
    }
    if(body.payment_method==='online'){
-    if((await tx.query("SELECT 1 FROM payments WHERE provider='ycp' AND account_id=$1 AND environment=$2 AND external_id=$3",[...this.scope(),body.acquiring_id])).rowCount)throw new YcpConflict('PAYMENT_ORDER_CONFLICT');
-    await tx.query("INSERT INTO payments(id,order_id,provider,account_id,environment,external_id,status,amount_minor,currency) VALUES($1,$2,'ycp',$3,$4,$5,'paid',$6,'RUB')",[randomUUID(),row.order_id,...this.scope(),body.acquiring_id,row.total_minor]);
+    if((await tx.query("SELECT 1 FROM payments WHERE provider='ycp' AND account_id=$1 AND environment=$2 AND external_id=$3",[...this.scope(),paymentReference])).rowCount)throw new YcpConflict('PAYMENT_ORDER_CONFLICT');
+    await tx.query("INSERT INTO payments(id,order_id,provider,account_id,environment,external_id,status,amount_minor,currency) VALUES($1,$2,'ycp',$3,$4,$5,'paid',$6,'RUB')",[randomUUID(),row.order_id,...this.scope(),paymentReference,row.total_minor]);
    }
-   await tx.query('UPDATE ycp_sessions SET placement_hash=$4,placement_outcome=$5,external_order_id=$6,external_order_number=$7,payment_method=$8,acquiring_id=$9 WHERE account_id=$1 AND environment=$2 AND session_id=$3',[...this.scope(),body.session_id,digest,isLate?'late_review':'placed',body.order_id,body.order_number,body.payment_method,body.acquiring_id??null]);
+   await tx.query('UPDATE ycp_sessions SET placement_hash=$4,placement_outcome=$5,external_order_id=$6,external_order_number=$7,payment_method=$8,acquiring_id=$9,online_payment_method=$10 WHERE account_id=$1 AND environment=$2 AND session_id=$3',[...this.scope(),body.session_id,digest,isLate?'late_review':'placed',body.order_id,body.order_number,body.payment_method,body.acquiring_id??null,body.online_payment_method??null]);
    await tx.query('UPDATE orders SET external_ycp_order_id=$2,external_ycp_order_number=$3 WHERE id=$1',[row.order_id,body.order_id,body.order_number]);
-   if(isLate){await notify(tx,row.order_id,'ycp.placement_after_cancel');return true;}
    await saveYcpCustomer(tx,row.order_id);
+   if(isLate){
+    // Preserve cancellation/released stock, but do not hide confirmed money received.
+    if(body.payment_method==='online'){
+     await tx.query("UPDATE orders SET payment_status='paid',updated_at=$2 WHERE id=$1",[row.order_id,this.clock()]);
+     await history(tx,row.order_id,'payment','paid');
+    }
+    await notify(tx,row.order_id,'ycp.placement_after_cancel');return true;
+   }
    const payment=body.payment_method==='online'?'paid':'pending';
    await tx.query("UPDATE orders SET status='placed',payment_status=$2,updated_at=$3 WHERE id=$1",[row.order_id,payment,this.clock()]);
    await tx.query("UPDATE checkout_sessions SET status='placed' WHERE id=$1",[row.checkout_id]);

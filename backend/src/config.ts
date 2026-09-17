@@ -22,7 +22,8 @@ export function config(env: NodeJS.ProcessEnv = process.env) {
  }).parse(env);
  if(Boolean(c.YCP_TOKEN)!==Boolean(c.YCP_SETTINGS_FILE))throw new Error('YCP_TOKEN and YCP_SETTINGS_FILE must be configured together');
  if(c.UNPAID_RETENTION_ENABLED==='true'&&!c.YCP_SETTINGS_FILE)throw new Error('Unpaid retention requires a YCP scope');
- if(c.FULFILLMENT_ENABLED==='true'&&(!c.FULFILLMENT_SETTINGS_FILE||!c.FULFILLMENT_LOGIN||!c.FULFILLMENT_PASSWORD))throw new Error('Fulfillment requires verified server configuration and credentials');
+ // v10.1: Yandex owns CDEK order/shipment creation. Never start the obsolete order.paid dispatcher.
+ if(c.FULFILLMENT_ENABLED==='true')throw new Error('ASAYA fulfillment dispatch is disabled: Yandex Checkout owns shipment creation');
  if(c.NODE_ENV==='production' && (c.COOKIE_SECURE!=='true'||!c.PUBLIC_ORIGIN.startsWith('https://'))) throw new Error('Production requires HTTPS and secure cookies');
  if(c.DEPLOYMENT_MODE==='catalog'&&(!c.STAFF_SECRET||c.YCP_TOKEN||c.YCP_SETTINGS_FILE))throw new Error('Catalog mode requires staff authentication and disables YCP');
  if(c.DEPLOYMENT_MODE==='ycp'&&(!c.STAFF_SECRET||!c.YCP_TOKEN||!c.YCP_SETTINGS_FILE))throw new Error('YCP mode requires staff authentication, an inbound token and settings');

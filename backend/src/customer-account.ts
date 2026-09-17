@@ -12,7 +12,12 @@ export async function saveYcpCustomer(tx:Tx,orderId:string){
  const name=typeof row.customer_snapshot.name==='string'?row.customer_snapshot.name.slice(0,200):'';
  const email=z.email().max(254).safeParse(row.customer_snapshot.email);
  const profile=(await tx.query(`INSERT INTO customer_profiles(phone,name,email) VALUES($1,$2,$3)
-  ON CONFLICT(phone) DO UPDATE SET phone=excluded.phone RETURNING id`,[phone,name,email.success?email.data.toLowerCase():''])).rows[0];
+  ON CONFLICT(phone) DO UPDATE SET
+   name=CASE WHEN customer_profiles.name='' THEN excluded.name ELSE customer_profiles.name END,
+   email=CASE WHEN customer_profiles.email='' THEN excluded.email ELSE customer_profiles.email END,
+   updated_at=CASE WHEN (customer_profiles.name='' AND excluded.name<>'') OR (customer_profiles.email='' AND excluded.email<>'')
+    THEN now() ELSE customer_profiles.updated_at END
+  RETURNING id`,[phone,name,email.success?email.data.toLowerCase():''])).rows[0];
  await tx.query('UPDATE orders SET customer_id=$2,customer_phone_normalized=$3 WHERE id=$1',[orderId,profile.id,phone]);
 }
 export async function claimPhoneOrders(tx:Tx,userId:string){

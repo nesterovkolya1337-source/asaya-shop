@@ -29,6 +29,7 @@ import type {FulfillmentDispatch} from './fulfillment-dispatch.js';
 declare module 'fastify' {interface FastifyContextConfig {cdekWebhook?:boolean}}
 
 export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'ycp';db:Database;otpSecret:string;otpSender:OtpSender;otpPolicy?:Partial<OtpPolicy>;customerSmsEnabled?:boolean;origin:string;secureCookies:boolean;logger?:boolean;deliveryProvider?:DeliveryProvider;staffSecret?:string;ycp?:{token:string;settings:unknown};yandexIdClientId?:string;yandexIdentityProvider?:YandexIdentityProvider;cdekTracking?:{service:OrderTracking;secret:string};fulfillment?:FulfillmentDispatch}) {
+ if(options.fulfillment)throw new Error('ASAYA fulfillment dispatch is disabled: Yandex Checkout owns shipment creation');
  const smsEnabled=options.customerSmsEnabled===true;
  if(options.cdekTracking&&(options.cdekTracking.secret.length<32||[options.otpSecret,options.staffSecret,options.ycp?.token].includes(options.cdekTracking.secret)))throw new Error('CDEK callback requires an independent secret');
  if(smsEnabled&&options.otpSender instanceof DisabledOtpSender)throw new Error('Customer SMS requires a configured sender');
