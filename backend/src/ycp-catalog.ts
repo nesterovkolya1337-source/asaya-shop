@@ -61,6 +61,10 @@ export class YcpCatalog {
   if(settings.priceUnit===null||settings.vat===null)throw new DomainError('YCP_PRICING_NOT_CONFIGURED',503);
   const warehouseIds=(await ycpWarehouses(this.db.pool,settings,true)).filter(w=>w.servedLocalities.some(l=>l==='*'||localityKey(l)===localityKey(input.locality))).map(w=>w.warehouseId);
   // One statement gives all prices and warehouse balances from the same DB snapshot.
+  // YCP available_quantity is the current purchase ceiling, not measured provider stock.
+  // Shared asaya_stock_limit fails closed for missing/stale/failed production sources;
+  // Admin/ASAYA retain the unknown/stale distinction, which YCP has no field for.
+  // Request quantity never overrides this ceiling; checking does not reserve or sync.
   const {rows}=await this.db.pool.query(`SELECT requested.request_id,p.sku,p.name,p.weight_g,p.width_mm,p.height_mm,p.depth_mm,
    pr.regular_minor,pr.final_minor,m.slug,e.published->'content'->>'image' AS image,
    COALESCE((SELECT jsonb_agg(jsonb_build_object('id',w.id,'available_quantity',GREATEST(0,LEAST(b.on_hand,asaya_stock_limit(p.id,w.id,$4='production'))-b.reserved)) ORDER BY w.id)

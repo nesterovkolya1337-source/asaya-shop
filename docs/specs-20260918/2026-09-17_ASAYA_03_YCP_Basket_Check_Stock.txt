@@ -1,0 +1,48 @@
+ASAYA — YCP ТЗ
+03 · checkout/basket/check → актуальные остатки
+17 сентября 2026 года
+Цель. Подключить YCP checkout/basket/check к уже проверенному stock-layer ASAYA. YCP должен получать актуальную цену/availability/quantity из backend, а не из DOM или отдельной копии.
+
+1. Официальная документация
+https://yandex.ru/support/merchants-ru-ycp/ru/openapi/checkoutbasketcheck-post
+https://yandex.ru/support/merchants/ru/buy-button-site#ycp-setup
+https://yandex.ru/support/merchants-ru-ycp/ru/openapi/
+2. Подтверждённое поведение
+Остатки НЕ передаются как отдельный stock snapshot при самом переходе пользователя в Checkout.
+YCP вызывает API магазина в процессе checkout и ожидает актуальные данные корзины.
+ASAYA отвечает из того же stock-layer, который виден в Admin → Аналитика → Остатки.
+3. Что сделать
+Сверить фактическую текущую schema checkout/basket/check по официальной документации.
+Для каждого item сопоставлять по стабильному SKU/product identifier согласно фактическому контракту.
+Вернуть актуальную цену, availability и разрешённое quantity строго в полях, которые документированы YCP.
+Не доверять price/quantity из frontend; authoritative значения брать backend-side.
+stock=0 и недостаточное количество должны корректно отражаться в ответе YCP по официальному contract.
+unknown/stale stock обрабатывать по заранее определённой безопасной политике; не подменять unknown нулём без решения.
+4. Тесты
+Вход
+Ожидание
+stock 10, request qty 1
+YCP получает доступность по официальной schema.
+stock 1, request qty 2
+Ответ не позволяет молча продать 2.
+stock 0
+Товар недоступен.
+unknown/missing
+Не маскируется как доказанный 0; поведение зафиксировано.
+подмена цены/qty на frontend
+Backend возвращает authoritative значения.
+
+5. Не делать
+Не создавать второй stock cache только для YCP.
+Не обращаться к CDEK API синхронно на каждый checkout/basket/check, если утверждённая архитектура использует заранее синхронизированный stock-layer.
+Не создавать shipment/order в CDEK.
+Правила для Codex
+Работать только в области этого файла: YCP checkout/basket/check. Не выполнять следующие ТЗ автоматически.
+Не переосмысливать закрытые бизнес- и архитектурные решения. Если решение уже указано как закрытое, его нужно реализовать, а не предлагать альтернативу.
+Если точный ответ есть в официальной документации, сначала использовать документацию. Не задавать владельцу вопрос, на который документация уже отвечает.
+Нельзя придумывать endpoint, JSON field, identifier, статус, формат или поведение провайдера.
+Не делать unrelated refactor и не менять замороженные части сайта.
+После реализации: релевантные tests/build → commit → push в рабочую ветку → отчёт LOCAL/GITHUB/PRODUCTION → STOP.
+Production не менять без отдельного разрешения.
+Дополнение · связь с Cart Out-of-Stock UX
+Purchasable basket должен исключать позиции, которые текущий authoritative stock-layer считает недоступными. Подробное пользовательское поведение корзины (приглушение, «Нет в наличии», исключение из total, блокировка checkout при отсутствии доступных товаров) определено отдельным ТЗ 08 — 2026-09-17_ASAYA_08_Cart_Out_of_Stock_UX.docx. Не дублировать отдельную stock-логику для UI и YCP.

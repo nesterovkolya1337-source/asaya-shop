@@ -1,5 +1,7 @@
 # Packet 03 — basket/check reconciliation
 
+Historical report. The revised 2026-09-18 verification is in [PACKET_03_YCP_BASKET_REVISED.md](PACKET_03_YCP_BASKET_REVISED.md).
+
 Official method page fetched successfully on 2026-09-17:
 https://yandex.ru/support/merchants-ru-ycp/ru/openapi/checkoutbasketcheck-post
 

@@ -323,3 +323,54 @@ test('cart catalog distinguishes confirmed zero from missing, stale and failed s
  await f.sync.apply(parseStockFeed(xml(new Date(+f.at+2000),5).replace(/<offer [\s\S]*<\/offer>/,'')));await check(0,'unknown');
  await f.sync.apply(parseStockFeed(xml(new Date(+f.at+3000),0)));await check(0,'known');
 });
+
+test('production YCP HTTP basket follows the official contract and preserves unknown stock diagnostics without provider calls',async()=>{
+ const f=await fixture(),url='/api/v1/checkout/basket/check',headers={authorization:'Bearer '+token};
+ const app=await buildApp({db:f.db,deploymentMode:'ycp',origin:'https://asaya.example.test',secureCookies:true,
+  staffSecret:'s'.repeat(32),otpSecret:'o'.repeat(32),otpSender:new DisabledOtpSender(),stock:f.sync,ycp:{token,settings:f.settings}});
+ const originalFetch=globalThis.fetch;let outbound=0;
+ globalThis.fetch=async()=>{outbound++;throw new Error('Basket must use local synchronized stock only');};
+ const check=async(quantity:number,allowed:number,known:boolean,providerQuantity:number|null,syncStatus:string)=>{
+  const balances=(await f.db.pool.query('SELECT * FROM inventory_balances ORDER BY warehouse_id')).rows;
+  const request={...f.request,items:[{id:'SKU-1',quantity}]};
+  for(const is_health_check of [false,true]){
+   const response=await app.inject({method:'POST',url,headers,payload:{...request,is_health_check}});
+   assert.equal(response.statusCode,200);assert.equal(response.headers['cache-control'],'no-store');
+   const body=response.json();assert.deepEqual(Object.keys(body),['items']);assert.equal(body.items.length,1);
+   const item=body.items[0];
+   assert.deepEqual(Object.keys(item).sort(),['id','name','regular_price','final_price','vat','img','url','warehouses','dimensions','characteristics','variations'].sort());
+   assert.equal(item.id,'SKU-1');assert.equal(item.regular_price,60000);assert.equal(item.final_price,50000);
+   assert.deepEqual(item.dimensions,{width:50,height:190,depth:50,weight:500});
+   assert.equal(item.warehouses.reduce((sum:number,w:{available_quantity:number})=>sum+w.available_quantity,0),allowed);
+   for(const w of item.warehouses){assert.deepEqual(Object.keys(w).sort(),['available_quantity','id']);assert.equal(w.id,f.warehouse);assert.ok(Number.isInteger(w.available_quantity));}
+  }
+  const storefront=(await app.inject({url:'/api/store/v1/products'})).json().items[0];
+  assert.equal(storefront.available,allowed);assert.equal(storefront.stockState,known?'known':'unknown');
+  const admin=await new AdminStocks(f.db,f.sync).read(f.actor,{});
+  assert.equal(admin.items[0]!.quantity,providerQuantity);assert.equal(admin.source!.syncStatus,syncStatus);
+  assert.deepEqual((await f.db.pool.query('SELECT * FROM inventory_balances ORDER BY warehouse_id')).rows,balances);
+ };
+ try{
+  await check(1,0,false,null,'never_synced');
+  for(const [i,[stock,requested]] of [[10,1],[1,2],[0,1]].entries()){
+   await f.sync.apply(parseStockFeed(xml(new Date(+f.at+i*1000),stock!)));
+   await check(requested!,stock!,true,stock!,'fresh');
+  }
+  await f.sync.apply(parseStockFeed(xml(new Date(+f.at+3000),10)));
+  await f.db.pool.query("UPDATE stock_sources SET expires_at=now()-interval '1 second'");await check(1,0,false,10,'stale');
+  await f.db.pool.query("UPDATE stock_sources SET expires_at=now()+interval '1 hour',healthy=false");await check(1,0,false,10,'error');
+  await f.sync.apply(parseStockFeed(xml(new Date(+f.at+4000),10).replaceAll('SKU-1','OTHER-SKU')));await check(1,0,false,null,'fresh');
+  await f.sync.apply(parseStockFeed(xml(new Date(+f.at+5000),10)));await check(100,10,true,10,'fresh');
+  await f.db.pool.query('UPDATE inventory_balances SET reserved=3 WHERE product_id=$1',[f.product]);
+  await check(100,7,true,10,'fresh'); // Admin retains provider count; YCP excludes reservations.
+  await f.db.pool.query('UPDATE product_prices SET final_minor=49900 WHERE product_id=$1',[f.product]);
+  assert.equal((await app.inject({method:'POST',url,headers,payload:f.request})).json().items[0].final_price,49900);
+  for(const item of [{id:'SKU-1',quantity:1,final_price:1},{id:'SKU-1',quantity:1,available_quantity:999},{id:'SKU-1',quantity:1.5},{id:'SKU-1',quantity:0}]){
+   assert.equal((await app.inject({method:'POST',url,headers,payload:{...f.request,items:[item]}})).statusCode,400);
+  }
+  assert.equal((await app.inject({method:'POST',url,payload:f.request})).statusCode,401);
+  assert.equal((await app.inject({method:'POST',url,headers,payload:{...f.request,items:[{id:'unknown',quantity:1}]}})).statusCode,404);
+  for(const table of ['orders','checkout_sessions','integration_inbox','integration_outbox','inventory_reservations'])assert.equal((await f.db.pool.query(`SELECT count(*)::int n FROM ${table}`)).rows[0].n,0);
+  assert.equal(outbound,0);
+ }finally{globalThis.fetch=originalFetch;await app.close();}
+});
