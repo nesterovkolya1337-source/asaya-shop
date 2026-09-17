@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useState,type FormEvent} from 'react';
+import {AdminStocks} from './admin-stocks';
 import {assetPath} from '@/lib/asset-path';
 import {AuthClientError} from '@/lib/auth-client';
 import {createAnalyticsClient,type AnalyticsReport,type AnalyticsQuery} from '@/lib/analytics-client';
@@ -10,7 +11,11 @@ const rub=(n:number|null)=>n===null?'Нет данных':new Intl.NumberFormat(
 const percent=(n:number|null)=>n===null?'—':new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(n)+' %';
 const categories={hair:'Волосы',body:'Тело',face:'Лицо',sets:'Наборы',unknown:'Категория неизвестна'};
 const chartMetrics={salesMinor:'Оплаченные товары, ₽',orders:'Заказы',units:'Продано, шт.'};
-export function AdminStatistics({onExpired}:{onExpired:()=>void}){
+export function AdminStatistics({onExpired,csrf}:{onExpired:()=>void;csrf:string}){
+ const [stocks,setStocks]=useState(false);
+ return <><div className={styles.buttons} aria-label="Раздел аналитики"><button aria-pressed={!stocks} onClick={()=>setStocks(false)}>Продажи</button><button aria-pressed={stocks} onClick={()=>setStocks(true)}>Остатки</button></div>{stocks?<AdminStocks csrf={csrf} onExpired={onExpired}/>:<SalesStatistics onExpired={onExpired}/>}</>;
+}
+function SalesStatistics({onExpired}:{onExpired:()=>void}){
  const [mode,setMode]=useState<'store'|'products'>('store'),[query,setQuery]=useState<AnalyticsQuery>({days:'30'}),[attempt,setAttempt]=useState(0);
  const [from,setFrom]=useState(''),[to,setTo]=useState(''),[search,setSearch]=useState(''),[category,setCategory]=useState(''),[inputError,setInputError]=useState('');
  const [data,setData]=useState<AnalyticsReport|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[metric,setMetric]=useState<keyof typeof chartMetrics>('salesMinor');

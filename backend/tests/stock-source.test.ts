@@ -12,6 +12,11 @@ import {CommerceService} from '../src/commerce.js';
 import {AdminCatalog} from '../src/admin-catalog.js';
 import {YcpOrders} from '../src/ycp-orders.js';
 import {YandexFeed} from '../src/yandex-feed.js';
+import {AdminStocks} from '../src/admin-stocks.js';
+import {buildApp} from '../src/app.js';
+import {DisabledOtpSender} from '../src/auth.js';
+import {StaffAuth} from '../src/staff-auth.js';
+import {hash} from '../src/core.js';
 let ctx:Awaited<ReturnType<typeof testDatabase>>;
 before(async()=>{ctx=await testDatabase();});after(async()=>{await ctx?.stop();});
 beforeEach(async()=>{await ctx.db.pool.query('TRUNCATE products,warehouses,users,customer_profiles,checkout_sessions,integration_inbox,integration_outbox CASCADE');});
@@ -37,6 +42,53 @@ async function fixture(){
  const available=async()=>(await basket.basket(request)).items[0]!.warehouses[0].available_quantity;
  return {db,warehouse,product,actor,at,source,sync,settings,basket,checkout,request,body,available};
 }
+
+test('admin stock report reads shared quantities and canonical metadata; never substitutes missing with zero',async()=>{
+ const f=await fixture(),service=new AdminStocks(f.db,f.sync);
+ assert.equal((await service.read(f.actor,{})).items[0]!.quantity,null);
+ await f.sync.apply(parseStockFeed(xml(f.at,0)));
+ const r=await service.read(f.actor,{}),shared=await new StockState(f.db,f.source.settings).read();
+ assert.deepEqual(r.items,shared.items);assert.equal(r.items[0]!.quantity,0);assert.equal(r.items[0]!.name,'Canonical product');assert.equal(r.items[0]!.category,'body');assert.equal(r.items[0]!.image,'/images/test.webp');
+ await f.db.pool.query("INSERT INTO products(id,sku,name) VALUES($1,'MISSING','Missing product')",[randomUUID()]);
+ assert.equal((await service.read(f.actor,{})).items.find(i=>i.sku==='MISSING')!.quantity,null);
+ await assert.rejects(service.read(randomUUID(),{}),/FORBIDDEN/);
+ await assert.rejects(service.refresh(f.actor,{quantity:99}));
+ assert.deepEqual(await new AdminStocks(f.db).read(f.actor,{}),{configured:false,source:null,items:[]});
+});
+
+test('admin refresh shares worker lock and schedule, exposes changed quantity, preserves successful snapshot after error',async()=>{
+ const f=await fixture();let calls=0,quantity=3,at=new Date(),fail=false;
+ const source=new CdekStockFeed(f.source.settings,async()=>{calls++;await new Promise(r=>setTimeout(r,25));return fail?new Response('private-secret',{status:500}):new Response(xml(at,quantity));});
+ const service=new AdminStocks(f.db,new StockSync(f.db,source));
+ const results=await Promise.all(Array.from({length:5},()=>service.refresh(f.actor,{})));
+ assert.equal(calls,1);assert.equal(results.filter(r=>r.outcome==='updated').length,1);
+ assert.equal((await service.refresh(f.actor,{})).outcome,'not_due');assert.equal(calls,1);
+ quantity=7;at=new Date(+at+1000);await f.db.pool.query("UPDATE stock_sources SET next_attempt_at=now()-interval '1 second'");
+ await service.refresh(f.actor,{});const good=await service.read(f.actor,{});assert.equal(good.items[0]!.quantity,7);
+ fail=true;await f.db.pool.query("UPDATE stock_sources SET next_attempt_at=now()-interval '1 second'");
+ await assert.rejects(service.refresh(f.actor,{}),/STOCK_REFRESH_FAILED/);const bad=await service.read(f.actor,{});
+ assert.equal(bad.items[0]!.quantity,7);assert.deepEqual(bad.source!.syncedAt,good.source!.syncedAt);assert.equal(bad.source!.syncStatus,'error');assert.ok(!JSON.stringify(bad).includes('private-secret'));
+});
+
+test('stock HTTP routes require staff, origin and CSRF in catalog and YCP mode; reject quantity writes',async()=>{
+ const f=await fixture(),origin='https://asaya.example.test',staffSecret='s'.repeat(32),staffToken='a'.repeat(64);
+ const staffId=await new StaffAuth(f.db,staffSecret).provision('stocks@example.test','Test-only-password-12345','GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ');
+ await f.db.pool.query("INSERT INTO staff_sessions(token_hash,user_id,created_at,expires_at) VALUES($1,$2,now(),now()+interval '1 hour')",[hash(staffToken),staffId]);
+ const csrf=(await new StaffAuth(f.db,staffSecret).session(staffToken)).csrfToken;
+ for(const deploymentMode of ['catalog','ycp'] as const){
+ const app=await buildApp({db:f.db,stock:f.sync,deploymentMode,origin,staffSecret,otpSecret:'o'.repeat(32),otpSender:new DisabledOtpSender(),secureCookies:true,...(deploymentMode==='ycp'?{ycp:{token,settings:f.settings}}:{})});
+ try{
+  const url='/api/admin/v1/analytics/stocks',headers={origin,cookie:'__Host-asaya_staff='+staffToken,'x-csrf-token':csrf};
+  assert.equal((await app.inject({url})).statusCode,401);
+  const r=await app.inject({url,headers});assert.equal(r.statusCode,200);assert.equal(r.headers['cache-control'],'no-store');
+  assert.equal((await app.inject({url:url+'/refresh',method:'POST',headers:{cookie:headers.cookie,origin},payload:{}})).statusCode,403);
+  assert.equal((await app.inject({url:url+'/refresh',method:'POST',headers:{...headers,origin:'https://evil.test'},payload:{}})).statusCode,403);
+  assert.equal((await app.inject({url:url+'/refresh',method:'POST',headers,payload:{quantity:9}})).statusCode,400);
+  await f.sync.apply(parseStockFeed(xml(f.at,4)));
+  const refresh=await app.inject({url:url+'/refresh',method:'POST',headers,payload:{}});assert.equal(refresh.statusCode,200);assert.equal(refresh.json().outcome,'not_due');
+ }finally{await app.close();}
+ }
+});
 test('FF parser accepts exact article/count contract and rejects unsafe or ambiguous XML',()=>{
  const at=new Date('2026-09-17T00:00:00Z');assert.deepEqual(parseStockFeed(xml(at,4)).items,[{sku:'SKU-1',quantity:4}]);
  for(const bad of [xml(at,-1),xml(at,1.5),xml(at,1000001),xml(at,1).replace('<count>1</count>',''),xml(at,1).replace('code="article"','code="barcode"'),xml(at,1).replace('id="SKU-1"','id="different"'),xml(at,1).replace('</offers>','<offer id="SKU-1"><param code="article">SKU-1</param><count>1</count></offer></offers>'),xml(at,1).replace('</offer>','<count>2</count></offer>'),xml(at,1).replace('</shop>',''),xml(at,1).replace('<shop>','<!DOCTYPE evil [<!ENTITY x SYSTEM "file:///secret">]><shop>'),'<html/>'])assert.throws(()=>parseStockFeed(bad),/STOCK_FEED_INVALID/);

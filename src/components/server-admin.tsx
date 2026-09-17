@@ -60,7 +60,7 @@ export function ServerAdmin(){
  <div className={styles.main} hidden={section==='content'}>
  <div hidden={section!=='catalog'}><h1>Товары</h1><CatalogEditor key={session.user.id} session={session} onExpired={onExpired}/></div>
  {section==='integration'&&<AdminIntegration onExpired={onExpired} onOrder={id=>{setSelectedOrder(id);setSection('orders');}}/>}
- {section==='statistics'&&<AdminStatistics onExpired={onExpired}/>}
+ {section==='statistics'&&<AdminStatistics onExpired={onExpired} csrf={session.csrfToken}/>}
  {section==='orders'&&<AdminOrders key={selectedOrder} initialOrderId={selectedOrder} session={session} onExpired={onExpired}/>}
  </div></>:<div className={styles.main}><form className={styles.login} onSubmit={login}><h1>Вход в кабинет</h1><p>Управляйте страницами, товарами и заказами ASAYA.</p><fieldset disabled={busy}>
  <label>Почта сотрудника<input type="email" autoComplete="username" required value={email} onChange={e=>setEmail(e.target.value)}/></label>

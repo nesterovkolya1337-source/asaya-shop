@@ -1,3 +1,5 @@
+import {AdminStocks} from './admin-stocks.js';
+import type {StockSync} from './stock-sync.js';
 import {Warehouses} from './warehouses.js';
 import {CustomerYandexAuth,YandexIdProvider,yandexCallbackPath,type YandexIdentityProvider} from './yandex-id.js';
 import {randomUUID} from 'node:crypto';
@@ -31,7 +33,7 @@ import {authorizeCdekWebhook,type OrderTracking} from './order-tracking.js';
 import type {FulfillmentDispatch} from './fulfillment-dispatch.js';
 declare module 'fastify' {interface FastifyContextConfig {cdekWebhook?:boolean}}
 
-export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'ycp';db:Database;otpSecret:string;otpSender:OtpSender;otpPolicy?:Partial<OtpPolicy>;customerSmsEnabled?:boolean;origin:string;secureCookies:boolean;logger?:boolean;deliveryProvider?:DeliveryProvider;staffSecret?:string;ycp?:{token:string;settings:unknown};yandexIdClientId?:string;yandexIdentityProvider?:YandexIdentityProvider;cdekTracking?:{service:OrderTracking;secret:string};fulfillment?:FulfillmentDispatch}) {
+export async function buildApp(options:{stock?:StockSync;deploymentMode?:'foundation'|'catalog'|'ycp';db:Database;otpSecret:string;otpSender:OtpSender;otpPolicy?:Partial<OtpPolicy>;customerSmsEnabled?:boolean;origin:string;secureCookies:boolean;logger?:boolean;deliveryProvider?:DeliveryProvider;staffSecret?:string;ycp?:{token:string;settings:unknown};yandexIdClientId?:string;yandexIdentityProvider?:YandexIdentityProvider;cdekTracking?:{service:OrderTracking;secret:string};fulfillment?:FulfillmentDispatch}) {
  if(options.fulfillment)throw new Error('ASAYA fulfillment dispatch is disabled: Yandex Checkout owns shipment creation');
  const smsEnabled=options.customerSmsEnabled===true;
  if(options.cdekTracking&&(options.cdekTracking.secret.length<32||[options.otpSecret,options.staffSecret,options.ycp?.token].includes(options.cdekTracking.secret)))throw new Error('CDEK callback requires an independent secret');
@@ -78,6 +80,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
    if(!options.cdekTracking)throw new DomainError('NOT_FOUND',404);
    authorizeCdekWebhook((req.params as {key?:string}).key,options.cdekTracking.secret);return;
   }
+  const stockRefresh=req.method==='POST'&&req.routeOptions.url==='/api/admin/v1/analytics/stocks/refresh';
   const analyticsEvent=req.method==='POST'&&req.routeOptions.url==='/api/store/v1/analytics/events';
   const accountEdit=smsEnabled&&req.method==='PUT'&&req.routeOptions.url==='/api/store/v1/account/profile';
   const privacyEdit=req.method==='POST'&&req.routeOptions.url==='/api/admin/v1/orders/:id/privacy';
@@ -86,7 +89,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
   if(options.deploymentMode==='catalog'&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout)|media|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
+   if(!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout)|media|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
   }
   if(liveYcp&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
@@ -95,7 +98,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
    // Yandex owns checkout/payments; CDEK callbacks have their own boundary. Do not enable the
    // local checkout or local-only order changes with customer SMS sign-in.
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!ffRecheck&&!accountEdit&&!adminEdit&&!checkoutLink&&!customerLogin&&!req.routeOptions.config.ycp)throw new DomainError('YANDEX_CHECKOUT_ONLY',503);
+   if(!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!ffRecheck&&!accountEdit&&!adminEdit&&!checkoutLink&&!customerLogin&&!req.routeOptions.config.ycp)throw new DomainError('YANDEX_CHECKOUT_ONLY',503);
   }
   if(req.routeOptions.config.ycp){
    if(!ycp)throw new DomainError('YCP_UNAVAILABLE',503);
@@ -148,6 +151,9 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
   secured.post('/api/admin/v1/site-pages/:page/restore',async req=>siteContent.restore(await actor(req.cookies[staffCookie]),pageId(req.params),req.body));
   secured.get('/api/admin/v1/integration-issues',async req=>new AdminIntegration(options.db).list(await actor(req.cookies[staffCookie]),req.query));
   secured.get('/api/admin/v1/readiness',async req=>new AdminReadiness(options.db,options.deploymentMode==='catalog',!!ycp).get(await actor(req.cookies[staffCookie]),req.query));
+  const stocks=new AdminStocks(options.db,options.stock);
+  secured.get('/api/admin/v1/analytics/stocks',async req=>stocks.read(await actor(req.cookies[staffCookie]),req.query));
+  secured.post('/api/admin/v1/analytics/stocks/refresh',async req=>stocks.refresh(await actor(req.cookies[staffCookie]),req.body));
   secured.get('/api/admin/v1/analytics',async req=>new AnalyticsReport(options.db).get(await actor(req.cookies[staffCookie]),req.query));
   secured.get('/api/admin/v1/statistics',async req=>new AdminStatistics(options.db).get(await actor(req.cookies[staffCookie]),req.query));
   const id=(raw:unknown)=>z.object({id:z.uuid()}).parse(raw).id;

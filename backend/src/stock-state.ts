@@ -15,8 +15,11 @@ export class StockState {
   const s=this.settings,at=this.clock();
   // One statement: metadata and per-SKU values must describe the same snapshot.
   const source=(await this.db.pool.query(`SELECT st.*,COALESCE((SELECT jsonb_agg(jsonb_build_object(
-    'sku',p.sku,'productId',p.id,'listed',i.listed,'quantity',i.provider_quantity) ORDER BY p.sku)
-    FROM products p LEFT JOIN stock_source_items i ON i.warehouse_id=w.id AND i.product_id=p.id),'[]'::jsonb) AS items
+    'sku',p.sku,'productId',p.id,'name',p.name,
+    'category',e.published->'content'->>'category','image',e.published->'content'->>'image',
+    'listed',i.listed,'quantity',i.provider_quantity) ORDER BY p.sku)
+    FROM products p LEFT JOIN product_editor e ON e.product_id=p.id
+    LEFT JOIN stock_source_items i ON i.warehouse_id=w.id AND i.product_id=p.id),'[]'::jsonb) AS items
    FROM warehouses w JOIN warehouse_external_ids x ON x.warehouse_id=w.id
    LEFT JOIN stock_sources st ON st.warehouse_id=w.id
    WHERE w.id=$1 AND w.active AND x.provider='cdek_ff' AND x.account_id=$2 AND x.external_id=$3`,
@@ -31,8 +34,8 @@ export class StockState {
   });
   return {source:{kind:'cdek_ff_yml',warehouseId:s.warehouseId,accountId:s.accountId,
    externalWarehouseId:s.externalWarehouseId,environment:s.environment,...project(source)},
-   items:(source.items as Array<{sku:string;productId:string;listed:boolean|null;quantity:number|null}>).map(r=>{
-    return {sku:r.sku,productId:r.productId,quantity:r.listed?r.quantity:null,
+   items:(source.items as Array<{sku:string;productId:string;name:string;category:string|null;image:string|null;listed:boolean|null;quantity:number|null}>).map(r=>{
+    return {sku:r.sku,productId:r.productId,name:r.name,category:r.category,image:r.image,quantity:r.listed?r.quantity:null,
      quantityState:!source.fetched_at?'not_synced':r.listed?'known':'missing',...project(source)};
    })};
  }
