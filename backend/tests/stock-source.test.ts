@@ -94,6 +94,25 @@ test('FF parser accepts exact article/count contract and rejects unsafe or ambig
  for(const bad of [xml(at,-1),xml(at,1.5),xml(at,1000001),xml(at,1).replace('<count>1</count>',''),xml(at,1).replace('code="article"','code="barcode"'),xml(at,1).replace('id="SKU-1"','id="different"'),xml(at,1).replace('</offers>','<offer id="SKU-1"><param code="article">SKU-1</param><count>1</count></offer></offers>'),xml(at,1).replace('</offer>','<count>2</count></offer>'),xml(at,1).replace('</shop>',''),xml(at,1).replace('<shop>','<!DOCTYPE evil [<!ENTITY x SYSTEM "file:///secret">]><shop>'),'<html/>'])assert.throws(()=>parseStockFeed(bad),/STOCK_FEED_INVALID/);
  for(const url of ['http://static.integrations.ffcdek.ru/a.xml','https://evil.test/a.xml',feedUrl+'?token=x',feedUrl.replace('https://','https://user@')])assert.equal(stockSettingsSchema.safeParse({warehouseId:randomUUID(),accountId:'a',externalWarehouseId:'1',environment:'test',feedUrl:url}).success,false);
 });
+
+test('packet 03 basket quantity is a purchase ceiling from shared stock, never a second provider snapshot',async()=>{
+ const f=await fixture();let generation=f.at;
+ for(const [stock,requested] of [[10,1],[1,2],[0,1]]){
+  generation=new Date(+generation+1000);await f.sync.apply(parseStockFeed(xml(generation,stock!)));
+  const response=await f.basket.basket({...f.request,items:[{id:'SKU-1',quantity:requested}]});
+  assert.equal(response.items[0]!.warehouses[0].available_quantity,stock);
+  assert.equal(response.items[0]!.final_price,50000);
+  assert.equal((await new StockState(f.db,f.source.settings).read()).items[0]!.quantity,stock);
+ }
+ await assert.rejects(f.basket.basket({...f.request,items:[{id:'SKU-1',quantity:1,final_price:1}]}));
+ await assert.rejects(f.basket.basket({...f.request,items:[{id:'SKU-1',quantity:1.5}]}));
+ generation=new Date(+generation+1000);await f.sync.apply(parseStockFeed(xml(generation,10)));
+ await f.db.pool.query("UPDATE stock_sources SET expires_at=now()-interval '1 second'");
+ assert.equal(await f.available(),0);const stale=await new StockState(f.db,f.source.settings).read();
+ assert.equal(stale.items[0]!.quantity,10);assert.equal(stale.source.syncStatus,'stale');
+ generation=new Date(+generation+1000);await f.sync.apply(parseStockFeed(xml(generation,10).replaceAll('SKU-1','OTHER-SKU')));
+ assert.equal(await f.available(),0);assert.equal((await new StockState(f.db,f.source.settings).read()).items[0]!.quantity,null);
+});
 test('stock provider uses bounded GET only with timeout, no redirects, sanitized errors',async()=>{
  const settings={warehouseId:randomUUID(),accountId:'asaya',externalWarehouseId:'23401',environment:'production',feedUrl};
  let calls=0;const source=new CdekStockFeed(settings,async(url,init)=>{calls++;assert.equal(url,feedUrl);assert.equal(init?.method,'GET');assert.equal(init?.redirect,'error');assert.ok(init?.signal);return new Response(xml(new Date(),0));});
