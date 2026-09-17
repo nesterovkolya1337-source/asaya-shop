@@ -9,6 +9,7 @@ import {buildApp} from '../src/app.js';
 import {DisabledOtpSender} from '../src/auth.js';
 import {purgeUnpaidContacts} from '../src/order-retention.js';
 import {parseCdekOrder} from '../src/cdek-delivery.js';
+import {CdekCorrelation} from '../src/cdek-correlation.js';
 let ctx:Awaited<ReturnType<typeof testDatabase>>;
 before(async()=>{ctx=await testDatabase();});after(async()=>{await ctx?.stop();});
 beforeEach(async()=>{await ctx.db.pool.query('TRUNCATE users,products,warehouses,integration_outbox,integration_inbox CASCADE');});
@@ -29,6 +30,31 @@ async function fixture(){
  const binding:FulfillmentBinding={enabled:true,environment:'test',ycpAccountId:'ycp-test',deliveryAccountId:'cdek-test',warehouseId:warehouse,shopId:217484,ffWarehouseId:7460,senderId:9704,pickupRateId:49,ycpWaybillsDisabled:false,contractVerified:false};
  return {db,order,user,checkout,product,binding};
 }
+test('confirmed CDEK client number binds scoped YCP order once and existing status pipeline consumes that binding',async()=>{
+ const f=await fixture(),uuid=randomUUID(),number=(await f.db.pool.query('SELECT public_number FROM orders WHERE id=$1',[f.order])).rows[0].public_number;
+ let calls=0;const api={order:async()=>{calls++;return {uuid,trackingNumber:'1234567890',clientOrderNumber:number,events:[{rawStatus:'CREATED',status:'created' as const,occurredAt:new Date().toISOString(),deleted:false}]};}};
+ const scope={ycpAccountId:'ycp-test',deliveryAccountId:'cdek-test',environment:'test' as const},correlation=new CdekCorrelation(f.db,api,scope);
+ const proof=await correlation.verify(f.order,'1234567890');assert.equal(proof.internalNumber,number);assert.equal((await f.db.pool.query('SELECT 1 FROM order_logistics')).rowCount,0);
+ await assert.rejects(correlation.bind(f.order,'1234567890','different'),/CONFIRMATION_REQUIRED/);
+ const results=await Promise.all([correlation.bind(f.order,'1234567890',number),correlation.bind(f.order,'1234567890',number)]);
+ assert.equal(results.filter(r=>!r.alreadyBound).length,1);assert.equal((await f.db.pool.query("SELECT 1 FROM audit_log WHERE action='cdek.correlation_verified'")).rowCount,1);
+ const tracking=new OrderTracking(f.db,api,{accountId:'cdek-test',environment:'test'});await tracking.refresh(f.order);
+ assert.equal((await f.db.pool.query('SELECT delivery_status FROM order_logistics WHERE order_id=$1',[f.order])).rows[0].delivery_status,'created');
+ assert.equal((await f.db.pool.query('SELECT payment_status FROM orders WHERE id=$1',[f.order])).rows[0].payment_status,'paid');assert.ok(calls>=4);
+ assert.equal((await f.db.pool.query('SELECT 1 FROM fulfillment_jobs')).rowCount,0);
+});
+
+test('CDEK correlation rejects missing/different client number, foreign scope and reused immutable binding',async()=>{
+ const f=await fixture(),uuid=randomUUID(),number=(await f.db.pool.query('SELECT public_number FROM orders WHERE id=$1',[f.order])).rows[0].public_number;
+ let clientOrderNumber:string|undefined='not-the-order';const api={order:async()=>({uuid,trackingNumber:'1234567890',clientOrderNumber,events:[]})};
+ const scope={ycpAccountId:'ycp-test',deliveryAccountId:'cdek-test',environment:'test' as const},correlation=new CdekCorrelation(f.db,api,scope);
+ await assert.rejects(correlation.verify(f.order,'1234567890'),/CLIENT_NUMBER_MISMATCH/);clientOrderNumber=undefined;await assert.rejects(correlation.verify(f.order,'1234567890'),/CLIENT_NUMBER_MISMATCH/);
+ clientOrderNumber=number;await assert.rejects(new CdekCorrelation(f.db,api,{...scope,ycpAccountId:'other'}).verify(f.order,'1234567890'),/ORDER_NOT_READY/);
+ await assert.rejects(new CdekCorrelation(f.db,api,{...scope,environment:'production'}).verify(f.order,'1234567890'),/ORDER_NOT_READY/);
+ await f.db.pool.query("INSERT INTO order_logistics(order_id,account_id,environment,cdek_uuid,tracking_number) VALUES($1,'cdek-test','test',$2,'9876543210')",[f.order,randomUUID()]);
+ await assert.rejects(correlation.bind(f.order,'1234567890',number),/BINDING_CONFLICT/);
+});
+
 test('FF submits only a verified paid immutable order; duplicate and ambiguous retries cannot create a second shipment',async()=>{
  const f=await fixture();let posts=0,remote:FulfillmentOrder|null=null;
  const gateway:FulfillmentGateway={servicePoint:async code=>{assert.equal(code,'TEST-PVZ');return 1234;},find:async()=>remote,get:async()=>remote!,create:async s=>{posts++;remote={id:123,externalId:s.externalId,rawStatus:'assembling',status:'assembling',trackingNumber:'1234567890'};throw new Error('response lost after acceptance');}};

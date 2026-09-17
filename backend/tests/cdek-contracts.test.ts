@@ -9,6 +9,13 @@ const snapshot:FulfillmentSnapshot={externalId:'TEST-ASAYA-10001',environment:'t
 const ffOrder={id:765,extId:snapshot.externalId,state:'assembling',paymentState:'paid',eav:{'order-reserve-warehouse':7460},_embedded:{shop:{id:217484},deliveryRequest:{trackingNumber:'1234567890'}},profile:{secret:'never returned'}};
 const uuid='c0137489-783c-4279-a9a9-6bf221c9a1a4';
 const entity={uuid,cdek_number:'1234567890',is_return:false,is_reverse:false,is_client_return:false,statuses:[{code:'CREATED',date_time:'2026-09-14T12:00:00+0300'},{code:'ACCEPTED_AT_PICK_UP_POINT',date_time:'2026-09-15T12:00:00+0300'}],recipient:{phone:'private'}};
+
+test('CDEK documented entity.number is retained only as client order identifier, with no contact payload',()=>{
+ const r=parseCdekOrder({entity:{...entity,number:'ASAYA-123'}},{trackingNumber:'1234567890'});
+ assert.equal(r.clientOrderNumber,'ASAYA-123');assert.ok(!JSON.stringify(r).includes('private'));
+ assert.equal(parseCdekOrder({entity},{trackingNumber:'1234567890'}).clientOrderNumber,undefined);
+ assert.throws(()=>parseCdekOrder({entity:{...entity,number:'x'.repeat(31)}},{trackingNumber:'1234567890'}));
+});
 test('FF payload uses verified offer/rate/PVZ identifiers, rubles and prepaid zero COD',()=>{
  const payload=fulfillmentPayload(settings,snapshot);
  assert.equal(payload.orderProducts[0]!.price,2678.44);assert.equal(payload.deliveryRequest.retailPrice,0);assert.equal(payload.deliveryRequest.servicePoint,1234);assert.equal(payload.paymentState,'paid');
