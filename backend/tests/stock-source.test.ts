@@ -285,3 +285,24 @@ test('Yandex feed and checkout link share external availability and stock sync r
  finally{await f.db.pool.query('DROP TRIGGER reject_stock_audit ON audit_log; DROP FUNCTION reject_stock_audit()');}
  await f.db.pool.query("UPDATE stock_sources SET expires_at=now()-interval '1 second'");assert.equal((await yandex.render()).included,0);await assert.rejects(yandex.checkoutLink({items:[{sku:'SKU-1',quantity:1}]}),/PRODUCT_UNAVAILABLE/);
 });
+
+
+test('published storefront remains visible through missing, zero, positive and stale stock without republishing',async()=>{
+ const f=await fixture(),catalog=new CommerceService(f.db,undefined,'production');
+ const published=await f.db.pool.query('SELECT published,revision,published_at FROM product_editor WHERE product_id=$1',[f.product]);
+ const check=async(quantity:number)=>{const items=await catalog.catalog();assert.equal(items.length,1);assert.equal(items[0]!.sku,'SKU-1');assert.equal(items[0]!.available,quantity);assert.equal(items[0]!.content.image,content.image);};
+ await check(0); // No stock source yet is not an unpublished product.
+ for(const [index,quantity] of [0,5,0].entries()){
+  await f.sync.apply(parseStockFeed(xml(new Date(+f.at+index*1000),quantity)));
+  await check(quantity);
+  assert.deepEqual((await f.db.pool.query('SELECT published,revision,published_at FROM product_editor WHERE product_id=$1',[f.product])).rows,published.rows);
+ }
+ await f.sync.apply(parseStockFeed(xml(new Date(+f.at+3000),5)));await check(5);
+ await f.db.pool.query("UPDATE stock_sources SET expires_at=now()-interval '1 second'");await check(0);
+ await f.db.pool.query('UPDATE stock_sources SET healthy=false');await check(0);
+ await f.db.pool.query("UPDATE stock_sources SET healthy=true,expires_at=now()+interval '1 hour'");await check(5);
+ await f.db.pool.query('UPDATE product_editor SET published=NULL WHERE product_id=$1',[f.product]);
+ assert.equal((await catalog.catalog()).length,0);
+ await f.db.pool.query('UPDATE product_editor SET published=$2 WHERE product_id=$1',[f.product,JSON.stringify(published.rows[0].published)]);
+ await f.db.pool.query('UPDATE products SET active=false WHERE id=$1',[f.product]);assert.equal((await catalog.catalog()).length,0);
+});

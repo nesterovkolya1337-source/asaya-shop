@@ -64,7 +64,7 @@ export function ProductCard({ product }: { product: Product }) {
           onClick={() => addToCart(product.id)}
           type="button"
         >
-          {catalogOnly && !checkoutEnabled ? "Продажи пока закрыты" : !product.stock ? "Нет в наличии" : "В корзину"}
+          {!product.stock ? "Нет в наличии" : catalogOnly && !checkoutEnabled ? "Продажи пока закрыты" : "В корзину"}
         </button>
       )}
     </article>

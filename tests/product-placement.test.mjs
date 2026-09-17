@@ -12,3 +12,11 @@ test('placement survives content parsing and invalid positions are rejected',()=
  const placement={catalogOrder:3,bestsellerOrder:null,newOrder:1};assert.deepEqual(parseProductContent({...c,placement}).placement,placement);assert.equal(parseProductContent(c).placement,undefined);
  for(const invalid of [null,[],{...placement,catalogOrder:-1},{...placement,newOrder:1.5},{...placement,bestsellerOrder:'1'}])assert.throws(()=>parseProductContent({...c,placement:invalid}));
 });
+
+
+test('all zero-stock published products retain catalog, bestseller and new placements',()=>{
+ const products=['hair','body','face'].map((category,i)=>({id:category,category,active:true,stock:0,placement:{catalogOrder:i,bestsellerOrder:i,newOrder:i}}));
+ const hidden={...products[0],id:'hidden',active:false,stock:5};
+ for(const section of ['catalog','bestsellers','new'])assert.deepEqual(placedProducts([...products,hidden],section).map(p=>p.id),['hair','body','face']);
+ for(const stock of [0,5,0])assert.deepEqual(placedProducts(products.map(p=>({...p,stock})),'catalog').map(p=>p.id),['hair','body','face']);
+});

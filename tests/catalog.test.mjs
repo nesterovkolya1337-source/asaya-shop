@@ -18,3 +18,12 @@ test('malformed, duplicate and unknown items cannot become displayed prices',()=
   {items:[{...item,available:-1}]}, {items:[{...item,slug:null}]}, {items:[{...item,content:null}]},
   {items:[item,item]}, {items:[item,{...item,slug:'another'}]}, {items:[{...item,regularMinor:1}]}]) assert.throws(()=>readBackendCatalog(payload));
 });
+
+
+test('zero quantity changes purchase quantity only and preserves product content and visibility',()=>{
+ const states=[0,5,0].map(available=>readBackendCatalog({items:[{...item,available}]}));
+ for(const [i,products] of states.entries()){
+  assert.equal(products.length,1);const p=products[0];assert.equal(p.active,true);assert.equal(p.id,item.slug);
+  assert.equal(p.stock,[0,5,0][i]);assert.equal(p.description,content.description);assert.equal(p.image,content.image);
+ }
+});

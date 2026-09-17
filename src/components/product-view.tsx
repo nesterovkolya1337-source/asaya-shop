@@ -32,7 +32,7 @@ export function ProductView({ productId }: { productId: string }) {
   const [recommendationDragging, setRecommendationDragging] = useState(false);
   const recommendationDrag = useRef({ active: false, moved: false, pointerId: -1, startX: 0, startY: 0, scrollLeft: 0 });
   const recommendationRail = useRef<HTMLDivElement>(null);
-  const product = products.find((item) => item.id === productId);
+  const product = products.find((item) => item.id === productId && item.active);
 
   if (!product) {
     return (
@@ -188,7 +188,7 @@ export function ProductView({ productId }: { productId: string }) {
               </div>
             ) : (
               <button className={styles.addButton} disabled={(catalogOnly && !checkoutEnabled) || !product.stock} onClick={() => addToCart(product.id)} type="button">
-                {catalogOnly && !checkoutEnabled ? "Продажи пока закрыты" : product.stock ? "Добавить в корзину" : "Нет в наличии"}
+                {!product.stock ? "Нет в наличии" : catalogOnly && !checkoutEnabled ? "Продажи пока закрыты" : "Добавить в корзину"}
               </button>
             )}
             {quantity > 0 && <Link className={styles.checkoutLink} href={catalogOnly ? "/cart" : "/checkout"}>Перейти к оформлению</Link>}
@@ -309,8 +309,8 @@ export function ProductView({ productId }: { productId: string }) {
       }
       <aside className={styles.stickyBuy} aria-label="Быстрая покупка">
         <div><small>{product.name}</small><strong>{formatPrice(product.price)}</strong></div>
-        {yandexCheckoutEnabled && product.sku ? <YandexCheckoutButton key={JSON.stringify([product.sku,quantity,product.stock])} compact items={[{sku:product.sku,quantity:quantity||1}]} disabled={product.stock<(quantity||1)} label="Купить сейчас" /> : <button className={styles.buyNow} disabled={(catalogOnly && !checkoutEnabled) || !product.stock} onClick={buyNow} type="button">{catalogOnly && !checkoutEnabled ? 'Продажи пока закрыты' : 'Купить сейчас'}</button>}
-        <button className={styles.stickyCart} disabled={(catalogOnly && !checkoutEnabled) || !product.stock || quantity >= product.stock} onClick={() => addToCart(product.id)} type="button">{quantity ? `В корзине · ${quantity}` : "В корзину"}</button>
+        {yandexCheckoutEnabled && product.sku ? <YandexCheckoutButton key={JSON.stringify([product.sku,quantity,product.stock])} compact items={[{sku:product.sku,quantity:quantity||1}]} disabled={product.stock<(quantity||1)} label={!product.stock ? 'Нет в наличии' : 'Купить сейчас'} /> : <button className={styles.buyNow} disabled={(catalogOnly && !checkoutEnabled) || !product.stock} onClick={buyNow} type="button">{!product.stock ? 'Нет в наличии' : catalogOnly && !checkoutEnabled ? 'Продажи пока закрыты' : 'Купить сейчас'}</button>}
+        <button className={styles.stickyCart} disabled={(catalogOnly && !checkoutEnabled) || !product.stock || quantity >= product.stock} onClick={() => addToCart(product.id)} type="button">{!product.stock ? 'Нет в наличии' : quantity ? `В корзине · ${quantity}` : "В корзину"}</button>
       </aside>
     </main>
   );
