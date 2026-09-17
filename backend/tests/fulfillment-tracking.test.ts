@@ -8,6 +8,7 @@ import type {FulfillmentOrder} from '../src/cdek-fulfillment.js';
 import {buildApp} from '../src/app.js';
 import {DisabledOtpSender} from '../src/auth.js';
 import {purgeUnpaidContacts} from '../src/order-retention.js';
+import {parseCdekOrder} from '../src/cdek-delivery.js';
 let ctx:Awaited<ReturnType<typeof testDatabase>>;
 before(async()=>{ctx=await testDatabase();});after(async()=>{await ctx?.stop();});
 beforeEach(async()=>{await ctx.db.pool.query('TRUNCATE users,products,warehouses,integration_outbox,integration_inbox CASCADE');});
@@ -94,4 +95,72 @@ test('unpaid retention honors definitive provider cancellation, 30 days and lega
  assert.equal(order.customer_snapshot.redacted,true);assert.equal(order.delivery_snapshot.redacted,true);assert.equal(order.total_minor,'50000');
  const draft=(await f.db.pool.query('SELECT snapshot FROM checkout_sessions')).rows[0].snapshot;assert.equal(draft.customer,undefined);assert.equal(draft.delivery,undefined);assert.ok(draft.items);
  assert.equal((await f.db.pool.query('SELECT 1 FROM order_items')).rowCount,1);
+});
+
+async function trackingFixture(){
+ const f=await fixture(),uuid=randomUUID();let now=new Date('2026-09-17T12:00:00Z');
+ await f.db.pool.query("INSERT INTO order_logistics(order_id,account_id,environment,tracking_number) VALUES($1,'cdek-test','test','1234567890')",[f.order]);
+ let statuses=[{code:'ACCEPTED_AT_PICK_UP_POINT',date_time:'2026-09-17T11:00:00Z',deleted:false}];
+ let error=false;
+ const api={order:async()=>{if(error)throw new Error('provider offline');return parseCdekOrder({entity:{uuid,cdek_number:'1234567890',is_return:false,is_reverse:false,is_client_return:false,delivery_point:'MSK123',planned_delivery_date:'2026-09-19',statuses,recipient:{phone:'PRIVATE'}}},{trackingNumber:'1234567890'});}};
+ const scope={accountId:'cdek-test',environment:'test' as const};
+ const service=new OrderTracking(f.db,api,scope,()=>now);
+ const body=(deleted=false)=>({type:'ORDER_STATUS',uuid,date_time:now.toISOString(),attributes:{cdek_number:'1234567890',code:'DELIVERED',status_date_time:'2026-09-17T11:30:00Z',deleted,is_return:false,is_reverse:false,is_client_return:false}});
+ return {...f,uuid,api,scope,service,body,advance:(ms:number)=>{now=new Date(+now+ms);},setStatuses:(value:typeof statuses)=>{statuses=value;},setError:()=>{error=true;}};
+}
+
+test('CDEK status correction is durably queued once, reconciles deleted history and keeps calendar ETA private',async()=>{
+ const f=await trackingFixture();
+ const arrived={code:'ACCEPTED_AT_PICK_UP_POINT',date_time:'2026-09-17T11:00:00Z',deleted:false};
+ const delivered={code:'DELIVERED',date_time:'2026-09-17T11:30:00Z',deleted:false};
+ f.setStatuses([arrived,delivered]);await f.service.webhook(f.body());await f.service.refresh(f.order);
+ f.advance(1000);f.setStatuses([arrived,{...delivered,deleted:true}]);
+ await f.service.webhook(f.body(true));await f.service.webhook(f.body(true));
+ assert.equal((await f.db.pool.query("SELECT 1 FROM integration_inbox WHERE provider='cdek'")).rowCount,2);
+ assert.deepEqual(await f.service.due(),[f.order]);await f.service.refresh(f.order);
+ const projection=(await trackingProjection(f.db,{id:f.order,status:'processing',payment_status:'paid'}))!;
+ assert.equal(projection.status,'ready_for_pickup');assert.equal(projection.plannedDeliveryDate,'2026-09-19');assert.equal(projection.pickupPoint,'MSK123');
+ assert.ok(projection.history.every(e=>e.status!=='delivered'));assert.ok(!JSON.stringify(projection).includes('PRIVATE'));
+ assert.equal((await f.db.pool.query("SELECT deleted FROM order_logistics_events WHERE raw_status='DELIVERED'")).rows[0].deleted,true);
+ assert.equal((await f.db.pool.query('SELECT payment_status FROM orders')).rows[0].payment_status,'paid');
+ assert.deepEqual((await f.db.pool.query('SELECT on_hand,reserved FROM inventory_balances')).rows[0],{on_hand:9,reserved:0});
+});
+
+test('CDEK daily/stale fallback respects ownership, final states and eight-attempt backoff without erasing status',async()=>{
+ const f=await trackingFixture();await f.service.refresh(f.order);assert.deepEqual(await f.service.due(),[]);
+ f.advance(61*60000);await f.service.requestStale(f.order,randomUUID());assert.deepEqual(await f.service.due(),[]);
+ await f.service.requestStale(f.order,f.user);assert.deepEqual(await f.service.due(),[f.order]);
+ f.setError();await assert.rejects(f.service.refresh(f.order));await f.service.failed(f.order);assert.deepEqual(await f.service.due(),[]);
+ for(let i=1;i<8;i++)await f.service.failed(f.order);
+ const row=(await f.db.pool.query('SELECT delivery_attempts,delivery_next_attempt_at,delivery_status FROM order_logistics')).rows[0];
+ assert.equal(row.delivery_attempts,8);assert.equal(row.delivery_status,'ready_for_pickup');
+ f.advance(23*3600000);assert.deepEqual(await f.service.due(),[]);f.advance(3600000);assert.deepEqual(await f.service.due(),[f.order]);
+ await f.db.pool.query("UPDATE order_logistics SET delivery_requested_at=NULL,delivery_next_attempt_at=NULL,delivery_status='delivered'");
+ f.advance(25*3600000);await f.service.requestStale(f.order,f.user);assert.deepEqual(await f.service.due(),[]);
+ await f.db.pool.query("UPDATE order_logistics SET delivery_status='in_transit'");assert.deepEqual(await f.service.due(),[f.order]);
+});
+
+test('unknown, cross-account and mismatched-UUID CDEK hints cannot bind or queue an order',async()=>{
+ const f=await trackingFixture();
+ await f.service.webhook({...f.body(),attributes:{...f.body().attributes,cdek_number:'999999'}});
+ await new OrderTracking(f.db,f.api,{...f.scope,accountId:'another'}).webhook(f.body());
+ await f.db.pool.query('UPDATE order_logistics SET cdek_uuid=$1',[randomUUID()]);await f.service.webhook(f.body());
+ assert.equal((await f.db.pool.query("SELECT 1 FROM integration_inbox WHERE provider='cdek'")).rowCount,0);
+ assert.equal((await f.db.pool.query('SELECT delivery_requested_at FROM order_logistics')).rows[0].delivery_requested_at,null);
+});
+
+test('a CDEK binding moved during GET cannot commit a response into another account',async()=>{
+ const f=await trackingFixture();
+ const service=new OrderTracking(f.db,{order:async()=>{const response=await f.api.order();await f.db.pool.query("UPDATE order_logistics SET account_id='another'");return response;}},f.scope);
+ await assert.rejects(service.refresh(f.order),/CDEK_ORDER_MISMATCH/);
+ assert.equal((await f.db.pool.query('SELECT 1 FROM order_logistics_events')).rowCount,0);
+});
+
+test('return started never marks a completed return, credits inventory or refunds payment',async()=>{
+ const f=await trackingFixture();await f.service.refresh(f.order);
+ f.setStatuses([{code:'NOT_DELIVERED',date_time:'2026-09-17T13:00:00Z',deleted:false}]);f.advance(3600000);await f.service.refresh(f.order);
+ assert.equal((await trackingProjection(f.db,{id:f.order,status:'processing',payment_status:'paid'}))!.status,'returning');
+ assert.equal((await f.db.pool.query('SELECT delivery_status FROM orders')).rows[0].delivery_status,'arrived_to_pickup_point');
+ assert.deepEqual((await f.db.pool.query('SELECT on_hand,reserved FROM inventory_balances')).rows[0],{on_hand:9,reserved:0});
+ assert.equal((await f.db.pool.query('SELECT 1 FROM refunds')).rowCount,0);
 });

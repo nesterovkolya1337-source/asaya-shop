@@ -32,9 +32,13 @@ test('warehouse and delivery status domains remain separate; transit returns do 
  assert.equal(deliveryStatus('ENTERED_TO_PICK_UP_POINT'),'in_transit');
  assert.equal(deliveryStatus('ACCEPTED_AT_PICK_UP_POINT'),'ready_for_pickup');
  assert.equal(deliveryStatus('NOT_DELIVERED'),'returning');assert.equal(deliveryStatus('new-code'),'review');
- assert.equal(customerOrderStatus({payment:'paid',order:'placed',fulfillment:'assembled'}),'assembling');
+ assert.equal(customerOrderStatus({payment:'paid',order:'placed',fulfillment:'assembled'}),'processing');
  assert.equal(customerOrderStatus({payment:'paid',order:'placed',fulfillment:'handed_to_delivery',delivery:'delivered'}),'delivered');
  assert.equal(customerOrderStatus({payment:'paid',order:'placed',delivery:'returning'}),'returning');
+ assert.equal(customerOrderStatus({payment:'paid',order:'placed',delivery:'handed_to_cdek'}),'handed_to_delivery');
+ assert.equal(customerOrderStatus({payment:'paid',order:'placed',delivery:'out_for_delivery'}),'in_transit');
+ assert.equal(customerOrderStatus({payment:'paid',order:'placed',delivery:'review'}),'delivery_problem');
+ assert.equal(customerOrderStatus({payment:'paid',order:'placed',delivery:'returned'}),'returned');
 });
 test('CDEK order parser verifies shipment identity and keeps deleted/corrected status history without recipient data',()=>{
  const result=parseCdekOrder({entity:{...entity,statuses:[...entity.statuses,{code:'DELIVERED',date_time:'2026-09-15T13:00:00+0300',deleted:true}]}},{trackingNumber:entity.cdek_number,uuid});
@@ -57,4 +61,24 @@ test('CDEK transport caches concurrent authorization and uses read-only order AP
 test('CDEK callback requires an independent unpredictable secret',()=>{
  const secret='callback-fixture-'.repeat(4);authorizeCdekWebhook(secret,secret);
  assert.throws(()=>authorizeCdekWebhook('wrong',secret),/NOT_FOUND/);assert.throws(()=>authorizeCdekWebhook('short','short'),/NOT_FOUND/);
+});
+
+test('CDEK parser retains only documented pickup code and calendar ETA, rejects invalid dates',()=>{
+ const parsed=parseCdekOrder({entity:{...entity,delivery_point:'MSK123',planned_delivery_date:'2026-10-01',to_location:{address:'PRIVATE_ADDRESS'}}},{trackingNumber:entity.cdek_number});
+ assert.equal(parsed.pickupPoint,'MSK123');assert.equal(parsed.plannedDeliveryDate,'2026-10-01');
+ assert.ok(!JSON.stringify(parsed).includes('PRIVATE'));assert.equal('recipient' in parsed,false);
+ assert.throws(()=>parseCdekOrder({entity:{...entity,planned_delivery_date:'2026-02-30'}},{trackingNumber:entity.cdek_number}),/CDEK_INVALID_RESPONSE/);
+});
+
+test('CDEK GET failures expose no provider body and make only one request per scheduled attempt',async()=>{
+ for(const status of [429,500,503,'timeout'] as const){
+  let calls=0;
+  const client=new CdekDeliveryClient({account:'fixture',clientId:'client',clientSecret:'SECRET',environment:'test'},async(url)=>{
+   if(String(url).includes('/oauth/token'))return Response.json({access_token:'SECRET_TOKEN',expires_in:3600,token_type:'bearer'});
+   calls++;if(status==='timeout')throw new DOMException('PRIVATE_URL','TimeoutError');
+   return new Response('PRIVATE_PROVIDER_BODY',{status});
+  });
+  await assert.rejects(client.order({trackingNumber:entity.cdek_number,uuid}),e=>e instanceof Error&&e.message==='CDEK_UNAVAILABLE');
+  assert.equal(calls,1);
+ }
 });

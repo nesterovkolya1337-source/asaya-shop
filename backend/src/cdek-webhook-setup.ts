@@ -38,7 +38,7 @@ export async function setupCdekWebhook(api:CdekSubscriptionGateway,store:CdekWeb
  if(state)return {status:'requires_review' as const,created:null};
  if(mode==='status')return {status:'missing' as const,created:false};
  // Existing subscriptions belong to other integrations; never replace/delete them.
- if(list.filter(s=>s.type==='ORDER_STATUS').length>=2)throw new DomainError('CDEK_SUBSCRIPTION_LIMIT');
+ if(list.length>=2)throw new DomainError('CDEK_SUBSCRIPTION_LIMIT');
  await store.save({bindingHash,phase:'pending'});
  try{await api.createOrderStatusSubscription(callback);}catch{return {status:'requires_review' as const,created:null};}
  const active=(await api.subscriptions()).filter(s=>s.type==='ORDER_STATUS'&&s.url===callback);

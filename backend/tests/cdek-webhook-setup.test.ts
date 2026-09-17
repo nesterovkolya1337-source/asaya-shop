@@ -59,7 +59,7 @@ test('CDEK setup preserves intent when read-back fails or accepted subscription 
 test('CDEK setup refuses duplicates, exhausted slots and changed account, environment or callback bindings',async()=>{
  const f=fixture();f.setList([exact,{...exact,uuid:'ca024a7e-9f6e-45bc-9a47-4b0a0934db90'}]);
  await assert.rejects(setupCdekWebhook(f.api,f.store,binding,'ensure'),/CDEK_SUBSCRIPTION_DUPLICATE/);assert.equal(f.posts,0);
- f.setList([{...exact,url:'https://other.example.test/one'},{...exact,url:'https://other.example.test/two'}]);
+ f.setList([{...exact,type:'PRINT_FORM',url:'https://other.example.test/one'},{...exact,type:'ORDER_MODIFIED',url:'https://other.example.test/two'}]);
  await assert.rejects(setupCdekWebhook(f.api,f.store,binding,'ensure'),/CDEK_SUBSCRIPTION_LIMIT/);assert.equal(f.posts,0);assert.equal(f.saves,0);
  f.setList([]);await setupCdekWebhook(f.api,f.store,binding,'ensure');
  for(const changed of [{...binding,account:'other'},{...binding,environment:'production' as const},{...binding,secret:'different-secret-'.repeat(3)}]){

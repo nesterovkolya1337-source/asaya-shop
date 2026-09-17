@@ -14,12 +14,12 @@ export function cdekTrackingFromEnv(env:NodeJS.ProcessEnv){
 const tracking=z.string().regex(/^\d{5,30}$/);
 const timestamp=z.string().max(40).refine(v=>/(Z|[+-]\d{2}:?\d{2})$/.test(v)&&Number.isFinite(Date.parse(v)));
 const eventSchema=z.object({code:z.string().min(1).max(100),date_time:timestamp,deleted:z.boolean().default(false)});
-const responseSchema=z.object({entity:z.object({uuid:z.uuid(),cdek_number:tracking,is_return:z.literal(false),is_reverse:z.literal(false),is_client_return:z.literal(false),statuses:z.array(eventSchema).min(1).max(500)})});
-export type CdekOrderStatus={uuid:string;trackingNumber:string;events:Array<{rawStatus:string;status:ReturnType<typeof deliveryStatus>;occurredAt:string;deleted:boolean}>};
+const responseSchema=z.object({entity:z.object({uuid:z.uuid(),cdek_number:tracking,is_return:z.literal(false),is_reverse:z.literal(false),is_client_return:z.literal(false),delivery_point:z.string().min(1).max(255).optional(),planned_delivery_date:z.iso.date().optional(),statuses:z.array(eventSchema).min(1).max(500)})});
+export type CdekOrderStatus={uuid:string;trackingNumber:string;pickupPoint?:string;plannedDeliveryDate?:string;events:Array<{rawStatus:string;status:ReturnType<typeof deliveryStatus>;occurredAt:string;deleted:boolean}>};
 export function parseCdekOrder(raw:unknown,expected:{trackingNumber:string;uuid?:string}):CdekOrderStatus{
  const result=responseSchema.safeParse(raw);if(!result.success)throw new DomainError('CDEK_INVALID_RESPONSE',503);const o=result.data.entity;
  if(o.cdek_number!==expected.trackingNumber||(expected.uuid&&o.uuid!==expected.uuid))throw new DomainError('CDEK_ORDER_MISMATCH');
- return {uuid:o.uuid,trackingNumber:o.cdek_number,events:o.statuses.map(e=>({rawStatus:e.code,status:deliveryStatus(e.code),occurredAt:new Date(e.date_time).toISOString(),deleted:e.deleted})).sort((a,b)=>a.occurredAt.localeCompare(b.occurredAt))};
+ return {uuid:o.uuid,trackingNumber:o.cdek_number,...(o.delivery_point?{pickupPoint:o.delivery_point}:{}),...(o.planned_delivery_date?{plannedDeliveryDate:o.planned_delivery_date}:{}),events:o.statuses.map(e=>({rawStatus:e.code,status:deliveryStatus(e.code),occurredAt:new Date(e.date_time).toISOString(),deleted:e.deleted})).sort((a,b)=>a.occurredAt.localeCompare(b.occurredAt))};
 }
 export class CdekDeliveryClient{
  #settings:CdekDeliverySettings;#token?:{value:string;expiresAt:number};#pending?:Promise<string>;
@@ -62,4 +62,4 @@ export class CdekDeliveryClient{
 }
 // Webhook is only a durable refresh hint. No signature is documented by CDEK;
 // customer-visible state must come from the authenticated GET above.
-export const cdekWebhookSchema=z.object({type:z.literal('ORDER_STATUS'),date_time:timestamp,uuid:z.uuid(),attributes:z.object({cdek_number:tracking,code:z.string().min(1).max(100),status_date_time:timestamp,is_return:z.boolean(),is_reverse:z.boolean(),is_client_return:z.boolean()})});
+export const cdekWebhookSchema=z.object({type:z.literal('ORDER_STATUS'),date_time:timestamp,uuid:z.uuid(),attributes:z.object({cdek_number:tracking,code:z.string().min(1).max(100),status_date_time:timestamp,deleted:z.boolean().default(false),is_return:z.boolean(),is_reverse:z.boolean(),is_client_return:z.boolean()})});
