@@ -862,7 +862,7 @@
   backdrop-filter: blur(16px);
 }
 
-.stickyBuy > div {
+.stickyBuy > div:first-child {
   display: grid;
   gap: 3px;
   padding-left: 12px;
@@ -1115,7 +1115,7 @@
     display: none;
   }
 
-  .stickyBuy > div {
+  .stickyBuy > div:first-child {
     display: none;
   }
 

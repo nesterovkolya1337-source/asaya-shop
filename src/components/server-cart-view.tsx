@@ -6,7 +6,7 @@ import styles from './server-checkout.module.css';
 import {YandexCheckoutButton} from './yandex-buy-button';
 export const rubles=(minor:number)=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(minor/100);
 export function ServerCartView(){
- const {cart,products,changeQuantity,catalogStatus,reloadCatalog,checkoutEnabled,yandexCheckoutEnabled}=useShop();
+ const {cart,products,changeQuantity,catalogStatus,reloadCatalog,yandexCheckoutEnabled}=useShop();
  const {rows,valid,subtotalMinor,items}=checkoutCart(cart,products);
  return <main className={styles.main}><p>ASAYA / Корзина</p><h1>Ваша корзина</h1>
  {catalogStatus==='loading'?<p>Загружаем актуальные товары…</p>:catalogStatus==='error'?<><p role="alert">Каталог недоступен.</p><button onClick={reloadCatalog}>Повторить загрузку</button></>:<>
@@ -21,6 +21,6 @@ export function ServerCartView(){
  <YandexCheckoutButton key={JSON.stringify([items,valid,subtotalMinor])} items={items} disabled={!valid} label="Оформить в Яндексе" />
  <button onClick={reloadCatalog}>Обновить цены и наличие</button>
  </>}
- {!yandexCheckoutEnabled&&checkoutEnabled&&valid&&<><p>Тестовый заказ — без реальной оплаты и отправки.</p><Link className={styles.primary} href="/checkout">Перейти к оформлению</Link></>}
+ {rows.length>0&&!yandexCheckoutEnabled&&<p role="status">Оформление заказов пока недоступно. Корзина сохранена.</p>}
  </>}<p><Link href="/catalog">В каталог</Link></p></main>;
 }

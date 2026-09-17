@@ -5,6 +5,14 @@ export function parseYandexCheckoutLink(raw:unknown):string {
  return url.href;
 }
 
+// Analytics is optional and cannot block checkout when the SDK fails or never calls back.
+export async function trackCheckoutTransition(track:()=>Promise<void>|void,timeoutMs=600){
+ let timer:ReturnType<typeof setTimeout>|undefined;
+ try{await Promise.race([Promise.resolve().then(track),new Promise<void>(resolve=>{timer=setTimeout(resolve,timeoutMs);})]);}
+ catch{/* Navigation remains available without analytics. */}
+ finally{clearTimeout(timer);}
+}
+
 // Keep the same key after an uncertain network result, bounded to the current page.
 const attempts=new Map<string,string>();
 export async function requestYandexCheckoutLink(endpoint:string,items:Array<{sku:string;quantity:number}>,fetcher:typeof fetch=fetch){

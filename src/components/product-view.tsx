@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, type FormEvent, type MouseEvent, type PointerEvent, useRef, useState } from "react";
 import { ProductCard } from "@/components/product-card";
-import { YandexBuyButton } from "@/components/yandex-buy-button";
+import { YandexBuyButton, YandexCheckoutButton } from "@/components/yandex-buy-button";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
 import { categoryLabels, formatPrice } from "@/lib/store-data";
@@ -22,7 +22,7 @@ function fileToDataUrl(file: File) {
 }
 
 export function ProductView({ productId }: { productId: string }) {
-  const { addReview, addToCart, cart, changeQuantity, favorites, products, reviews, toggleFavorite, userEmail, catalogOnly, catalogStatus, checkoutEnabled } = useShop();
+  const { addReview, addToCart, cart, changeQuantity, favorites, products, reviews, toggleFavorite, userEmail, catalogOnly, catalogStatus, checkoutEnabled, yandexCheckoutEnabled } = useShop();
   const router = useRouter();
   const [activeImage, setActiveImage] = useState(0);
   const [reviewRating, setReviewRating] = useState(5);
@@ -54,7 +54,7 @@ export function ProductView({ productId }: { productId: string }) {
   const ratingRows = [5, 4, 3, 2, 1];
   const buyNow = () => {
     if (!quantity && product.stock) addToCart(product.id);
-    router.push("/checkout");
+    router.push(catalogOnly ? "/cart" : "/checkout");
   };
   const startRecommendationDrag = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
@@ -191,7 +191,7 @@ export function ProductView({ productId }: { productId: string }) {
                 {catalogOnly && !checkoutEnabled ? "Продажи пока закрыты" : product.stock ? "Добавить в корзину" : "Нет в наличии"}
               </button>
             )}
-            {quantity > 0 && <Link className={styles.checkoutLink} href="/checkout">Перейти к оформлению</Link>}
+            {quantity > 0 && <Link className={styles.checkoutLink} href={catalogOnly ? "/cart" : "/checkout"}>Перейти к оформлению</Link>}
           </div>
 
           <YandexBuyButton sku={product.sku} stock={product.stock} quantity={quantity || 1} />
@@ -309,7 +309,7 @@ export function ProductView({ productId }: { productId: string }) {
       }
       <aside className={styles.stickyBuy} aria-label="Быстрая покупка">
         <div><small>{product.name}</small><strong>{formatPrice(product.price)}</strong></div>
-        <button className={styles.buyNow} disabled={(catalogOnly && !checkoutEnabled) || !product.stock} onClick={buyNow} type="button">{catalogOnly && !checkoutEnabled ? 'Продажи пока закрыты' : 'Купить сейчас'}</button>
+        {yandexCheckoutEnabled && product.sku ? <YandexCheckoutButton key={JSON.stringify([product.sku,quantity,product.stock])} compact items={[{sku:product.sku,quantity:quantity||1}]} disabled={product.stock<(quantity||1)} label="Купить сейчас" /> : <button className={styles.buyNow} disabled={(catalogOnly && !checkoutEnabled) || !product.stock} onClick={buyNow} type="button">{catalogOnly && !checkoutEnabled ? 'Продажи пока закрыты' : 'Купить сейчас'}</button>}
         <button className={styles.stickyCart} disabled={(catalogOnly && !checkoutEnabled) || !product.stock || quantity >= product.stock} onClick={() => addToCart(product.id)} type="button">{quantity ? `В корзине · ${quantity}` : "В корзину"}</button>
       </aside>
     </main>

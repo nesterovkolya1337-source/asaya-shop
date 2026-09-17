@@ -1,8 +1,14 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {parseYandexCheckoutLink,requestYandexCheckoutLink} from '../src/lib/yandex-checkout.ts';
+import {parseYandexCheckoutLink,requestYandexCheckoutLink,trackCheckoutTransition} from '../src/lib/yandex-checkout.ts';
 import {checkoutCart} from '../src/lib/checkout-cart.ts';
 const url='https://checkout.kit.yandex.ru/express?host=asaya.example.test&data=e30%3D';
+test('checkout proceeds without analytics, on SDK exception, rejected promise and missing callback',async()=>{
+ await trackCheckoutTransition(()=>{});
+ await trackCheckoutTransition(()=>{throw new Error('SDK unavailable');});
+ await trackCheckoutTransition(()=>Promise.reject(new Error('Analytics blocked')));
+ await trackCheckoutTransition(()=>new Promise(()=>{}),5);
+});
 test('Yandex redirect accepts only the official checkout destination',()=>{
  assert.equal(parseYandexCheckoutLink({url}),url);
  for(const value of [null,{}, {url:'javascript:alert(1)'},{url:url.replace('checkout.kit.yandex.ru','evil.test')},{url:url.replace('/express','/other')},{url:url.replace('https:','http:')},{url:'https://user@checkout.kit.yandex.ru/express?host=a&data=b'},{url:url+'#fragment'}])assert.throws(()=>parseYandexCheckoutLink(value));

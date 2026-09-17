@@ -2,7 +2,7 @@
 
 import {useEffect,useRef,useState} from 'react';
 import {assetPath} from '@/lib/asset-path';
-import {requestYandexCheckoutLink} from '@/lib/yandex-checkout';
+import {requestYandexCheckoutLink,trackCheckoutTransition} from '@/lib/yandex-checkout';
 import {getMetrika} from '@/lib/metrika';
 import styles from './yandex-buy-button.module.css';
 
@@ -11,7 +11,7 @@ export function YandexBuyButton({sku,stock,quantity=1}:{sku?:string;stock:number
  return <YandexCheckoutButton key={JSON.stringify([sku,quantity,stock])} items={[{sku,quantity}]} disabled={stock<quantity} />;
 }
 
-export function YandexCheckoutButton({items,disabled=false,label='Купить в 1 клик'}:{items:Array<{sku:string;quantity:number}>;disabled?:boolean;label?:string}){
+export function YandexCheckoutButton({items,disabled=false,label='Купить в 1 клик',compact=false}:{items:Array<{sku:string;quantity:number}>;disabled?:boolean;label?:string;compact?:boolean}){
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const pending=useRef(false);
  const active=useRef(false);
@@ -22,16 +22,16 @@ export function YandexCheckoutButton({items,disabled=false,label='Купить �
   pending.current=true;setBusy(true);setError('');
   try{
    const url=await requestYandexCheckoutLink(assetPath('/api/store/v1/yandex/checkout-link'),items);
-   if(active.current){await getMetrika()?.checkoutRedirect();if(active.current)window.location.assign(url);}
+   if(active.current){await trackCheckoutTransition(()=>getMetrika()?.checkoutRedirect());if(active.current)window.location.assign(url);}
   }
   catch(e){if(active.current)setError(e instanceof Error&&e.message.startsWith('Корзина')?e.message:'Оформление в Яндексе пока недоступно. Попробуйте позже.');}
   finally{pending.current=false;if(active.current)setBusy(false);}
  };
- return <div className={styles.wrap}>
+ return <div className={compact?styles.compact:styles.wrap}>
   <button type="button" className={styles.button} disabled={busy||disabled||!items.length} onClick={buy} aria-busy={busy}>
    {busy?'Переходим в Яндекс…':label}
   </button>
-  <p className={styles.note}>Оформление и оплата — в Яндексе</p>
+  {!compact&&<p className={styles.note}>Оформление и оплата — в Яндексе. Регистрация на ASAYA не нужна.</p>}
   {error&&<p className={styles.error} role="alert">{error}</p>}
  </div>;
 }

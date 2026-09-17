@@ -6,12 +6,11 @@ import { type FormEvent, useMemo, useState } from "react";
 import { useShop } from "@/components/shop-provider";
 import { formatPrice } from "@/lib/store-data";
 import styles from "./checkout-view.module.css";
-import {ServerCheckoutView} from './server-checkout-view';
 import {ServerCartView} from './server-cart-view';
 import {FREE_CDEK_PICKUP_FROM_RUB} from '@/lib/store-policy';
 
 export function CheckoutView() {
-  const { cart, clearCart, products, promoCode, catalogOnly, checkoutEnabled, yandexCheckoutEnabled } = useShop();
+  const { cart, clearCart, products, promoCode, catalogOnly } = useShop();
   const [placed, setPlaced] = useState(false);
   const cartProducts = products.filter((product) => cart[product.id]);
   const itemCount = cartProducts.reduce((sum, product) => sum + cart[product.id], 0);
@@ -30,9 +29,8 @@ export function CheckoutView() {
     clearCart();
   }
 
-  if (yandexCheckoutEnabled) return <ServerCartView />;
-  if (catalogOnly && checkoutEnabled) return <ServerCheckoutView />;
-  if (catalogOnly) return <main className={styles.success}><h1>Оформление заказов пока закрыто</h1><p>Сейчас доступен просмотр каталога.</p><Link href="/catalog">Вернуться в каталог</Link></main>;
+  // Old bookmarks share the same guest cart and Yandex action; never a second checkout.
+  if (catalogOnly) return <ServerCartView />;
 
   if (placed) {
     return (
