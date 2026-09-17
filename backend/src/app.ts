@@ -64,7 +64,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
  const adminCatalog=new AdminCatalog(options.db);
  const siteContent=new SiteContent(options.db);
  const media=new MediaService(options.db);
- const adminOrders=new AdminOrders(options.db);
+ const adminOrders=new AdminOrders(options.db,options.cdekTracking?.service);
  const staffCookie=options.secureCookies?'__Host-asaya_staff':'asaya_dev_staff';
  const cookieName=options.secureCookies?'__Host-asaya_session':'asaya_dev_session';
  const cookieOptions={httpOnly:true,secure:options.secureCookies,sameSite:'strict' as const,path:'/',maxAge:7*86400};
@@ -78,11 +78,12 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
   }
   const accountEdit=smsEnabled&&req.method==='PUT'&&req.routeOptions.url==='/api/store/v1/account/profile';
   const privacyEdit=req.method==='POST'&&req.routeOptions.url==='/api/admin/v1/orders/:id/privacy';
+  const cdekRefresh=req.method==='POST'&&req.routeOptions.url==='/api/admin/v1/orders/:id/cdek/refresh';
   const ffRecheck=!!options.fulfillment&&req.method==='POST'&&req.routeOptions.url==='/api/admin/v1/orders/:id/fulfillment/recheck';
   if(options.deploymentMode==='catalog'&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!privacyEdit&&!accountEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout)|media|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
+   if(!cdekRefresh&&!privacyEdit&&!accountEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout)|media|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
   }
   if(liveYcp&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
@@ -91,7 +92,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
    // Yandex owns checkout/payments; CDEK callbacks have their own boundary. Do not enable the
    // local checkout or local-only order changes with customer SMS sign-in.
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!privacyEdit&&!ffRecheck&&!accountEdit&&!adminEdit&&!checkoutLink&&!customerLogin&&!req.routeOptions.config.ycp)throw new DomainError('YANDEX_CHECKOUT_ONLY',503);
+   if(!cdekRefresh&&!privacyEdit&&!ffRecheck&&!accountEdit&&!adminEdit&&!checkoutLink&&!customerLogin&&!req.routeOptions.config.ycp)throw new DomainError('YANDEX_CHECKOUT_ONLY',503);
   }
   if(req.routeOptions.config.ycp){
    if(!ycp)throw new DomainError('YCP_UNAVAILABLE',503);
@@ -150,6 +151,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
   secured.put('/api/admin/v1/warehouses/:id',async req=>new Warehouses(options.db).save(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   secured.get('/api/admin/v1/orders',async req=>adminOrders.list(await actor(req.cookies[staffCookie]),req.query));
   secured.get('/api/admin/v1/orders/:id',async req=>adminOrders.detail(await actor(req.cookies[staffCookie]),id(req.params)));
+  secured.post('/api/admin/v1/orders/:id/cdek/refresh',async req=>adminOrders.refreshDelivery(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   secured.get('/api/admin/v1/orders/:id/privacy',async req=>new AdminPrivacy(options.db).preview(await actor(req.cookies[staffCookie]),id(req.params),req.query));
   secured.post('/api/admin/v1/orders/:id/privacy',async req=>new AdminPrivacy(options.db).apply(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   if(options.fulfillment)secured.post('/api/admin/v1/orders/:id/fulfillment/recheck',async req=>{await actor(req.cookies[staffCookie]);z.object({}).strict().parse(req.body);return options.fulfillment!.reconcile(id(req.params));});
@@ -162,6 +164,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
   secured.put('/api/admin/v1/products/:id',{bodyLimit:128*1024},async req=>adminCatalog.save(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   secured.post('/api/admin/v1/products/:id/publish',async req=>adminCatalog.publish(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   secured.post('/api/admin/v1/products/:id/unpublish',async req=>adminCatalog.unpublish(await actor(req.cookies[staffCookie]),id(req.params),req.body));
+  secured.post('/api/admin/v1/products/:id/remove',async req=>adminCatalog.remove(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   secured.post('/api/admin/v1/products/:id/stock',async req=>adminCatalog.stock(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   secured.get('/api/admin/v1/products/:id/history',async req=>adminCatalog.history(id(req.params)));
  });

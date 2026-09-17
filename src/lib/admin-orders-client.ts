@@ -1,5 +1,6 @@
 import {AuthClientError,createStoreRequest,parseOrderDetail,parseOrderSummary,type OrderDetail} from './auth-client.ts';
-export type AdminOrder=OrderDetail & {fulfillment?:{state:string;orderId:string|null;externalKey:string;rawStatus:string|null;updatedAt:string|null;cdekUuid:string|null;trackingNumber:string|null}|null;paymentOnDelivery:boolean;reviewSignals:Array<{kind:string;createdAt:string}>;completion:null|{completedBy:string;completedAt:string;reason:string};dispatch:null|{carrier:string;trackingNumber:string;dispatchedBy:string;dispatchedAt:string};packing:null|{packedBy:string;packedAt:string};customer:{name:string;phone:string};delivery:{label:string;city:string;address:string};history:Array<{action:string;actorId:string|null;reason:string;createdAt:string}>};
+export type OrderDiagnostics={yandexOrderId:string|null;yandexOrderNumber:string|null;yandexSessionId:string|null;cdekUuid:string|null;trackingNumber:string|null;rawDeliveryStatus:string|null;lastDeliveryUpdate:string|null;nextDeliveryAttempt:string|null;deliveryUpdateFailed:boolean;canRefresh:boolean};
+export type AdminOrder=OrderDetail & {diagnostics?:OrderDiagnostics;fulfillment?:{state:string;orderId:string|null;externalKey:string;rawStatus:string|null;updatedAt:string|null;cdekUuid:string|null;trackingNumber:string|null}|null;paymentOnDelivery:boolean;reviewSignals:Array<{kind:string;createdAt:string}>;completion:null|{completedBy:string;completedAt:string;reason:string};dispatch:null|{carrier:string;trackingNumber:string;dispatchedBy:string;dispatchedAt:string};packing:null|{packedBy:string;packedAt:string};customer:{name:string;phone:string};delivery:{label:string;city:string;address:string};history:Array<{action:string;actorId:string|null;reason:string;createdAt:string}>};
 const uuid=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 export const reviewSignalLabels:Record<string,string>={
  'fulfillment.cancel_review':'Запрошена отмена после передачи в фулфилмент. Сначала подтвердите остановку сборки или физический возврат; резерв сохранён.',
@@ -34,7 +35,13 @@ export function parseAdminOrder(raw:unknown):AdminOrder{
  const history=r.history.map(v=>{const h=object(v);if(typeof h.action!=='string'||typeof h.reason!=='string'||!(h.actorId===null||typeof h.actorId==='string'&&uuid.test(h.actorId))||typeof h.createdAt!=='string'||!Number.isFinite(Date.parse(h.createdAt)))throw new AuthClientError('INVALID_RESPONSE');return h as AdminOrder['history'][number];});
  let fulfillment:AdminOrder['fulfillment']=null;
  if(r.fulfillment){const f=object(r.fulfillment);if(typeof f.state!=='string'||!['prepared','sending','uncertain','created','review'].includes(f.state)||typeof f.externalKey!=='string'||f.externalKey.length>100||!['orderId','rawStatus','cdekUuid','trackingNumber'].every(k=>f[k]===null||typeof f[k]==='string'&&String(f[k]).length<=100)||!(f.updatedAt===null||typeof f.updatedAt==='string'&&Number.isFinite(Date.parse(f.updatedAt))))throw new AuthClientError('INVALID_RESPONSE');fulfillment=f as NonNullable<AdminOrder['fulfillment']>;}
- return {...order,fulfillment,paymentOnDelivery,reviewSignals,completion,dispatch,packing,customer:customer as AdminOrder['customer'],delivery:delivery as AdminOrder['delivery'],history};
+ let diagnostics:OrderDiagnostics|undefined;
+ if(r.diagnostics!==undefined){const d=object(r.diagnostics);
+  const keys=['yandexOrderId','yandexOrderNumber','yandexSessionId','cdekUuid','trackingNumber','rawDeliveryStatus'] as const;
+  if(!keys.every(k=>d[k]===null||typeof d[k]==='string'&&(d[k] as string).length<=200)||!['lastDeliveryUpdate','nextDeliveryAttempt'].every(k=>d[k]===null||typeof d[k]==='string'&&Number.isFinite(Date.parse(d[k] as string)))||typeof d.deliveryUpdateFailed!=='boolean'||typeof d.canRefresh!=='boolean')throw new AuthClientError('INVALID_RESPONSE');
+  diagnostics=Object.fromEntries([...keys,'lastDeliveryUpdate','nextDeliveryAttempt','deliveryUpdateFailed','canRefresh'].map(k=>[k,d[k]])) as OrderDiagnostics;
+ }
+ return {...order,diagnostics,fulfillment,paymentOnDelivery,reviewSignals,completion,dispatch,packing,customer:customer as AdminOrder['customer'],delivery:delivery as AdminOrder['delivery'],history};
 }
 export function createAdminOrdersClient(base:string,fetcher:typeof fetch=fetch){
  const request=createStoreRequest(base,fetcher);
@@ -49,6 +56,7 @@ export function createAdminOrdersClient(base:string,fetcher:typeof fetch=fetch){
    return {items,nextCursor:r.nextCursor as string|null};
   },
   async detail(id:string){const order=parseAdminOrder(await request(path(id),'GET'));if(order.id!==id)throw new AuthClientError('INVALID_RESPONSE');return order;},
+  async refreshDelivery(id:string,csrf:string){const r=object(await request(path(id)+'/cdek/refresh','POST',{},csrf));if(r.ok!==true)throw new AuthClientError('INVALID_RESPONSE');},
   async recheckFulfillment(id:string,csrf:string){const r=object(await request(path(id)+'/fulfillment/recheck','POST',{},csrf));if(!['review','created'].includes(String(r.state)))throw new AuthClientError('INVALID_RESPONSE');return r.state;},
   async complete(id:string,input:{reason:string;confirmed:true},csrf:string){const r=object(await request(path(id)+'/complete','POST',input,csrf));if(r.ok!==true)throw new AuthClientError('INVALID_RESPONSE');},
   async dispatch(id:string,input:{carrier:string;trackingNumber:string;confirmed:true},csrf:string){const r=object(await request(path(id)+'/dispatch','POST',input,csrf));if(r.ok!==true)throw new AuthClientError('INVALID_RESPONSE');},

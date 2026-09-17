@@ -68,6 +68,16 @@ export class OrderTracking{
    // Payment/refund ledger never changes in response to delivery data.
   });
  }
+ async canRefresh(orderId:string){return !!(await this.db.pool.query('SELECT 1 FROM order_logistics WHERE order_id=$1 AND account_id=$2 AND environment=$3 AND tracking_number IS NOT NULL',[orderId,this.scope.accountId,this.scope.environment])).rowCount;}
+ async manualRefresh(orderId:string){
+  z.uuid().parse(orderId);if(!await this.canRefresh(orderId))throw new DomainError('SHIPMENT_NOT_FOUND',404);
+  // Atomic cooldown prevents simultaneous clicks from issuing duplicate GETs.
+  const claimed=await this.db.pool.query(`UPDATE order_logistics SET delivery_next_attempt_at=$4::timestamptz+interval '60 seconds'
+   WHERE order_id=$1 AND account_id=$2 AND environment=$3 AND (delivery_next_attempt_at IS NULL OR delivery_next_attempt_at<=$4)
+   AND (delivery_synced_at IS NULL OR delivery_synced_at<=$4::timestamptz-interval '60 seconds') RETURNING order_id`,[orderId,this.scope.accountId,this.scope.environment,this.clock()]);
+  if(!claimed.rowCount)throw new DomainError('CDEK_REFRESH_COOLDOWN',429);
+  try{await this.refresh(orderId);}catch{await this.failed(orderId);throw new DomainError('CDEK_REFRESH_FAILED',503);}
+ }
  async requestStale(orderId:string,userId:string){
   await this.db.pool.query(`UPDATE order_logistics l SET delivery_requested_at=$3 FROM orders o WHERE o.id=l.order_id AND o.id=$1 AND o.user_id=$2
    AND l.account_id=$4 AND l.environment=$5 AND l.tracking_number IS NOT NULL AND COALESCE(l.delivery_status,'created') NOT IN ('delivered','cancelled','returned')

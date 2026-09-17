@@ -3,3 +3,5 @@
 .mediaCard{display:flex;flex-direction:column;gap:12px;border:1px solid #deded8;border-radius:12px;padding:14px;max-width:100%;margin-bottom:16px}
 .mediaImage{width:150px;height:150px;object-fit:contain;background:#f5f4f0;border-radius:8px}
 .orderList{list-style:none;padding:0;display:grid;gap:14px}.orderList>li{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border:1px solid #ddd;border-radius:12px;padding:16px}.main nav[aria-label="Разделы админки"]{justify-content:flex-start;margin:24px 0}.main button[aria-current="page"]{background:#252525;color:white}
+
+.sidebar .productRow{display:flex;align-items:center;gap:12px;margin:0}.sidebar .thumbnail{display:flex;align-items:center;justify-content:center;width:56px;height:64px;flex:0 0 56px;object-fit:contain;background:#eeece8;border-radius:8px;margin:0;font-size:10px}.productRow strong{overflow-wrap:anywhere}.diagnostics{overflow-wrap:anywhere}.diagnostics dt{font-weight:600;margin-top:12px}.diagnostics dd{margin:4px 0 12px}

@@ -1,5 +1,6 @@
 "use client";
 import Link from 'next/link';
+import Image from 'next/image';
 import {useEffect,useRef,useState,useCallback,type FormEvent} from 'react';
 import {assetPath} from '@/lib/asset-path';
 import {defaultProducts} from '@/lib/store-data';
@@ -69,9 +70,12 @@ export function ServerAdmin(){
 }
 function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>void}){
  const {reloadCatalog}=useShop();
+ const [checkedAt,setCheckedAt]=useState(0);
+ useEffect(()=>{const update=()=>setCheckedAt(Date.now());queueMicrotask(update);const timer=setInterval(update,30000);return()=>clearInterval(timer);},[]);
+ const [category,setCategory]=useState(''),[appliedFilter,setAppliedFilter]=useState({search:'',category:''});
  const [rows,setRows]=useState<ProductRow[]>([]),[search,setSearch]=useState(''),[next,setNext]=useState<number|null>(null);
  const [product,setProduct]=useState<AdminProduct|null>(null),[draft,setDraft]=useState<AdminDraft>(blankDraft),[dirty,setDirty]=useState(false);
- const [operationBusy,setBusy]=useState(false),[mediaBusy,setMediaBusy]=useState(false),[notice,setNotice]=useState(''),[confirm,setConfirm]=useState<'publish'|'unpublish'|'discard'|null>(null);
+ const [operationBusy,setBusy]=useState(false),[mediaBusy,setMediaBusy]=useState(false),[notice,setNotice]=useState(''),[confirm,setConfirm]=useState<'publish'|'unpublish'|'discard'|'remove'|null>(null);
  const busy=operationBusy||mediaBusy;
  const [history,setHistory]=useState<Array<{action:string;createdAt:string;actorId:string}>>([]);
  const lock=useRef(false),nextAction=useRef<(()=>Promise<void>)|null>(null);
@@ -86,7 +90,7 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
   api.list().then(r=>{if(active){setRows(r.items);setNext(r.nextOffset);}}).catch(e=>{if(active)setNotice(adminError(e));});
   return()=>{active=false;};
  },[]);
- async function list(offset=0){const r=await api.list(search,offset);setRows(previous=>offset?[...previous,...r.items]:r.items);setNext(r.nextOffset);}
+ async function list(offset=0){const filter=offset?appliedFilter:{search,category};const r=await api.list(filter.search,offset,filter.category);setAppliedFilter(filter);setRows(previous=>offset?[...previous,...r.items]:r.items);setNext(r.nextOffset);}
  async function open(id:string){
   const p=await api.detail(id);setProduct(p);setDraft(initialDraft(p));setDirty(false);setConfirm(null);
   setHistory((await api.history(id)));
@@ -112,28 +116,31 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
   await run(async()=>{if(operation==='publish')await api.publish(product.id,product.revision,session.csrfToken);else await api.unpublish(product.id,product.revision,session.csrfToken);
    await open(product.id);await list();reloadCatalog();setNotice(operation==='publish'?'Товар опубликован.':'Товар скрыт с витрины. Заказы и история сохранены.');});
  }
- const labels:Record<string,string>={'product.draft_saved':'Сохранён черновик','product.published':'Опубликован товар','product.unpublished':'Товар скрыт','inventory.adjusted':'Изменён остаток'};
+ async function remove(){if(!product||confirm!=='remove')return;await run(async()=>{const outcome=await api.remove(product.id,product.revision,product.draft.sku,session.csrfToken);if(outcome==='archived')await open(product.id);else{setProduct(null);setDirty(false);setConfirm(null);}await list();reloadCatalog();setNotice(outcome==='archived'?'Товар архивирован. История и существующие заказы сохранены.':'Неиспользованный черновик удалён.');});}
+ const labels:Record<string,string>={'product.archived':'Товар архивирован','product.deleted':'Удалён неиспользованный черновик','product.draft_saved':'Сохранён черновик','product.published':'Опубликован товар','product.unpublished':'Товар скрыт','inventory.adjusted':'Изменён остаток'};
  const textField=(label:string,key:'name'|'slug')=><label>{label}<input value={draft[key]} maxLength={key==='slug'?80:300} onChange={e=>change({[key]:e.target.value})}/></label>;
  const contentField=(label:string,key:'description'|'volume'|'usage'|'ingredients'|'aroma'|'image'|'safety',large=false)=><label>{label}{large?<textarea rows={4} value={draft.content[key]} onChange={e=>content({[key]:e.target.value})}/>:<input value={draft.content[key]} onChange={e=>content({[key]:e.target.value})}/>}</label>;
  const lines=(label:string,key:'features'|'gallery'|'recommendations')=><label>{label}<textarea rows={3} value={draft.content[key].join('\n')} onChange={e=>content({[key]:e.target.value.split('\n')})}/></label>;
  return <><p>Сначала сохраните черновик, затем опубликуйте. Остатки меняются отдельно и сразу.</p>
  {notice&&<p role="status" className={styles.notice}>{notice}</p>}
  {confirm==='discard'&&<div className={styles.notice}><p>Есть несохранённые правки. Отбросить их и продолжить?</p><button disabled={busy} onClick={()=>{setConfirm(null);void run(nextAction.current!);}}>Отбросить правки</button><button onClick={()=>setConfirm(null)}>Остаться</button></div>}
- <div className={styles.layout}><aside className={styles.sidebar}><form onSubmit={e=>{e.preventDefault();void run(()=>list());}}><label>Найти товар<input value={search} onChange={e=>setSearch(e.target.value)}/></label><button disabled={busy}>Найти</button></form>
+ <div className={styles.layout}><aside className={styles.sidebar}><form onSubmit={e=>{e.preventDefault();void run(()=>list());}}><label>Найти товар<input value={search} onChange={e=>setSearch(e.target.value)}/></label><label>Категория в списке<select value={category} onChange={e=>setCategory(e.target.value)}><option value="">Все категории</option><option value="hair">Волосы</option><option value="body">Тело</option><option value="face">Лицо</option><option value="sets">Наборы</option></select></label><button disabled={busy}>Найти</button></form>
  <button className={styles.primary} disabled={busy} onClick={newProduct}>Добавить товар</button>
- <ul>{rows.map(row=><li key={row.id}><button disabled={busy} aria-current={product?.id===row.id?'true':undefined} onClick={()=>choose(()=>open(row.id))}><strong>{row.name||'Без названия'}</strong><span>{row.sku} · {row.active?'На витрине':'Скрыт'}</span></button></li>)}</ul>
+ <ul>{rows.map(row=><li key={row.id}><button disabled={busy} aria-current={product?.id===row.id?'true':undefined} onClick={()=>choose(()=>open(row.id))}><span className={styles.productRow}>{row.image?<Image unoptimized width={56} height={64} className={styles.thumbnail} src={row.image.startsWith('/')?assetPath(row.image):row.image} alt=""/>:<span className={styles.thumbnail}>Нет фото</span>}<span><strong>{row.name||'Без названия'}</strong><span>{row.sku}</span><span>{({hair:'Волосы',body:'Тело',face:'Лицо',sets:'Наборы','':'Без категории'})[row.category]} · {row.active?'На витрине':'Скрыт'}</span></span></span></button></li>)}</ul>
  {!rows.length&&<p>Товары не найдены.</p>}{next!==null&&<button disabled={busy} onClick={()=>void run(()=>list(next))}>Показать ещё</button>}</aside>
  <section className={styles.editor}>{!product?<p>Выберите товар или добавьте новый.</p>:<><header><h2>{draft.name||'Новый товар'}</h2><p>{product.active?'Опубликован':'Скрыт с витрины'} · {dirty?'Есть несохранённые правки':product.hasDraft?'Правки сохранены':'Черновик ещё не сохранён'}</p>
  <div className={styles.actions}><button disabled={busy||!product.hasDraft||dirty} onClick={()=>setConfirm('publish')}>Опубликовать</button><button disabled={busy||dirty||!product.active} onClick={()=>setConfirm('unpublish')}>Скрыть с витрины</button>
+ {product.hasDraft&&<button disabled={busy||dirty} onClick={()=>setConfirm('remove')}>Архивировать / удалить черновик</button>}
  {product.revision>0&&<button disabled={busy} onClick={()=>choose(()=>open(product.id))}>Загрузить с сервера</button>}
  {product.active&&<Link href={'/product/'+product.draft.slug}>Посмотреть товар</Link>}</div></header>
  {(confirm==='publish'||confirm==='unpublish')&&<div className={styles.notice}><p>{confirm==='publish'?'Опубликовать сохранённые данные и цены?':'Скрыть товар с витрины? Существующие заказы сохранятся.'}</p><button disabled={busy} onClick={()=>void publication()}>Подтвердить</button><button disabled={busy} onClick={()=>setConfirm(null)}>Назад</button></div>}
+ {confirm==='remove'&&<div className={styles.notice} role="alert"><p>Убрать товар «{product.draft.name}» ({product.draft.sku})? Опубликованный или использованный товар будет архивирован. Только неиспользованный черновик удалится безвозвратно.</p><button disabled={busy} onClick={()=>void remove()}>Подтвердить удаление или архивирование</button><button disabled={busy} onClick={()=>setConfirm(null)}>Назад</button></div>}
  <form onSubmit={save} key={product.id+':'+product.revision}><fieldset disabled={busy}>
- <h3>Основная информация</h3><p>Артикул можно исправить у скрытого товара до использования в заказах и интеграциях. Для опубликованного товара сначала нажмите «Снять с публикации».</p><label>Артикул<input required maxLength={100} readOnly={product.active} value={draft.sku} onChange={e=>change({sku:e.target.value})}/></label>
+ <h3>Основная информация</h3><p>Артикул можно исправить только до первой публикации и использования в заказах или интеграциях. Архивирование не снимает это ограничение.</p><label>Артикул<input required maxLength={100} readOnly={product.active||!!product.publishedAt} value={draft.sku} onChange={e=>change({sku:e.target.value})}/></label>
  {textField('Название','name')}{textField('Адрес карточки: латинские буквы, цифры и дефисы','slug')}
  <div className={styles.columns}><label>Категория<select value={draft.content.category} onChange={e=>content({category:e.target.value as ProductContent['category']})}><option value="hair">Волосы</option><option value="body">Тело</option><option value="face">Лицо</option><option value="sets">Наборы</option></select></label>
  <label>Тип товара<select value={draft.content.setKind} onChange={e=>content({setKind:e.target.value as ProductContent['setKind']})}><option value="none">Отдельный товар</option><option value="combo">Комбо-набор</option><option value="gift">Подарочный набор</option></select></label></div>
- {contentField('Описание','description',true)}{contentField('Объём / размер','volume')}{lines('Особенности — по одной на строке','features')}
+ {contentField('Описание','description',true)}<div className={styles.columns}><label>Объём / количество<input type="number" min="0.001" max="1000000" step="any" value={draft.content.size?.value??''} onChange={e=>content({size:e.target.value?{value:Number(e.target.value),unit:draft.content.size?.unit??'ml'}:undefined})}/></label><label>Единица измерения<select disabled={!draft.content.size} value={draft.content.size?.unit??'ml'} onChange={e=>content({size:{value:draft.content.size!.value,unit:e.target.value as 'ml'|'g'|'pcs'}})}><option value="ml">мл</option><option value="g">г</option><option value="pcs">шт.</option></select></label></div>{!draft.content.size&&<><p>Для старой карточки размер сохранён текстом. Укажите число и единицу, чтобы обновить его.</p>{contentField('Текущий размер','volume')}</>}{lines('Особенности — по одной на строке','features')}
  {contentField('Применение','usage',true)}{contentField('Состав','ingredients',true)}{contentField('Аромат','aroma',true)}
  <h3>Фотографии</h3>
  <AdminMediaEditor image={draft.content.image} gallery={draft.content.gallery} csrf={session.csrfToken} disabled={operationBusy} onBusy={setMediaBusy} onExpired={onExpired}
@@ -155,6 +162,6 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  <h3>Параметры отправки</h3><div className={styles.columns}>{([['Вес, г','weightG'],['Ширина, мм','widthMm'],['Высота, мм','heightMm'],['Глубина, мм','depthMm']] as const).map(([label,key])=><label key={key}>{label}<input type="number" min={1} value={draft[key]??''} onChange={e=>change({[key]:e.target.value===''?null:Number(e.target.value)})}/></label>)}</div>
  <button className={styles.primary}>Сохранить черновик</button></fieldset></form>
  {product.hasDraft&&<section><h3>Остатки по складам</h3><p>Для подключённого склада остаток обновляется из СДЭК Фулфилмента. Ручная корректировка доступна только для складов без синхронизации.</p>{!product.stocks.length&&<p>Склады ещё не заведены на сервере.</p>}
- {product.stocks.map(s=>s.source?<div className={styles.stock} key={s.warehouseId}><p>{s.name} · доступно {s.source.available} · в резерве {s.reserved}<br/>Источник: СДЭК Фулфилмент · остаток в выгрузке {s.source.reportedQuantity}<br/>Выгрузка: {new Date(s.source.generatedAt).toLocaleString("ru-RU")}<br/>{s.source.healthy&&Date.parse(s.source.expiresAt)>Date.now()?"Синхронизация работает":"Данные устарели или обновление не удалось. Продажа недоступна."}</p></div>:<form className={styles.stock} key={s.warehouseId+':'+s.onHand+':'+s.reserved} onSubmit={e=>{e.preventDefault();const onHand=Number(new FormData(e.currentTarget).get('onHand'));void run(async()=>{await api.stock(product.id,{warehouseId:s.warehouseId,expectedOnHand:s.onHand,onHand},session.csrfToken);const updated=await api.detail(product.id);setProduct(p=>p?{...p,stocks:updated.stocks}:p);setHistory(await api.history(product.id));reloadCatalog();setNotice('Остаток обновлён.');});}}><label>{s.name} · в резерве {s.reserved}<input type="number" name="onHand" required min={s.reserved} max={1000000} defaultValue={s.onHand}/></label><button disabled={busy||!s.active}>Обновить остаток</button></form>)}</section>}
+ {product.stocks.map(s=>s.source?<div className={styles.stock} key={s.warehouseId}><p>{s.name} · доступно {s.source.available} · в резерве {s.reserved}<br/>Источник: СДЭК Фулфилмент · остаток в выгрузке {s.source.reportedQuantity}<br/>Выгрузка: {new Date(s.source.generatedAt).toLocaleString("ru-RU")}<br/>{s.source.healthy&&Date.parse(s.source.expiresAt)>checkedAt?"Синхронизация работает":"Данные устарели или обновление не удалось. Продажа недоступна."}</p></div>:<form className={styles.stock} key={s.warehouseId+':'+s.onHand+':'+s.reserved} onSubmit={e=>{e.preventDefault();const onHand=Number(new FormData(e.currentTarget).get('onHand'));void run(async()=>{await api.stock(product.id,{warehouseId:s.warehouseId,expectedOnHand:s.onHand,onHand},session.csrfToken);const updated=await api.detail(product.id);setProduct(p=>p?{...p,stocks:updated.stocks}:p);setHistory(await api.history(product.id));reloadCatalog();setNotice('Остаток обновлён.');});}}><label>{s.name} · в резерве {s.reserved}<input type="number" name="onHand" required min={s.reserved} max={1000000} defaultValue={s.onHand}/></label><button disabled={busy||!s.active}>Обновить остаток</button></form>)}</section>}
  <section><h3>Последние действия</h3><ul className={styles.history}>{history.map((h,i)=><li key={i}>{new Date(h.createdAt).toLocaleString('ru-RU')} — {labels[h.action]??h.action}<small>Сотрудник: {h.actorId}</small></li>)}</ul></section></>}</section></div></>;
 }

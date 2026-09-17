@@ -1,7 +1,7 @@
 import type { Product } from './store-data';
 
 type CatalogItem = {sku:string;name?:string;content?:unknown;slug:string;currency:'RUB';regularMinor:number;finalMinor:number;available:number};
-export type ProductContent=Pick<Product,'description'|'volume'|'category'|'usage'|'ingredients'|'aroma'|'features'|'image'|'gallery'|'badge'|'instruction'|'recommendations'|'sensory'> & {placement?:Product['placement'];safety:string;setKind:'none'|'combo'|'gift'};
+export type ProductContent=Pick<Product,'description'|'volume'|'category'|'usage'|'ingredients'|'aroma'|'features'|'image'|'gallery'|'badge'|'instruction'|'recommendations'|'sensory'> & {size?:{value:number;unit:'ml'|'g'|'pcs'};placement?:Product['placement'];safety:string;setKind:'none'|'combo'|'gift'};
 export function parseProductContent(raw:unknown):ProductContent {
  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('INVALID_CONTENT');
  const c=raw as ProductContent;
@@ -11,9 +11,10 @@ export function parseProductContent(raw:unknown):ProductContent {
   !c.instruction||!Array.isArray(c.instruction.steps)||!c.instruction.steps.every(v=>typeof v==='string')||typeof c.instruction.amount!=='string'||typeof c.instruction.tip!=='string'||
   !Array.isArray(c.sensory)||!c.sensory.every(v=>v&&typeof v.label==='string'&&Number.isInteger(v.value)&&v.value>=0&&v.value<=5))throw new Error('INVALID_CONTENT');
  if(c.placement!==undefined){const p=c.placement;if(!p||typeof p!=='object'||Array.isArray(p)||!Number.isInteger(p.catalogOrder)||p.catalogOrder<0||p.catalogOrder>100000||![p.bestsellerOrder,p.newOrder].every(v=>v===null||Number.isInteger(v)&&v>=0&&v<=100000))throw new Error('INVALID_CONTENT');}
+ if(c.size!==undefined&&(!c.size||!Number.isFinite(c.size.value)||c.size.value<=0||c.size.value>1000000||!['ml','g','pcs'].includes(c.size.unit)))throw new Error('INVALID_CONTENT');
  const safeImage=(v:string)=>v===''||/^\/api\/store\/v1\/media\/[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(v)||/^\/images\/[A-Za-z0-9_./-]+$/.test(v)&&!v.includes('..')||/^https:\/\/[^\s]+$/.test(v)&&(()=>{try{const u=new URL(v);return !u.username&&!u.password;}catch{return false;}})();
  if(![c.image,...c.gallery].every(safeImage))throw new Error('INVALID_CONTENT');
- return {...(c.placement?{placement:{...c.placement}}:{}),description:c.description,volume:c.volume,category:c.category,setKind:c.setKind,usage:c.usage,ingredients:c.ingredients,aroma:c.aroma,
+ return {...(c.size?{size:{...c.size}}:{}),...(c.placement?{placement:{...c.placement}}:{}),description:c.description,volume:c.volume,category:c.category,setKind:c.setKind,usage:c.usage,ingredients:c.ingredients,aroma:c.aroma,
   features:c.features,image:c.image,gallery:c.gallery,badge:c.badge,instruction:c.instruction,safety:c.safety,recommendations:c.recommendations,sensory:c.sensory};
 }
 export function readBackendCatalog(payload:unknown):Product[] {

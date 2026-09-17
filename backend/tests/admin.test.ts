@@ -90,7 +90,9 @@ test('stock changes respect reservations, stale quantities and immutable order s
  const detail=await catalog.detail(id);assert.equal(detail.stocks[0]!.onHand,3);assert.equal(detail.stocks[0]!.reserved,2);
  await catalog.save(actor,id,{...d,revision:2,name:'Changed',finalMinor:10000});await catalog.publish(actor,id,{revision:3});
  const old=await commerce.order(buyer,order.orderId);assert.equal(old.items[0]!.name_snapshot,d.name);assert.equal(old.total_minor,50000);
- await catalog.unpublish(actor,id,{revision:4});assert.equal((await commerce.order(buyer,order.orderId)).total_minor,50000);
+ const snapshot=await commerce.order(buyer,order.orderId);
+ assert.deepEqual(await catalog.remove(actor,id,{revision:4,sku:d.sku,confirmed:true}),{outcome:'archived'});
+ assert.deepEqual(await commerce.order(buyer,order.orderId),snapshot);
 });
 test('HTTP staff API rejects customer cookies, requires origin/CSRF and supports saved product flow',async()=>{
  const actor=await staff(),origin='http://127.0.0.1:3200';
@@ -141,4 +143,26 @@ test('placement is private until publication and validates order values',async()
  assert.deepEqual(await commerce.catalog(),[]);await catalog.publish(actor,id,{revision:1});assert.deepEqual((await commerce.catalog())[0]!.content.placement,placement);
  await catalog.save(actor,id,{...d,revision:2,content:{...d.content,placement:{catalogOrder:1,bestsellerOrder:null,newOrder:3}}});assert.deepEqual((await commerce.catalog())[0]!.content.placement,placement);
  for(const catalogOrder of [-1,1.5,100001])await assert.rejects(catalog.save(actor,id,{...d,revision:3,content:{...d.content,placement:{...placement,catalogOrder}}}));
+});
+
+test('product list filters draft categories, exposes thumbnails and typed size publishes from the canonical editor',async()=>{
+ const actor=await staff(),catalog=new AdminCatalog(ctx.db),id=randomUUID(),d=draft();
+ await catalog.save(actor,id,{...d,content:{...d.content,category:'face',size:{value:30.5,unit:'g'}}});
+ const list=await catalog.list({category:'face'});assert.equal(list.items.length,1);assert.equal(list.items[0].category,'face');assert.equal(list.items[0].image,d.content.image);
+ assert.equal((await catalog.list({category:'body'})).items.length,0);assert.equal((await catalog.detail(id)).draft.content.volume,'30.5 г');
+ await catalog.publish(actor,id,{revision:1});assert.equal((await new CommerceService(ctx.db).catalog())[0]!.content.volume,'30.5 г');
+ for(const size of [{value:0,unit:'ml'},{value:-1,unit:'g'},{value:2,unit:'unknown'}])await assert.rejects(catalog.save(actor,id,{...d,revision:2,content:{...d.content,size}}));
+});
+test('physical deletion requires confirmed unused draft and revision; ever-published and referenced products are archived',async()=>{
+ const actor=await staff(),catalog=new AdminCatalog(ctx.db),id=randomUUID(),d=draft();await catalog.save(actor,id,d);
+ await assert.rejects(catalog.remove(actor,id,{revision:1,sku:d.sku,confirmed:false}));
+ await assert.rejects(catalog.remove(actor,id,{revision:0,sku:d.sku,confirmed:true}),/EDIT_CONFLICT/);
+ await assert.rejects(catalog.remove(actor,id,{revision:1,sku:'wrong',confirmed:true}),/EDIT_CONFLICT/);
+ assert.deepEqual(await catalog.remove(actor,id,{revision:1,sku:d.sku,confirmed:true}),{outcome:'deleted'});
+ assert.equal((await ctx.db.pool.query('SELECT 1 FROM products WHERE id=$1',[id])).rowCount,0);
+ assert.equal((await ctx.db.pool.query("SELECT 1 FROM audit_log WHERE entity_id=$1 AND action='product.deleted'",[id])).rowCount,1);
+ const used=randomUUID();await catalog.save(actor,used,d);await catalog.publish(actor,used,{revision:1});await catalog.unpublish(actor,used,{revision:2});
+ assert.deepEqual(await catalog.remove(actor,used,{revision:3,sku:d.sku,confirmed:true}),{outcome:'archived'});assert.equal((await catalog.detail(used)).active,false);
+ const linked=randomUUID();await catalog.save(actor,linked,{...d,sku:'LINKED'});await ctx.db.pool.query("INSERT INTO product_external_ids(provider,environment,account_id,external_id,product_id) VALUES('ycp','test','test','offer-linked',$1)",[linked]);
+ assert.deepEqual(await catalog.remove(actor,linked,{revision:1,sku:'LINKED',confirmed:true}),{outcome:'archived'});
 });

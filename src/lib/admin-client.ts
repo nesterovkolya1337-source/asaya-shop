@@ -3,7 +3,8 @@ import {parseProductContent,type ProductContent} from './backend-catalog.ts';
 export type StaffSession={user:{id:string;role:'admin'};csrfToken:string};
 export type AdminDraft={sku:string;name:string;slug:string;content:ProductContent;regularMinor:number|null;finalMinor:number|null;weightG:number|null;widthMm:number|null;heightMm:number|null;depthMm:number|null};
 export type AdminProduct={id:string;revision:number;active:boolean;hasDraft:boolean;publishedAt:string|null;draft:AdminDraft;stocks:Array<{warehouseId:string;name:string;active:boolean;onHand:number;reserved:number;source?:null|{kind:'cdek_ff_yml';generatedAt:string;fetchedAt:string;expiresAt:string;healthy:boolean;available:number;reportedQuantity:number}}>};
-export type ProductRow={id:string;sku:string;name:string;active:boolean;revision:number};
+export type ProductRow={id:string;sku:string;name:string;active:boolean;revision:number;category:''|'hair'|'body'|'face'|'sets';image:string};
+const emptyRowContent={description:'',volume:'',category:'hair',setKind:'none',usage:'',ingredients:'',aroma:'',features:[],image:'',gallery:[],badge:'',instruction:{steps:[],amount:'',tip:''},safety:'',recommendations:[],sensory:[]};
 const idPattern=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 const object=(r:unknown):Record<string,unknown>=>{if(!r||typeof r!=='object'||Array.isArray(r))throw new AuthClientError('INVALID_RESPONSE');return r as Record<string,unknown>;};
 const uuid=(r:unknown):r is string=>typeof r==='string'&&idPattern.test(r);
@@ -52,16 +53,17 @@ export function createAdminClient(base:string,fetcher:typeof fetch=fetch){
   async me(){try{return parseStaffSession(await request('auth/me','GET'));}catch(e){if(e instanceof AuthClientError&&e.code==='UNAUTHENTICATED')return null;throw e;}},
   async login(email:string,password:string,code:string){return parseStaffSession(await request('auth/login','POST',{email:email.trim().toLowerCase(),password,code}));},
   async logout(csrf:string){try{ok(await request('auth/logout','POST',{},csrf));}catch(e){if(e instanceof AuthClientError&&e.code==='UNAUTHENTICATED')return;throw e;}},
-  async list(search='',offset=0){
-   const r=object(await request('products?search='+encodeURIComponent(search)+'&offset='+offset,'GET'));
+  async list(search='',offset=0,category=''){
+   const r=object(await request('products?search='+encodeURIComponent(search)+'&offset='+offset+'&category='+encodeURIComponent(category),'GET'));
    if(!Array.isArray(r.items)||r.items.length>50||!(r.nextOffset===null||integer(r.nextOffset)&&r.nextOffset>offset))throw new AuthClientError('INVALID_RESPONSE');
-   const items=r.items.map(rawItem=>{const v=object(rawItem);if(!uuid(v.id)||typeof v.sku!=='string'||typeof v.name!=='string'||typeof v.active!=='boolean'||!integer(v.revision))throw new AuthClientError('INVALID_RESPONSE');return v as ProductRow;});
+   const items=r.items.map(rawItem=>{const v=object(rawItem);if(!uuid(v.id)||typeof v.sku!=='string'||typeof v.name!=='string'||typeof v.active!=='boolean'||!integer(v.revision))throw new AuthClientError('INVALID_RESPONSE');const category=v.category??'',image=v.image??'';if(typeof category!=='string'||!['','hair','body','face','sets'].includes(category)||typeof image!=='string')throw new AuthClientError('INVALID_RESPONSE');parseProductContent({...emptyRowContent,image});return {...v,category,image} as ProductRow;});
    return {items,nextOffset:r.nextOffset as number|null};
   },
   async detail(id:string){const d=parseAdminProduct(await request(path(id),'GET'));if(d.id!==id)throw new AuthClientError('INVALID_RESPONSE');return d;},
   async save(id:string,draft:AdminDraft,revision:number,csrf:string){changed(await request(path(id),'PUT',{...draft,revision},csrf),id,revision);},
   async publish(id:string,revision:number,csrf:string){changed(await request(path(id)+'/publish','POST',{revision},csrf),id,revision);},
   async unpublish(id:string,revision:number,csrf:string){ok(await request(path(id)+'/unpublish','POST',{revision},csrf));},
+  async remove(id:string,revision:number,sku:string,csrf:string){const r=object(await request(path(id)+'/remove','POST',{revision,sku,confirmed:true},csrf));if(r.outcome!=='archived'&&r.outcome!=='deleted')throw new AuthClientError('INVALID_RESPONSE');return r.outcome;},
   async stock(id:string,stock:{warehouseId:string;expectedOnHand:number;onHand:number},csrf:string){ok(await request(path(id)+'/stock','POST',stock,csrf));},
   async history(id:string){
    const r=object(await request(path(id)+'/history','GET'));

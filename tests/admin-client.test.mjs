@@ -6,6 +6,17 @@ const id='00000000-0000-4000-8000-000000000001',csrf='a'.repeat(64);
 const content={description:'Описание',volume:'300 мл',category:'body',setKind:'none',usage:'Применение',ingredients:'Состав',aroma:'',features:[],image:'/images/test.webp',gallery:[],badge:'Новинка',instruction:{steps:[],amount:'',tip:''},safety:'Указания',recommendations:[],sensory:[]};
 const draft={sku:'NEW',name:'Новый товар',slug:'entirely-new',content,regularMinor:50000,finalMinor:45000,weightG:null,widthMm:null,heightMm:null,depthMm:null};
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status});
+
+test('product category filter and deletion confirmation carry canonical identity and size remains typed',async()=>{
+ let call;const row={id,sku:'NEW',name:'Новый',active:false,revision:2,image:'/images/test.webp',category:'face'};
+ const api=createAdminClient('/api/admin/v1',async(url,options)=>{call={url,options};return reply(options.method==='GET'?{items:[row],nextOffset:null}:{outcome:'archived'});});
+ assert.deepEqual((await api.list('NEW',0,'face')).items,[row]);assert.equal(new URL(call.url,'http://local').searchParams.get('category'),'face');
+ assert.equal(await api.remove(id,2,'NEW',csrf),'archived');assert.equal(call.options.headers['X-CSRF-Token'],csrf);assert.deepEqual(JSON.parse(call.options.body),{revision:2,sku:'NEW',confirmed:true});
+ const product={id,revision:2,active:false,hasDraft:true,publishedAt:null,draft:{...draft,content:{...content,size:{value:2,unit:'pcs'}}},stocks:[]};
+ assert.deepEqual(parseAdminProduct(product).draft.content.size,{value:2,unit:'pcs'});
+ assert.throws(()=>parseAdminProduct({...product,draft:{...product.draft,content:{...product.draft.content,size:{value:2,unit:'bad'}}}}));
+ await assert.rejects(createAdminClient('/api',async()=>reply({ok:true})).remove(id,2,'NEW',csrf),e=>e.code==='INVALID_RESPONSE');
+});
 test('server published cards work without hardcoded drafts and unsafe media is rejected',()=>{
  const raw={items:[{sku:'NEW',name:'Новое имя',slug:'entirely-new',content,currency:'RUB',regularMinor:50000,finalMinor:45000,available:3}]};
  const item=readBackendCatalog(raw)[0];assert.equal(item.name,'Новое имя');assert.equal(item.price,450);assert.equal(item.badge,'Новинка');assert.equal(item.safety,'Указания');

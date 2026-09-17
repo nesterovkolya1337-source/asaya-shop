@@ -15,9 +15,11 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY backend/package.json ./
 COPY backend/migrations ./migrations
+COPY backend/tests/fixtures ./tests/fixtures
+COPY backend/test-shop-ui ./test-shop-ui
 COPY backend/data/storefront-mapping.json backend/data/mapping-approvals.json ./data/
 # Deployment archives may have private source modes. Runtime code stays root-owned,
 # but the unprivileged application must be able to read its SQL and mapping files.
-RUN chmod -R a+rX /app/migrations /app/data && chmod a+r /app/package.json
+RUN chmod -R a+rX /app/migrations /app/data /app/tests /app/test-shop-ui && chmod a+r /app/package.json
 USER node
 CMD ["node", "dist/src/server.js"]

@@ -7,6 +7,7 @@ const text=(max:number)=>z.string().trim().max(max);
 const mediaPath=/^\/api\/store\/v1\/media\/([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})$/;
 const image=text(1000).refine(v=>v===''||mediaPath.test(v)||/^\/images\/[A-Za-z0-9_./-]+$/.test(v)&&!v.includes('..')||/^https:\/\/[^\s]+$/.test(v)&&(()=>{try{const u=new URL(v);return !u.username&&!u.password;}catch{return false;}})());
 export const contentSchema=z.object({
+ size:z.object({value:z.number().positive().max(1000000),unit:z.enum(['ml','g','pcs'])}).strict().optional(),
  placement:z.object({catalogOrder:z.number().int().min(0).max(100000),bestsellerOrder:z.number().int().min(0).max(100000).nullable(),newOrder:z.number().int().min(0).max(100000).nullable()}).strict().optional(),
  description:text(10000),volume:text(200),category:z.enum(['hair','body','face','sets']),setKind:z.enum(['none','combo','gift']),
  usage:text(10000),ingredients:text(10000),aroma:text(2000),features:z.array(text(300)).max(20),
@@ -37,10 +38,10 @@ async function audit(tx:Tx,actor:string,action:string,id:string,detail:unknown){
 export class AdminCatalog{
  constructor(private db:Database){}
  async list(raw:unknown){
-  const {search,offset}=z.object({search:text(100).default(''),offset:z.coerce.number().int().min(0).max(1000000).default(0)}).strict().parse(raw);
+  const {search,offset,category}=z.object({search:text(100).default(''),category:z.enum(['','hair','body','face','sets']).default(''),offset:z.coerce.number().int().min(0).max(1000000).default(0)}).strict().parse(raw);
   const r=await this.db.pool.query(`SELECT p.id,p.sku,COALESCE(e.draft->>'name',p.name) AS name,p.active,
-   COALESCE(e.revision,0) AS revision FROM products p LEFT JOIN product_editor e ON e.product_id=p.id
-   WHERE p.sku ILIKE $1 OR p.name ILIKE $1 OR e.draft->>'name' ILIKE $1 ORDER BY p.sku,p.id LIMIT 51 OFFSET $2`,['%'+search.replace(/[\\%_]/g,'\\$&')+'%',offset]);
+   COALESCE(e.revision,0) AS revision,COALESCE(e.draft->'content'->>'category','') AS category,COALESCE(e.draft->'content'->>'image','') AS image FROM products p LEFT JOIN product_editor e ON e.product_id=p.id
+   WHERE (p.sku ILIKE $1 OR p.name ILIKE $1 OR e.draft->>'name' ILIKE $1) AND ($3='' OR e.draft->'content'->>'category'=$3) ORDER BY p.sku,p.id LIMIT 51 OFFSET $2`,['%'+search.replace(/[\\%_]/g,'\\$&')+'%',offset,category]);
   return {items:r.rows.slice(0,50),nextOffset:r.rows.length>50?offset+50:null};
  }
  async detail(id:string){
@@ -62,6 +63,7 @@ export class AdminCatalog{
  }
  async save(actor:string,id:string,raw:unknown){
   z.uuid().parse(id);const input=draftSchema.parse(raw);const {revision,...draft}=input;
+  if(draft.content.size){const s=draft.content.size;draft.content.volume=String(s.value)+' '+({ml:'мл',g:'г',pcs:'шт.'}[s.unit]);}
   try{return await this.db.transaction(async tx=>{
    await admin(tx,actor);await lock(tx,'catalog:admin');
    await checkMedia(tx,draft.content);
@@ -118,6 +120,23 @@ export class AdminCatalog{
    await tx.query('UPDATE products SET active=false,sale_approved=false,updated_at=now() WHERE id=$1',[id]);
    await tx.query('UPDATE product_editor SET revision=revision+1,updated_by=$2,updated_at=now() WHERE product_id=$1',[id,actor]);
    await audit(tx,actor,'product.unpublished',id,{revision:revision+(e?1:0)});return {ok:true};
+  });
+ }
+ async remove(actor:string,id:string,raw:unknown){
+  z.uuid().parse(id);const input=z.object({revision:z.number().int().nonnegative(),confirmed:z.literal(true),sku:z.string().min(1).max(100)}).strict().parse(raw);
+  return this.db.transaction(async tx=>{
+   await admin(tx,actor);await lock(tx,'catalog:admin');
+   const p=(await tx.query('SELECT * FROM products WHERE id=$1 FOR UPDATE',[id])).rows[0],e=(await tx.query('SELECT * FROM product_editor WHERE product_id=$1 FOR UPDATE',[id])).rows[0];
+   if(!p)throw new DomainError('PRODUCT_NOT_FOUND',404);
+   if((e?.revision??0)!==input.revision||p.sku!==input.sku)throw new DomainError('EDIT_CONFLICT');
+   const used=!e||p.active||p.source_uuid||e.published_at||(await tx.query(`SELECT 1 FROM order_items WHERE product_id=$1 UNION ALL SELECT 1 FROM inventory_movements WHERE product_id=$1
+    UNION ALL SELECT 1 FROM inventory_reservations WHERE product_id=$1 UNION ALL SELECT 1 FROM inventory_balances WHERE product_id=$1
+    UNION ALL SELECT 1 FROM product_external_ids WHERE product_id=$1 UNION ALL SELECT 1 FROM product_barcodes WHERE product_id=$1
+    UNION ALL SELECT 1 FROM storefront_mappings WHERE product_id=$1 UNION ALL SELECT 1 FROM stock_source_items WHERE product_id=$1
+    UNION ALL SELECT 1 FROM product_components WHERE product_id=$1 OR component_id=$1 LIMIT 1`,[id])).rowCount;
+   if(used){await tx.query('UPDATE products SET active=false,sale_approved=false,updated_at=now() WHERE id=$1',[id]);await tx.query('UPDATE product_editor SET revision=revision+1,updated_by=$2,updated_at=now() WHERE product_id=$1',[id,actor]);}
+   else {await tx.query('DELETE FROM product_editor WHERE product_id=$1',[id]);await tx.query('DELETE FROM product_prices WHERE product_id=$1',[id]);await tx.query('DELETE FROM products WHERE id=$1',[id]);}
+   const outcome=used?'archived':'deleted';await audit(tx,actor,'product.'+outcome,id,{});return {outcome};
   });
  }
  async stock(actor:string,id:string,raw:unknown){

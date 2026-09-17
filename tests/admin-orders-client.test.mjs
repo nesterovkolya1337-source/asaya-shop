@@ -4,6 +4,13 @@ import {createAdminOrdersClient,parseAdminOrder} from '../src/lib/admin-orders-c
 const id='00000000-0000-4000-8000-000000000001';
 const order={id,shipment:null,completion:null,dispatch:null,packing:null,public_number:'ASAYA-10001',status:'draft',payment_status:'pending',delivery_status:'not_created',currency:'RUB',subtotal_minor:10000,delivery_minor:5000,total_minor:15000,created_at:'2026-09-06T10:00:00Z',canCancel:true,items:[{sku:'A',name_snapshot:'Old name',quantity:1,unit_minor:10000,line_minor:10000}],customer:{name:'Test',phone:'+79990000000'},delivery:{label:'Test delivery',city:'Test',address:'Test street'},history:[]};
 
+test('delivery diagnostics validate fields and protected refresh never sends shipment creation data',async()=>{
+ const diagnostics={yandexOrderId:'order',yandexOrderNumber:'123',yandexSessionId:'session',cdekUuid:id,trackingNumber:'1234567890',rawDeliveryStatus:'CREATED',lastDeliveryUpdate:null,nextDeliveryAttempt:null,deliveryUpdateFailed:false,canRefresh:true};
+ assert.deepEqual(parseAdminOrder({...order,diagnostics:{...diagnostics,token:'secret'}}).diagnostics,diagnostics);
+ assert.throws(()=>parseAdminOrder({...order,diagnostics:{...diagnostics,lastDeliveryUpdate:'bad'}}));
+ let call;const api=createAdminOrdersClient('/api/admin/v1',async(url,options)=>{call={url,options};return new Response('{"ok":true}');});
+ await api.refreshDelivery(id,'csrf');assert.equal(call.url,'/api/admin/v1/orders/'+id+'/cdek/refresh');assert.equal(call.options.headers['X-CSRF-Token'],'csrf');assert.deepEqual(JSON.parse(call.options.body),{});
+});
 test('admin review signals validate kinds and dates and discard private fields',()=>{
  const signal={kind:'payment.refund_review',createdAt:'2026-09-07T00:00:00Z'};
  assert.deepEqual(parseAdminOrder({...order,reviewSignals:[{...signal,payload:'secret'}]}).reviewSignals,[signal]);
