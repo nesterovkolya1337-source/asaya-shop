@@ -16,6 +16,7 @@ import {AdminCatalog} from './admin-catalog.js';
 import {SiteContent} from './site-content.js';
 import {MediaService} from './media.js';
 import {AdminOrders} from './admin-orders.js';
+import {AdminPrivacy} from './admin-privacy.js';
 import {AdminIntegration} from './admin-integration.js';
 import {AdminReadiness} from './admin-readiness.js';
 import {AdminStatistics} from './admin-statistics.js';
@@ -76,11 +77,12 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
    authorizeCdekWebhook((req.params as {key?:string}).key,options.cdekTracking.secret);return;
   }
   const accountEdit=smsEnabled&&req.method==='PUT'&&req.routeOptions.url==='/api/store/v1/account/profile';
+  const privacyEdit=req.method==='POST'&&req.routeOptions.url==='/api/admin/v1/orders/:id/privacy';
   const ffRecheck=!!options.fulfillment&&req.method==='POST'&&req.routeOptions.url==='/api/admin/v1/orders/:id/fulfillment/recheck';
   if(options.deploymentMode==='catalog'&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!accountEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout)|media|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
+   if(!privacyEdit&&!accountEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout)|media|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
   }
   if(liveYcp&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
@@ -89,7 +91,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
    // Yandex owns checkout/payments; CDEK callbacks have their own boundary. Do not enable the
    // local checkout or local-only order changes with customer SMS sign-in.
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!ffRecheck&&!accountEdit&&!adminEdit&&!checkoutLink&&!customerLogin&&!req.routeOptions.config.ycp)throw new DomainError('YANDEX_CHECKOUT_ONLY',503);
+   if(!privacyEdit&&!ffRecheck&&!accountEdit&&!adminEdit&&!checkoutLink&&!customerLogin&&!req.routeOptions.config.ycp)throw new DomainError('YANDEX_CHECKOUT_ONLY',503);
   }
   if(req.routeOptions.config.ycp){
    if(!ycp)throw new DomainError('YCP_UNAVAILABLE',503);
@@ -148,6 +150,8 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
   secured.put('/api/admin/v1/warehouses/:id',async req=>new Warehouses(options.db).save(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   secured.get('/api/admin/v1/orders',async req=>adminOrders.list(await actor(req.cookies[staffCookie]),req.query));
   secured.get('/api/admin/v1/orders/:id',async req=>adminOrders.detail(await actor(req.cookies[staffCookie]),id(req.params)));
+  secured.get('/api/admin/v1/orders/:id/privacy',async req=>new AdminPrivacy(options.db).preview(await actor(req.cookies[staffCookie]),id(req.params),req.query));
+  secured.post('/api/admin/v1/orders/:id/privacy',async req=>new AdminPrivacy(options.db).apply(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   if(options.fulfillment)secured.post('/api/admin/v1/orders/:id/fulfillment/recheck',async req=>{await actor(req.cookies[staffCookie]);z.object({}).strict().parse(req.body);return options.fulfillment!.reconcile(id(req.params));});
   secured.post('/api/admin/v1/orders/:id/cancel',async req=>{await commerce.adminCancel(await actor(req.cookies[staffCookie]),id(req.params),req.body);return {ok:true};});
   secured.post('/api/admin/v1/orders/:id/start-processing',async req=>{await commerce.adminStartProcessing(await actor(req.cookies[staffCookie]),id(req.params),req.body);return {ok:true};});

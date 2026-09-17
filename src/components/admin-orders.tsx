@@ -6,6 +6,7 @@ import {createAdminOrdersClient,reviewSignalLabels,type AdminOrder} from '@/lib/
 import type {StaffSession} from '@/lib/admin-client';
 import styles from './server-admin.module.css';
 import {OrderPackingSheet} from './order-packing-sheet';
+import {AdminPrivacy} from './admin-privacy';
 const api=createAdminOrdersClient(assetPath('/api/admin/v1'));
 const price=(n:number)=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(n/100);
 const fulfillmentLabels:Record<string,string>={prepared:'Готов к отправке',sending:'Передаётся на склад',uncertain:'Требуется сверить приём заказа',created:'Принят фулфилментом',review:'Требуется проверка'};
@@ -130,6 +131,7 @@ export function AdminOrders({session,onExpired,initialOrderId}:{session:StaffSes
  {!order.fulfillment&&order.status==='processing'&&order.delivery_status==='preparing'&&!order.packing&&<p>Заказ в сборке. Товары зарезервированы; отгрузка ещё не оформлена.</p>}
  {order.status==='cancelled'&&order.payment_status==='paid'&&!order.reviewSignals.some(s=>['payment.late_review','ycp.placement_after_cancel','payment.refund_review'].includes(s.kind))&&<p className={styles.notice}>Заказ отменён, но оплата отмечена как полученная. Сверьте платёж и необходимость возврата.</p>}
  <h3>Получатель</h3><p>{order.customer.name||'Имя не указано'} · {order.customer.phone||'Телефон не указан'}</p>
+ <AdminPrivacy key={order.id} orderId={order.id} csrf={session.csrfToken} onChanged={()=>void run(async()=>{updateOrder(await api.detail(order.id));})}/>
  <h3>Доставка</h3><p>{order.delivery.label||'Способ не указан'}</p><p>{[order.delivery.city,order.delivery.address].filter(Boolean).join(', ')||'Адрес не указан'}</p>
  <h3>Состав заказа</h3><ul>{order.items.map(item=><li key={item.sku}><strong>{item.name_snapshot}</strong><p>{item.sku} · {item.quantity} шт. × {price(item.unit_minor)} = {price(item.line_minor)}</p></li>)}</ul>
  <p>Товары: {price(order.subtotal_minor)} · Доставка: {price(order.delivery_minor)}</p><p><strong>Итого: {price(order.total_minor)}</strong></p>

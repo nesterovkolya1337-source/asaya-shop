@@ -82,19 +82,10 @@ test('CDEK webhook is authenticated before parsing, queues known shipments only,
   await tracking.failed(f.order);assert.ok((await f.db.pool.query('SELECT delivery_next_attempt_at FROM order_logistics')).rows[0].delivery_next_attempt_at>at);
  }finally{await app.close();}
 });
-test('unpaid retention honors definitive provider cancellation, 30 days and legal hold while retaining order lines',async()=>{
- const f=await fixture();await f.db.pool.query('DELETE FROM payments');
- await f.db.pool.query("UPDATE orders SET status='cancelled',payment_status='cancelled',updated_at=now()-interval '31 days' WHERE id=$1",[f.order]);
- const scope={accountId:'ycp-test',environment:'test' as const};
- assert.equal(await purgeUnpaidContacts(f.db,scope),0);
- await f.db.pool.query("INSERT INTO order_status_history(id,order_id,kind,status,source) VALUES($1,$2,'order','cancelled','ycp')",[randomUUID(),f.order]);
- await f.db.pool.query('UPDATE orders SET legal_hold=true WHERE id=$1',[f.order]);assert.equal(await purgeUnpaidContacts(f.db,scope),0);
- await f.db.pool.query('UPDATE orders SET legal_hold=false WHERE id=$1',[f.order]);assert.equal(await purgeUnpaidContacts(f.db,scope),1);
- assert.equal(await purgeUnpaidContacts(f.db,scope),0);
- const order=(await f.db.pool.query('SELECT customer_snapshot,delivery_snapshot,total_minor FROM orders')).rows[0];
- assert.equal(order.customer_snapshot.redacted,true);assert.equal(order.delivery_snapshot.redacted,true);assert.equal(order.total_minor,'50000');
- const draft=(await f.db.pool.query('SELECT snapshot FROM checkout_sessions')).rows[0].snapshot;assert.equal(draft.customer,undefined);assert.equal(draft.delivery,undefined);assert.ok(draft.items);
- assert.equal((await f.db.pool.query('SELECT 1 FROM order_items')).rowCount,1);
+test('obsolete automatic contact retention is disabled even for cancelled old orders',async()=>{
+ const f=await fixture();const before=(await f.db.pool.query('SELECT customer_snapshot,delivery_snapshot FROM orders')).rows;
+ await assert.rejects(purgeUnpaidContacts(f.db,{accountId:'ycp-test',environment:'test'}),/AUTOMATIC_RETENTION_DISABLED/);
+ assert.deepEqual((await f.db.pool.query('SELECT customer_snapshot,delivery_snapshot FROM orders')).rows,before);
 });
 
 async function trackingFixture(){

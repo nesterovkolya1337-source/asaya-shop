@@ -13,7 +13,6 @@ import {runTrackingWorker} from './tracking-worker.js';
 import {CdekFulfillmentClient} from './cdek-fulfillment.js';
 import {FulfillmentDispatch,type FulfillmentBinding} from './fulfillment-dispatch.js';
 import {runFulfillmentWorker} from './fulfillment-worker.js';
-import {runRetentionWorker} from './retention-worker.js';
 import {CdekStockFeed} from './cdek-stock-feed.js';
 import {StockSync,runStockWorker} from './stock-sync.js';
 const c=config();
@@ -30,8 +29,8 @@ const fulfillment=ffBinding?new FulfillmentDispatch(db,new CdekFulfillmentClient
 const otpSender=c.customerSms.enabled&&c.customerSms.settings?new SmsAeroSender(c.customerSms.settings):new DisabledOtpSender();
 const app=await buildApp({deploymentMode:c.DEPLOYMENT_MODE,db,otpSecret:c.OTP_SECRET,staffSecret:c.STAFF_SECRET,otpSender,customerSmsEnabled:c.customerSms.enabled,otpPolicy:c.otpPolicy,origin:new URL(c.PUBLIC_ORIGIN).origin,secureCookies:c.COOKIE_SECURE==='true',logger:true,ycp,yandexIdClientId:c.YANDEX_ID_CLIENT_ID,fulfillment,...(tracking?{cdekTracking:{service:tracking,secret:c.cdekTracking!.secret}}:{})});
 const sweepController=new AbortController();let sweep:Promise<void>|undefined;
-let trackingWorker:Promise<void>|undefined,fulfillmentWorker:Promise<void>|undefined,retentionWorker:Promise<void>|undefined,stockWorker:Promise<void>|undefined;
-app.addHook('onClose',async()=>{sweepController.abort();await Promise.allSettled([sweep,trackingWorker,fulfillmentWorker,retentionWorker,stockWorker]);await db.close();});
+let trackingWorker:Promise<void>|undefined,fulfillmentWorker:Promise<void>|undefined,stockWorker:Promise<void>|undefined;
+app.addHook('onClose',async()=>{sweepController.abort();await Promise.allSettled([sweep,trackingWorker,fulfillmentWorker,stockWorker]);await db.close();});
 let closing=false;
 const stop=async()=>{if(closing)return;closing=true;await app.close();};
 process.on('SIGINT',()=>void stop());process.on('SIGTERM',()=>void stop());
@@ -39,7 +38,6 @@ try {await app.listen({host:c.HOST,port:c.PORT});} catch(e) {await app.close();t
 if(tracking)trackingWorker=runTrackingWorker(tracking,sweepController.signal,report=>app.log.error(report));
 if(stock)stockWorker=runStockWorker(stock,sweepController.signal,report=>app.log.error(report));
 if(fulfillment&&ffBinding)fulfillmentWorker=runFulfillmentWorker(db,fulfillment,ffBinding,sweepController.signal,report=>app.log.error(report));
-if(c.UNPAID_RETENTION_ENABLED==='true'&&ycp)retentionWorker=runRetentionWorker(db,{accountId:ycp.settings.accountId,environment:ycp.settings.environment},sweepController.signal,report=>app.log.info(report));
 if(c.DEPLOYMENT_MODE==='ycp'&&ycp){
  const settings=parseYcpSettings(ycp.settings,true);
  const commerce=new CommerceService(db,undefined,'production');

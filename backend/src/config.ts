@@ -21,7 +21,7 @@ export function config(env: NodeJS.ProcessEnv = process.env) {
   RESERVATION_SWEEP_INTERVAL_MS:z.coerce.number().int().min(1000).max(300000).default(60000)
  }).parse(env);
  if(Boolean(c.YCP_TOKEN)!==Boolean(c.YCP_SETTINGS_FILE))throw new Error('YCP_TOKEN and YCP_SETTINGS_FILE must be configured together');
- if(c.UNPAID_RETENTION_ENABLED==='true'&&!c.YCP_SETTINGS_FILE)throw new Error('Unpaid retention requires a YCP scope');
+ if(c.UNPAID_RETENTION_ENABLED==='true')throw new Error('Automatic customer/order retention is disabled by v10.1');
  // v10.1: Yandex owns CDEK order/shipment creation. Never start the obsolete order.paid dispatcher.
  if(c.FULFILLMENT_ENABLED==='true')throw new Error('ASAYA fulfillment dispatch is disabled: Yandex Checkout owns shipment creation');
  if(c.NODE_ENV==='production' && (c.COOKIE_SECURE!=='true'||!c.PUBLIC_ORIGIN.startsWith('https://'))) throw new Error('Production requires HTTPS and secure cookies');

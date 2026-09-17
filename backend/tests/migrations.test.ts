@@ -2,13 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { testDatabase } from './postgres.js';
 import { migrate } from '../src/db.js';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { sitePageDefaults } from '../src/site-content-defaults.js';
 test('all migrations run on PostgreSQL and replay without changes',async()=>{
  const t=await testDatabase();
- try { assert.deepEqual(await migrate(t.db),[]); assert.equal((await t.db.pool.query('SELECT * FROM schema_migrations')).rows.length,23); }
+ try { assert.deepEqual(await migrate(t.db),[]); assert.deepEqual((await t.db.pool.query('SELECT name FROM schema_migrations ORDER BY name')).rows.map(r=>r.name),(await readdir(resolve('migrations'))).filter(n=>/^\d+.*\.sql$/.test(n)).sort()); }
  finally { await t.stop(); }
 });
 
