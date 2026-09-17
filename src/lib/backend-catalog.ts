@@ -1,6 +1,6 @@
 import type { Product } from './store-data';
 
-type CatalogItem = {sku:string;name?:string;content?:unknown;slug:string;currency:'RUB';regularMinor:number;finalMinor:number;available:number};
+type CatalogItem = {sku:string;name?:string;content?:unknown;slug:string;currency:'RUB';regularMinor:number;finalMinor:number;available:number;stockState?:'known'|'unknown'};
 export type ProductContent=Pick<Product,'description'|'volume'|'category'|'usage'|'ingredients'|'aroma'|'features'|'image'|'gallery'|'badge'|'instruction'|'recommendations'|'sensory'> & {size?:{value:number;unit:'ml'|'g'|'pcs'};placement?:Product['placement'];safety:string;setKind:'none'|'combo'|'gift'};
 export function parseProductContent(raw:unknown):ProductContent {
  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('INVALID_CONTENT');
@@ -27,13 +27,14 @@ export function readBackendCatalog(payload:unknown):Product[] {
   if(typeof item.slug!=='string' || !/^[a-z0-9][a-z0-9-]{0,79}$/.test(item.slug) || typeof item.sku!=='string' || !item.sku || item.currency!=='RUB' ||
    ![item.regularMinor,item.finalMinor,item.available].every(Number.isSafeInteger) || item.finalMinor<0 ||
    item.regularMinor<item.finalMinor || item.regularMinor>1_000_000_000_000 || item.available<0 ||
-   ids.has(item.slug) || skus.has(item.sku)) throw new Error('INVALID_CATALOG');
+   (item.stockState!==undefined&&!['known','unknown'].includes(item.stockState)) ||
+   (item.stockState==='unknown'&&item.available>0) || ids.has(item.slug) || skus.has(item.sku)) throw new Error('INVALID_CATALOG');
   const draft={...parseProductContent(item.content),id:item.slug,name:item.name};
   if(!draft.name||typeof draft.name!=='string'||!draft.image)throw new Error('INVALID_CATALOG');
   ids.add(item.slug);skus.add(item.sku);
   const displayImage=(path:string)=>(path.startsWith('/images/')||path.startsWith('/api/store/v1/media/'))?(process.env.NEXT_PUBLIC_BASE_PATH??'')+path:path;
   return {...draft,image:displayImage(draft.image),gallery:draft.gallery.filter(Boolean).map(displayImage),name:draft.name,sku:item.sku,price:item.finalMinor/100,oldPrice:item.regularMinor/100,
    discount:item.regularMinor>0?Math.round((item.regularMinor-item.finalMinor)/item.regularMinor*100):0,
-   stock:item.available,active:true,badge:draft.badge,rating:0,reviews:0};
+   stock:item.available,stockState:item.stockState??(item.available>0?'known':'unknown'),active:true,badge:draft.badge,rating:0,reviews:0};
  });
 }

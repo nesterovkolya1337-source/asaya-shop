@@ -12,7 +12,7 @@ export function YandexBuyButton({sku,stock,quantity=1}:{sku?:string;stock:number
  return <YandexCheckoutButton key={JSON.stringify([sku,quantity,stock])} items={[{sku,quantity}]} disabled={stock<quantity} />;
 }
 
-export function YandexCheckoutButton({items,disabled=false,label='Купить в 1 клик',compact=false}:{items:Array<{sku:string;quantity:number}>;disabled?:boolean;label?:string;compact?:boolean}){
+export function YandexCheckoutButton({items,disabled=false,label='Купить в 1 клик',compact=false,prepareItems,onConflict}:{items:Array<{sku:string;quantity:number}>;disabled?:boolean;label?:string;compact?:boolean;prepareItems?:()=>Promise<Array<{sku:string;quantity:number}>|null>;onConflict?:()=>Promise<void>}){
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const pending=useRef(false);
  const active=useRef(false);
@@ -22,10 +22,12 @@ export function YandexCheckoutButton({items,disabled=false,label='Купить �
   if(pending.current||disabled||!items.length)return;
   pending.current=true;setBusy(true);setError('');
   try{
-   const url=await requestYandexCheckoutLink(assetPath('/api/store/v1/yandex/checkout-link'),items);
-   if(active.current){for(const item of items)getProductAnalytics()?.track('checkout_started',item.sku);await trackCheckoutTransition(()=>getMetrika()?.checkoutRedirect());if(active.current)window.location.assign(url);}
+   const checked=prepareItems?await prepareItems():items;
+   if(!active.current||!checked?.length)return;
+   const url=await requestYandexCheckoutLink(assetPath('/api/store/v1/yandex/checkout-link'),checked);
+   if(active.current){for(const item of checked)getProductAnalytics()?.track('checkout_started',item.sku);await trackCheckoutTransition(()=>getMetrika()?.checkoutRedirect());if(active.current)window.location.assign(url);}
   }
-  catch(e){if(active.current)setError(e instanceof Error&&e.message.startsWith('Корзина')?e.message:'Оформление в Яндексе пока недоступно. Попробуйте позже.');}
+  catch(e){if(active.current){if(e instanceof Error&&e.message.startsWith('Корзина')&&onConflict)await onConflict().catch(()=>{});if(active.current)setError(e instanceof Error&&e.message.startsWith('Корзина')?e.message:'Оформление в Яндексе пока недоступно. Попробуйте позже.');}}
   finally{pending.current=false;if(active.current)setBusy(false);}
  };
  return <div className={compact?styles.compact:styles.wrap}>

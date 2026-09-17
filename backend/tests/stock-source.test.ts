@@ -306,3 +306,20 @@ test('published storefront remains visible through missing, zero, positive and s
  await f.db.pool.query('UPDATE product_editor SET published=$2 WHERE product_id=$1',[f.product,JSON.stringify(published.rows[0].published)]);
  await f.db.pool.query('UPDATE products SET active=false WHERE id=$1',[f.product]);assert.equal((await catalog.catalog()).length,0);
 });
+
+test('cart catalog distinguishes confirmed zero from missing, stale and failed stock using the shared source',async()=>{
+ const f=await fixture(),catalog=new CommerceService(f.db,undefined,'production');
+ const check=async(available:number,stockState:string)=>{
+  const [item]=await catalog.catalog();assert.equal(item!.available,available);assert.equal(item!.stockState,stockState);
+  const basket=await f.basket.basket(f.request);
+  assert.equal(basket.items[0]!.warehouses.reduce((sum:number,w:{available_quantity:number})=>sum+w.available_quantity,0),available);
+ };
+ await check(0,'unknown');
+ await f.sync.apply(parseStockFeed(xml(f.at,0)));await check(0,'known');
+ await f.sync.apply(parseStockFeed(xml(new Date(+f.at+1000),5)));await check(5,'known');
+ await f.db.pool.query("UPDATE stock_sources SET expires_at=now()-interval '1 second'");await check(0,'unknown');
+ await f.db.pool.query("UPDATE stock_sources SET expires_at=now()+interval '1 hour',healthy=false");await check(0,'unknown');
+ await f.db.pool.query('UPDATE stock_sources SET healthy=true');await check(5,'known');
+ await f.sync.apply(parseStockFeed(xml(new Date(+f.at+2000),5).replace(/<offer [\s\S]*<\/offer>/,'')));await check(0,'unknown');
+ await f.sync.apply(parseStockFeed(xml(new Date(+f.at+3000),0)));await check(0,'known');
+});

@@ -17,7 +17,7 @@ const artifacts=process.env.ASAYA_BROWSER_OUTPUT || __dirname;
    const req=route.request(),u=new URL(req.url());
    if(u.hostname==='checkout.kit.yandex.ru'){redirects.push(u.href);return route.fulfill({contentType:'text/html',body:'<h1>Intercepted checkout; no real request</h1>'});}
    if(u.hostname!=='127.0.0.1')return route.abort();
-   if(u.pathname==='/api/store/v1/products')return route.fulfill({status:catalogError?503:200,contentType:'application/json',body:JSON.stringify({items:[{...products[0],available:stock},products[1]]})});
+   if(u.pathname==='/api/store/v1/products')return route.fulfill({status:catalogError?503:200,contentType:'application/json',body:JSON.stringify({items:[{...products[0],available:stock,stockState:'known'},products[1]]})});
    if(u.pathname==='/api/store/v1/yandex/checkout-link'){
     requests.push({body:req.postDataJSON(),key:req.headers()['idempotency-key']});await new Promise(r=>setTimeout(r,150));
     const data=Buffer.from(JSON.stringify({items:req.postDataJSON().items.map(i=>({id:'offer-'+i.sku,quantity:i.quantity,price:800,final_price:690}))})).toString('base64');
@@ -38,13 +38,13 @@ const artifacts=process.env.ASAYA_BROWSER_OUTPUT || __dirname;
   assert.deepEqual(Object.keys(JSON.parse(Buffer.from(new URL(redirects.at(-1)).searchParams.get('data'),'base64').toString())),['items']);
   // Old checkout bookmark presents the same cart, with no customer address/order form.
   await page.goto(base+'/checkout/');await button.waitFor();assert.equal(await page.locator('main form').count(),0);
-  stock=0;await page.reload();await page.getByText('Недостаточно товара. Доступно: 0.',{exact:true}).waitFor();assert.equal(await button.isDisabled(),true);
-  catalogError=true;await page.reload();await page.getByRole('alert').filter({hasText:'Каталог недоступен'}).waitFor();assert.equal(await button.count(),0);catalogError=false;stock=5;
+  stock=0;await page.reload();await page.getByText('Нет в наличии',{exact:true}).waitFor();assert.equal(await button.isEnabled(),true);
+  catalogError=true;await page.reload();await page.getByRole('alert').filter({hasText:'Каталог недоступен'}).waitFor();assert.equal(await button.isDisabled(),true);catalogError=false;stock=5;
   await page.goto(base+'/product/task4-a/');const sticky=page.getByRole('complementary',{name:'Быстрая покупка'}).getByRole('button',{name:'Купить сейчас',exact:true});await sticky.waitFor();assert.equal(await sticky.isVisible(),true);
   assert.equal(await page.locator('a[href="/checkout/"]').count(),0);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
   await page.screenshot({path:path.join(artifacts,`task4-product-${width}.png`),fullPage:true});
   await sticky.click();await page.waitForURL('https://checkout.kit.yandex.ru/**');assert.deepEqual(requests.at(-1).body,{items:[{sku:'TASK4-A',quantity:2}]});
-  assert.deepEqual(errors,[]);results.push({width,guestCart:true,allLines:true,conflictAndFailurePreserveCart:true,doubleClickSingleRequest:true,officialRedirectIntercepted:true,oldCheckoutUsesCart:true,zeroStockAndCatalogErrorBlock:true,mobileStickyVisible:true,noOverflow:true,noPageErrors:true});await page.close();
+  assert.deepEqual(errors,[]);results.push({width,guestCart:true,allLines:true,conflictAndFailurePreserveCart:true,doubleClickSingleRequest:true,officialRedirectIntercepted:true,oldCheckoutUsesCart:true,mixedStockAllowsAvailable:true,catalogErrorBlocks:true,mobileStickyVisible:true,noOverflow:true,noPageErrors:true});await page.close();
  }
  await fs.writeFile(path.join(artifacts,'task4-browser-check.json'),JSON.stringify(results,null,2));console.log(JSON.stringify(results));
  }finally{await browser.close();}

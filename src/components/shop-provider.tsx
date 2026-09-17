@@ -1,7 +1,7 @@
 "use client";
 
 import {getProductAnalytics} from '@/lib/product-analytics';
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { getMetrika } from '@/lib/metrika';
 import { defaultProducts, type Product } from "@/lib/store-data";
 import { readBackendCatalog } from "@/lib/backend-catalog";
@@ -14,6 +14,7 @@ type ShopState = {
   catalogOnly: boolean;
   catalogStatus: "demo" | "loading" | "ready" | "error";
   reloadCatalog: () => void;
+  refreshCatalog: () => Promise<Product[]>;
   repeatOrder: (lines:Array<{sku:string;name_snapshot:string;quantity:number}>,signal:AbortSignal)=>Promise<{added:number;skipped:string[]}>;
   products: Product[];
   cart: Record<string, number>;
@@ -86,7 +87,7 @@ type SavedShopState = Partial<Pick<ShopState, "cart" | "favorites" | "promoCode"
 export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>(CATALOG_ONLY ? [] : defaultProducts);
   const [catalogStatus, setCatalogStatus] = useState<ShopState["catalogStatus"]>(CATALOG_ONLY ? "loading" : "demo");
-  const [catalogAttempt, setCatalogAttempt] = useState(0);
+  const catalogRequest=useRef(0);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
   const [promoCode, setPromoCode] = useState("");
@@ -144,21 +145,24 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  useEffect(() => {
-    if (!CATALOG_ONLY) return;
-    const controller = new AbortController();
-    let disposed = false;
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    fetch(assetPath('/api/store/v1/products'), { signal: controller.signal, cache: 'no-store', credentials: 'omit' })
-      .then(async response => {
-        if (!response.ok) throw new Error('CATALOG_UNAVAILABLE');
-        return readBackendCatalog(await response.json());
-      })
-      .then(items => { if (!disposed) { setProducts(items); setCatalogStatus('ready'); } })
-      .catch(() => { if (!disposed) { setProducts([]); setCatalogStatus('error'); } })
-      .finally(() => clearTimeout(timeout));
-    return () => { disposed = true; clearTimeout(timeout); controller.abort(); };
-  }, [catalogAttempt]);
+  const refreshCatalog=useCallback(async()=>{
+    const request=++catalogRequest.current;
+    setCatalogStatus('loading');
+    try{
+      const response=await fetch(assetPath('/api/store/v1/products'),{signal:AbortSignal.timeout(8000),cache:'no-store',credentials:'omit'});
+      if(!response.ok)throw new Error('CATALOG_UNAVAILABLE');
+      const items=readBackendCatalog(await response.json());
+      if(request!==catalogRequest.current)throw new Error('CATALOG_REFRESH_SUPERSEDED');
+      setProducts(items);setCatalogStatus('ready');return items;
+    }catch(error){if(request===catalogRequest.current)setCatalogStatus('error');throw error;}
+  },[]);
+  useEffect(()=>{
+    if(!CATALOG_ONLY)return;
+    const requests=catalogRequest;
+    let disposed=false;
+    queueMicrotask(()=>{if(!disposed)void refreshCatalog().catch(()=>{});});
+    return()=>{disposed=true;requests.current++;};
+  },[refreshCatalog]);
 
   useEffect(() => {
     if (!ready || CATALOG_ONLY) return;
@@ -204,7 +208,8 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     yandexCheckoutEnabled: YANDEX_CHECKOUT_ENABLED,
     catalogOnly: CATALOG_ONLY,
     catalogStatus,
-    reloadCatalog: () => { setProducts([]); setCatalogStatus('loading'); setCatalogAttempt(current => current + 1); },
+    reloadCatalog: () => { void refreshCatalog().catch(()=>{}); },
+    refreshCatalog,
     repeatOrder: async (lines,signal)=>{
       if(!CHECKOUT_ENABLED)throw Error('Оформление заказов пока недоступно.');
       const response=await fetch(assetPath('/api/store/v1/products'),{cache:'no-store',credentials:'omit',signal:AbortSignal.any([signal,AbortSignal.timeout(8000)])});
@@ -235,7 +240,12 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     changeQuantity: (id, quantity) => setCart((current) => {
       const next = { ...current };
       if (quantity <= 0) delete next[id];
-      else {const product=productsWithReviews.find(item=>item.id===id);if(product?.active&&Number.isInteger(quantity))next[id]=Math.min(quantity,product.stock,100);}
+      else if(Number.isInteger(quantity)&&quantity<=100){
+        const product=productsWithReviews.find(item=>item.id===id);
+        // Decreasing a saved unavailable row must not silently erase it at stock=0.
+        if(quantity<(current[id]??0))next[id]=quantity;
+        else if(product?.active&&product.stockState!=='unknown'&&quantity<=product.stock)next[id]=quantity;
+      }
       return next;
     }),
     clearCart: () => { setCart({}); setPromoCode(""); },
@@ -250,7 +260,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     updateProduct: (id, updates) => { if (!CATALOG_ONLY) setProducts((current) => current.map((product) => (
       product.id === id ? { ...product, ...updates } : product
     ))); },
-  }), [cart, favorites, productsWithReviews, promoCode, reviews, userEmail, catalogStatus]);
+  }), [cart, favorites, productsWithReviews, promoCode, reviews, userEmail, catalogStatus,refreshCatalog]);
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;
 }

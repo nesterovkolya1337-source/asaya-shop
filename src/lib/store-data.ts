@@ -34,6 +34,7 @@ export type Product = {
   rating: number;
   reviews: number;
   stock: number;
+  stockState?: 'known' | 'unknown';
   active: boolean;
 };
 
