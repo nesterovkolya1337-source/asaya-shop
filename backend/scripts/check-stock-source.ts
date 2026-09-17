@@ -4,6 +4,9 @@ import {CdekStockFeed} from '../src/cdek-stock-feed.js';
 try{
  const path=process.env.CDEK_STOCK_SETTINGS_FILE;if(!path)throw new Error('STOCK_SETTINGS_REQUIRED');
  const source=new CdekStockFeed(JSON.parse(await readFile(path,'utf8'))),snapshot=await source.read();
- console.log(JSON.stringify({warehouseId:source.settings.warehouseId,environment:source.settings.environment,generatedAt:snapshot.generatedAt,
+ const checkedAt=new Date(),fresh=+snapshot.generatedAt<=+checkedAt+60000&&+snapshot.generatedAt+source.settings.maxAgeSeconds*1000>+checkedAt;
+ console.log(JSON.stringify({checkedAt,sourceKind:'cdek_ff_yml',warehouseId:source.settings.warehouseId,environment:source.settings.environment,generatedAt:snapshot.generatedAt,
+  fresh,pollSeconds:source.settings.pollSeconds,maxAgeSeconds:source.settings.maxAgeSeconds,
   offers:snapshot.items.length,positive:snapshot.items.filter(i=>i.quantity>0).length,items:snapshot.items,changed:false}));
+ if(!fresh)process.exitCode=1;
 }catch{console.error('STOCK_SOURCE_CHECK_FAILED');process.exitCode=1;}

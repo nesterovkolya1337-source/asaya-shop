@@ -1,5 +1,10 @@
 # Task 3 — canonical catalog and real warehouse availability
 
+Historical v10.1 report. For the September 17 follow-up stock implementation,
+current diagnostics and the officially documented 30-minute export cadence,
+see [Packet 01](PACKET_01_STOCK_SOURCE_SYNC.md). Its stock policy supersedes the
+timing observations below. Production activation remains a separate operation.
+
 Authority: ASAYA v10.1, CAT-01/CAT-02 and STOCK-01/STOCK-02/STOCK-03.
 Scope: code and isolated tests only. No live migrations, product publication,
 stock writes, payment, shipment, deployment or merge to main.

@@ -1,9 +1,11 @@
 import {test,before,after,beforeEach} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
+import {readFile} from 'node:fs/promises';
 import {testDatabase} from './postgres.js';
-import {CdekStockFeed,parseStockFeed,stockSettingsSchema} from '../src/cdek-stock-feed.js';
+import {CdekStockFeed,parseStockFeed,stockSettingsSchema,StockRateLimitError} from '../src/cdek-stock-feed.js';
 import {StockSync} from '../src/stock-sync.js';
+import {StockState} from '../src/stock-state.js';
 import {YcpCatalog,type YcpSettings} from '../src/ycp-catalog.js';
 import {YcpCheckout} from '../src/ycp-checkout.js';
 import {CommerceService} from '../src/commerce.js';
@@ -77,7 +79,116 @@ test('stale, conflicting, regressed, wrong-scope or failed source cannot enable 
  await assert.rejects(new StockSync(f.db,new CdekStockFeed({...f.source.settings,externalWarehouseId:'1'})).apply(parseStockFeed(xml(f.at,1))),/SCOPE_MISMATCH/);
  await f.db.pool.query("UPDATE stock_sources SET expires_at=now()-interval '1 second'");assert.equal(await f.available(),0);await assert.rejects(f.checkout.create(f.body),/INVENTORY_CHANGED/);
  await f.sync.apply(parseStockFeed(xml(f.at,5)));assert.equal(await f.available(),5);
+ await f.db.pool.query('UPDATE stock_sources SET next_attempt_at=NULL');
  const failing=new StockSync(f.db,new CdekStockFeed(f.source.settings,async()=>{throw new Error('private URL');}));await assert.rejects(failing.refresh(),/STOCK_REFRESH_FAILED/);assert.equal(await f.available(),0);
+});
+
+test('shared stock state distinguishes confirmed zero, missing SKU and no successful sync',async()=>{
+ const f=await fixture();
+ await f.db.pool.query("INSERT INTO products(id,sku,name) VALUES($1,'MISSING','Not in feed')",[randomUUID()]);
+ let now=new Date(+f.at+1000);const state=new StockState(f.db,f.source.settings,()=>now);
+ const initial=await state.read();assert.equal(initial.source.syncStatus,'never_synced');
+ assert.ok(initial.items.every(i=>i.quantity===null&&i.quantityState==='not_synced'&&i.syncedAt===null));
+ await f.sync.apply(parseStockFeed(xml(f.at,0)));
+ const zero=await state.read();assert.equal(zero.items.find(i=>i.sku==='SKU-1')!.quantity,0);
+ assert.equal(zero.items.find(i=>i.sku==='SKU-1')!.quantityState,'known');
+ assert.equal(zero.items.find(i=>i.sku==='MISSING')!.quantity,null);
+ assert.equal(zero.items.find(i=>i.sku==='MISSING')!.quantityState,'missing');
+ assert.equal(zero.source.syncStatus,'fresh');assert.ok(!JSON.stringify(zero).includes(feedUrl));
+ now=new Date(+zero.source.expiresAt+1);assert.equal((await state.read()).source.syncStatus,'stale');
+ assert.equal((await state.read()).items.find(i=>i.sku==='SKU-1')!.quantity,0);
+ await assert.rejects(new StockState(f.db,{...f.source.settings,accountId:'other'}).read(),/SCOPE_MISMATCH/);
+ await assert.rejects(new StockState(f.db,{...f.source.settings,environment:'test'}).read(),/CHANGE_REQUIRES_REVIEW/);
+});
+
+test('first sync failure records safe diagnostics, retry schedule and recovers without invented zero',async()=>{
+ const f=await fixture();let now=new Date(+f.at+1000),fail=true,calls=0;
+ const source=new CdekStockFeed(f.source.settings,async()=>{calls++;if(fail)throw new Error('secret URL / personal data');return new Response(xml(now,6));});
+ const sync=new StockSync(f.db,source,()=>now),state=new StockState(f.db,source.settings,()=>now);
+ await assert.rejects(sync.refresh(),/STOCK_REFRESH_FAILED/);
+ const failed=await state.read();assert.equal(failed.source.syncStatus,'error');
+ assert.equal(failed.source.lastError,'STOCK_SOURCE_UNAVAILABLE');assert.equal(failed.source.syncedAt,null);
+ assert.equal(failed.items[0]!.quantity,null);assert.equal(failed.items[0]!.quantityState,'not_synced');
+ assert.equal(failed.source.consecutiveFailures,1);
+ assert.deepEqual(await sync.refresh(),{skipped:true,reason:'not_due'});assert.equal(calls,1);
+ now=new Date(+failed.source.nextAttemptAt);fail=false;await sync.refresh();
+ const recovered=await state.read();assert.equal(recovered.items[0]!.quantity,6);
+ assert.equal(recovered.source.syncStatus,'fresh');assert.equal(recovered.source.lastError,null);
+ assert.equal(recovered.source.consecutiveFailures,0);assert.equal(+recovered.source.syncedAt,+now);
+});
+
+test('failed refresh preserves successful provider snapshot, timestamp and inventory reservations',async()=>{
+ const f=await fixture();await f.sync.apply(parseStockFeed(xml(f.at,5)));await f.checkout.create(f.body);
+ const state=new StockState(f.db,f.source.settings),before=await state.read();
+ const balances=(await f.db.pool.query('SELECT * FROM inventory_balances')).rows;
+ await f.db.pool.query('UPDATE stock_sources SET next_attempt_at=NULL');
+ const sync=new StockSync(f.db,new CdekStockFeed(f.source.settings,async()=>new Response('private server error',{status:500})));
+ await assert.rejects(sync.refresh(),/STOCK_REFRESH_FAILED/);
+ const after=await state.read();assert.equal(after.items[0]!.quantity,5);assert.equal(after.source.syncStatus,'error');
+ assert.deepEqual(after.source.syncedAt,before.source.syncedAt);assert.deepEqual(after.source.sourceUpdatedAt,before.source.sourceUpdatedAt);
+ assert.deepEqual((await f.db.pool.query('SELECT * FROM inventory_balances')).rows,balances);
+ assert.equal((await f.db.pool.query("SELECT count(*)::int n FROM inventory_reservations WHERE status='active'")).rows[0].n,1);
+ await f.db.pool.query("UPDATE stock_sources SET last_error='unsafe provider body'");
+ assert.equal((await state.read()).source.lastError,'STOCK_REFRESH_FAILED');
+ await f.db.pool.query('UPDATE stock_sources SET next_attempt_at=NULL');
+ await new StockSync(f.db,new CdekStockFeed(f.source.settings,async()=>new Response(xml(f.at,5)))).refresh();
+ assert.equal((await state.read()).source.syncStatus,'fresh');assert.equal((await state.read()).source.lastError,null);
+ assert.deepEqual((await f.db.pool.query('SELECT * FROM inventory_balances')).rows,balances);
+});
+
+test('concurrent workers fetch a warehouse once and mismatched configuration cannot poison its state',async()=>{
+ const f=await fixture();let calls=0,unblock!:()=>void,started!:()=>void;
+ const gate=new Promise<void>(r=>{unblock=r;}),ready=new Promise<void>(r=>{started=r;});
+ const source=new CdekStockFeed(f.source.settings,async()=>{calls++;started();await gate;return new Response(xml(f.at,4));});
+ const first=new StockSync(f.db,source).refresh();await ready;
+ try{assert.deepEqual(await new StockSync(f.db,source).refresh(),{skipped:true,reason:'in_progress'});}
+ finally{unblock();}await first;assert.equal(calls,1);
+ assert.deepEqual(await new StockSync(f.db,source).refresh(),{skipped:true,reason:'not_due'});
+ const before=await new StockState(f.db,source.settings).read();
+ await assert.rejects(new StockSync(f.db,new CdekStockFeed({...source.settings,environment:'test'},async()=>{throw new Error('must not fetch');})).refresh(),/CHANGE_REQUIRES_REVIEW/);
+ assert.deepEqual(await new StockState(f.db,source.settings).read(),before);
+});
+
+test('provider rate limit is sanitized and Retry-After prevents early polling across worker restarts',async()=>{
+ const f=await fixture();let now=new Date(+f.at+1000),calls=0;
+ const source=new CdekStockFeed({...f.source.settings,pollSeconds:60},async()=>{calls++;return new Response('private body',{status:429,headers:{'Retry-After':'7200'}});});
+ await assert.rejects(source.read(),e=>e instanceof StockRateLimitError&&e.retryAfterSeconds===7200);
+ calls=0;await assert.rejects(new StockSync(f.db,source,()=>now).refresh(),/STOCK_REFRESH_FAILED/);
+ const state=await new StockState(f.db,source.settings,()=>now).read();
+ assert.equal(state.source.lastError,'STOCK_SOURCE_RATE_LIMITED');assert.equal(+state.source.nextAttemptAt,+now+7200000);
+ now=new Date(+now+60000);assert.deepEqual(await new StockSync(f.db,source,()=>now).refresh(),{skipped:true,reason:'not_due'});assert.equal(calls,1);
+ assert.equal(stockSettingsSchema.parse({...source.settings,pollSeconds:900}).pollSeconds,900);
+});
+
+test('diagnostic migration preserves a pre-existing successful source snapshot',async()=>{
+ const f=await fixture();await f.sync.apply(parseStockFeed(xml(f.at,3)));
+ const sql=await readFile('migrations/028_stock_sync_diagnostics.sql','utf8');
+ await f.db.transaction(async tx=>{
+  // A transaction-local copy of the old shape; no changes to the actual test source.
+  await tx.query(`CREATE TEMP TABLE stock_sources (LIKE public.stock_sources INCLUDING ALL) ON COMMIT DROP;
+   ALTER TABLE stock_sources DROP CONSTRAINT stock_success_has_snapshot,
+    DROP COLUMN last_attempt_at,DROP COLUMN next_attempt_at,DROP COLUMN consecutive_failures,
+    ALTER COLUMN generated_at SET NOT NULL,ALTER COLUMN fetched_at SET NOT NULL,
+    ALTER COLUMN expires_at SET NOT NULL,ALTER COLUMN payload_hash SET NOT NULL;
+   INSERT INTO stock_sources SELECT warehouse_id,source_hash,environment,generated_at,fetched_at,expires_at,
+    payload_hash,healthy,last_error,unknown_skus FROM public.stock_sources`);
+  const before=(await tx.query('SELECT * FROM stock_sources')).rows[0];
+  await tx.query(sql);
+  const after=(await tx.query('SELECT * FROM stock_sources')).rows[0];
+  assert.deepEqual(after,{...before,last_attempt_at:null,next_attempt_at:null,consecutive_failures:0});
+ });
+});
+
+test('documented 30-minute export cadence fits freshness policy without refreshing provider age',async()=>{
+ const f=await fixture();let now=new Date(+f.at+31*60000);
+ const sync=new StockSync(f.db,f.source,()=>now),state=new StockState(f.db,f.source.settings,()=>now);
+ await sync.apply(parseStockFeed(xml(f.at,2)));
+ const snapshot=await state.read();assert.equal(snapshot.source.syncStatus,'fresh');
+ assert.equal(+snapshot.source.expiresAt,+f.at+40*60000);
+ now=new Date(+f.at+40*60000);
+ assert.equal((await state.read()).source.syncStatus,'stale');
+ await assert.rejects(sync.apply(parseStockFeed(xml(f.at,2))),/STOCK_SOURCE_STALE/);
+ assert.equal((await state.read()).items[0]!.quantity,2);
 });
 test('unknown or missing SKU is unavailable; sync cannot invent products or approximate a SKU',async()=>{
  const f=await fixture(),other='<offer id="SKU-01"><param code="article">SKU-01</param><count>100</count></offer>';
