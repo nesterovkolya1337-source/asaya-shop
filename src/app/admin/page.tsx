@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPage() {
-  if(process.env.NEXT_PUBLIC_CATALOG_SOURCE==='backend')return <ServerAdmin/>;
+  if(process.env.NEXT_PUBLIC_CATALOG_SOURCE!=='demo')return <ServerAdmin/>;
   const sections = [
     ["01", "Дашборд", "Продажи, заказы, средний чек и остатки"],
     ["02", "Товары", "Цена, скидка, статус, остаток, фото и характеристики"],

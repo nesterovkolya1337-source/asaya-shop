@@ -63,7 +63,7 @@ export class YcpCatalog {
   // One statement gives all prices and warehouse balances from the same DB snapshot.
   const {rows}=await this.db.pool.query(`SELECT requested.request_id,p.sku,p.name,p.weight_g,p.width_mm,p.height_mm,p.depth_mm,
    pr.regular_minor,pr.final_minor,m.slug,e.published->'content'->>'image' AS image,
-   COALESCE((SELECT jsonb_agg(jsonb_build_object('id',w.id,'available_quantity',b.on_hand-b.reserved) ORDER BY w.id)
+   COALESCE((SELECT jsonb_agg(jsonb_build_object('id',w.id,'available_quantity',GREATEST(0,LEAST(b.on_hand,asaya_stock_limit(p.id,w.id,$4='production'))-b.reserved)) ORDER BY w.id)
     FROM inventory_balances b JOIN warehouses w ON w.id=b.warehouse_id
     WHERE b.product_id=p.id AND w.active AND w.id=ANY($5::uuid[])),'[]'::jsonb) AS warehouses
    FROM unnest($1::text[]) WITH ORDINALITY AS requested(request_id,position)
@@ -73,7 +73,8 @@ export class YcpCatalog {
    JOIN product_prices pr ON pr.product_id=p.id AND pr.approved AND pr.currency='RUB'
    JOIN LATERAL(SELECT slug FROM storefront_mappings WHERE product_id=p.id AND approved ORDER BY slug LIMIT 1) m ON true
    LEFT JOIN product_editor e ON e.product_id=p.id
-   WHERE p.active AND p.sale_approved AND NOT EXISTS(SELECT 1 FROM product_components c WHERE c.product_id=p.id)
+   WHERE p.active AND p.sale_approved AND ($4<>'production' OR e.published IS NOT NULL)
+   AND NOT EXISTS(SELECT 1 FROM product_components c WHERE c.product_id=p.id)
    ORDER BY requested.position`,[input.items.map(i=>i.id),input.offers_id_from_merchant_center,settings.accountId,settings.environment,warehouseIds]);
   if(rows.length!==input.items.length)throw new DomainError('PRODUCTS_NOT_FOUND',404);
   if(new Set(rows.map(r=>r.sku)).size!==rows.length)throw new DomainError('DUPLICATE_PRODUCT',400);

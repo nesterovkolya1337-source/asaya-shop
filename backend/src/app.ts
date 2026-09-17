@@ -55,7 +55,7 @@ export async function buildApp(options:{deploymentMode?:'foundation'|'catalog'|'
  const yandexProvider=options.yandexIdClientId?new YandexIdProvider(options.yandexIdClientId,options.origin):null;
  if(yandexProvider&&!options.secureCookies)throw new Error('Yandex ID requires secure cookies');
  const customerYandex=yandexProvider?new CustomerYandexAuth(options.db,options.otpSecret,options.yandexIdClientId!,options.yandexIdentityProvider??yandexProvider):null;
- const commerce=new CommerceService(options.db,undefined,liveYcp?'production':'test');
+ const commerce=new CommerceService(options.db,undefined,liveYcp||options.deploymentMode==='catalog'?'production':'test');
  const account=new CustomerAccount(options.db);
  const delivery=new DeliveryService(options.db,options.deliveryProvider);
  const staff=options.staffSecret?new StaffAuth(options.db,options.staffSecret):null;

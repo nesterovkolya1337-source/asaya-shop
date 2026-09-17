@@ -35,7 +35,8 @@ type ShopState = {
 };
 
 const STORAGE_KEY = "asaya-shop-state-v3";
-const CATALOG_ONLY = process.env.NEXT_PUBLIC_CATALOG_SOURCE === "backend";
+// Demo data is an explicit local preview option, never the default storefront.
+const CATALOG_ONLY = process.env.NEXT_PUBLIC_CATALOG_SOURCE !== "demo";
 const YANDEX_CHECKOUT_ENABLED = CATALOG_ONLY && process.env.NEXT_PUBLIC_YANDEX_BUTTON === 'true';
 const CHECKOUT_ENABLED = CATALOG_ONLY && (YANDEX_CHECKOUT_ENABLED || process.env.NEXT_PUBLIC_TEST_CHECKOUT === 'true');
 const CART_KEY='asaya-backend-cart-v1';
@@ -150,7 +151,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     fetch(assetPath('/api/store/v1/products'), { signal: controller.signal, cache: 'no-store', credentials: 'omit' })
       .then(async response => {
         if (!response.ok) throw new Error('CATALOG_UNAVAILABLE');
-        return readBackendCatalog(await response.json(), defaultProducts);
+        return readBackendCatalog(await response.json());
       })
       .then(items => { if (!disposed) { setProducts(items); setCatalogStatus('ready'); } })
       .catch(() => { if (!disposed) { setProducts([]); setCatalogStatus('error'); } })
@@ -207,7 +208,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       if(!CHECKOUT_ENABLED)throw Error('Оформление заказов пока недоступно.');
       const response=await fetch(assetPath('/api/store/v1/products'),{cache:'no-store',credentials:'omit',signal:AbortSignal.any([signal,AbortSignal.timeout(8000)])});
       if(!response.ok)throw Error('Не удалось проверить актуальные цены и остатки. Повторите позже.');
-      const fresh=readBackendCatalog(await response.json(),[]),result=repeatOrderPlan(lines,fresh,cart);
+      const fresh=readBackendCatalog(await response.json()),result=repeatOrderPlan(lines,fresh,cart);
       signal.throwIfAborted();
       setProducts(fresh);setCatalogStatus('ready');setCart(current=>repeatOrderPlan(lines,fresh,current).cart);
       return {added:result.added,skipped:result.skipped};

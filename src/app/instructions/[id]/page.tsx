@@ -12,7 +12,7 @@ export function generateStaticParams() {
 type InstructionPageProps = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: InstructionPageProps): Promise<Metadata> {
-  if(process.env.NEXT_PUBLIC_CATALOG_SOURCE==='backend')return {title:'Инструкция ASAYA'};
+  if(process.env.NEXT_PUBLIC_CATALOG_SOURCE!=='demo')return {title:'Инструкция ASAYA'};
   const { id } = await params;
   const product = defaultProducts.find((item) => item.id === id);
   return { title: product ? `Как использовать ${product.name}` : "Инструкция" };
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: InstructionPageProps): Promis
 export default async function InstructionPage({ params }: InstructionPageProps) {
   const { id } = await params;
   const product = defaultProducts.find((item) => item.id === id);
-  if (process.env.NEXT_PUBLIC_CATALOG_SOURCE!=='backend'&&!product) notFound();
+  if (process.env.NEXT_PUBLIC_CATALOG_SOURCE==='demo'&&!product) notFound();
 
   return (
     <>

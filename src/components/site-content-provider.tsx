@@ -5,7 +5,7 @@ import {parseSitePage,sitePageDefaults,sitePages,blockTemplates,type SitePageId,
 
 type ContentContext={documents:Partial<Record<SitePageId,SitePage>>;draft:SitePage|null;selected:string;preview:boolean;load:(id:SitePageId)=>void};
 const Context=createContext<ContentContext|null>(null);
-const enabled=process.env.NEXT_PUBLIC_CATALOG_SOURCE==='backend'||process.env.NEXT_PUBLIC_SITE_CONTENT==='backend';
+const enabled=process.env.NEXT_PUBLIC_CATALOG_SOURCE!=='demo'||process.env.NEXT_PUBLIC_SITE_CONTENT==='backend';
 
 export function SiteContentProvider({children}:{children:ReactNode}){
  const [documents,setDocuments]=useState<ContentContext['documents']>({}),[draft,setDraft]=useState<SitePage|null>(null),[selected,setSelected]=useState('');

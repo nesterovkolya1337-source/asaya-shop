@@ -6,6 +6,7 @@ export function config(env: NodeJS.ProcessEnv = process.env) {
  const c=z.object({
   DATABASE_URL:z.string().url(), OTP_SECRET:z.string().min(32),
   STAFF_SECRET:z.string().min(32).optional(),
+  CDEK_STOCK_SETTINGS_FILE:z.string().min(1).optional(),
   YANDEX_ID_CLIENT_ID:z.string().regex(/^[a-f0-9]{32}$/i).optional(),
   YCP_TOKEN:z.string().min(32).max(4096).optional(),YCP_SETTINGS_FILE:z.string().min(1).optional(),
   FULFILLMENT_ENABLED:z.enum(['false','true']).default('false'),

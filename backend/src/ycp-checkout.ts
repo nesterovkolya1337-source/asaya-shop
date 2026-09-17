@@ -68,14 +68,15 @@ export class YcpCheckout {
    const locality=body.delivery.address.locality?.trim().toLocaleLowerCase('ru-RU');
    if(!profile||!profile.servedLocalities.some(l=>l==='*'||l.trim().toLocaleLowerCase('ru-RU')===locality))throw new YcpConflict('WAREHOUSE_UNAVAILABLE');
    if(!(await tx.query('SELECT 1 FROM warehouses WHERE id=$1 AND active FOR SHARE',[body.warehouse_id])).rowCount)throw new YcpConflict('WAREHOUSE_UNAVAILABLE');
-   const {rows}=await tx.query(`SELECT p.id,p.sku,p.name,pr.regular_minor,pr.final_minor,b.on_hand-b.reserved AS available
+   const {rows}=await tx.query(`SELECT p.id,p.sku,p.name,pr.regular_minor,pr.final_minor,GREATEST(0,LEAST(b.on_hand,asaya_stock_limit(p.id,b.warehouse_id,$3))-b.reserved) AS available
     FROM products p JOIN product_prices pr ON pr.product_id=p.id AND pr.approved AND pr.currency='RUB'
     JOIN inventory_balances b ON b.product_id=p.id AND b.warehouse_id=$2
     WHERE p.sku=ANY($1::text[]) AND p.active AND p.sale_approved
     AND p.weight_g IS NOT NULL AND p.width_mm IS NOT NULL AND p.height_mm IS NOT NULL AND p.depth_mm IS NOT NULL
     AND EXISTS(SELECT 1 FROM storefront_mappings m WHERE m.product_id=p.id AND m.approved)
+    AND ($3=false OR EXISTS(SELECT 1 FROM product_editor e WHERE e.product_id=p.id AND e.published IS NOT NULL))
     AND NOT EXISTS(SELECT 1 FROM product_components c WHERE c.product_id=p.id)
-    ORDER BY p.sku FOR UPDATE OF p,pr,b`,[body.items.map(i=>i.id),body.warehouse_id]);
+    ORDER BY p.sku FOR UPDATE OF p,pr,b`,[body.items.map(i=>i.id),body.warehouse_id,s.environment==='production']);
    const convert=(n:unknown)=>{const value=money(n);if(s.priceUnit==='minor')return value;if(value%100)throw new DomainError('YCP_PRICE_NOT_REPRESENTABLE',503);return value/100;};
    const actual={items:rows.map(r=>({id:r.sku,regular_price:convert(r.regular_minor),final_price:convert(r.final_minor),warehouses:[{id:body.warehouse_id,available_quantity:r.available}]}))};
    if(rows.length!==body.items.length||body.items.some(i=>{const r=rows.find(r=>r.sku===i.id);return !r||i.quantity>r.available||i.regular_price!==convert(r.regular_minor)||i.final_price!==convert(r.final_minor);}))throw new YcpConflict('INVENTORY_CHANGED',{actual_inventory:actual,checkout_canceled:false});

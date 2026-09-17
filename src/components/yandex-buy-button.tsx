@@ -16,7 +16,7 @@ export function YandexCheckoutButton({items,disabled=false,label='Купить �
  const pending=useRef(false);
  const active=useRef(false);
  useEffect(()=>{active.current=true;return()=>{active.current=false;};},[]);
- if(process.env.NEXT_PUBLIC_CATALOG_SOURCE!=='backend'||process.env.NEXT_PUBLIC_YANDEX_BUTTON!=='true')return null;
+ if(process.env.NEXT_PUBLIC_CATALOG_SOURCE==='demo'||process.env.NEXT_PUBLIC_YANDEX_BUTTON!=='true')return null;
  const buy=async()=>{
   if(pending.current||disabled||!items.length)return;
   pending.current=true;setBusy(true);setError('');

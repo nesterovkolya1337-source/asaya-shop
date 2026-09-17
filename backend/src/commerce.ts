@@ -30,9 +30,12 @@ export class CommerceService {
  constructor(readonly db:Database,private clock=()=>new Date(),readonly environment:'test'|'production'='test') {}
  async catalog() {
   const {rows}=await this.db.pool.query(`SELECT p.sku,p.name,m.slug,pr.currency,pr.regular_minor,pr.final_minor,e.published->'content' AS content,
-   COALESCE((SELECT sum(b.on_hand-b.reserved) FROM inventory_balances b JOIN warehouses w ON w.id=b.warehouse_id WHERE b.product_id=p.id AND w.active),0)::integer AS available
-   FROM products p JOIN product_prices pr ON pr.product_id=p.id JOIN storefront_mappings m ON m.product_id=p.id AND m.approved LEFT JOIN product_editor e ON e.product_id=p.id
-   WHERE p.active AND p.sale_approved AND pr.approved AND NOT EXISTS(SELECT 1 FROM product_components c WHERE c.product_id=p.id) ORDER BY p.sku`);
+   COALESCE((SELECT sum(GREATEST(0,LEAST(b.on_hand,asaya_stock_limit(p.id,w.id,$1))-b.reserved)) FROM inventory_balances b JOIN warehouses w ON w.id=b.warehouse_id WHERE b.product_id=p.id AND w.active),0)::integer AS available
+   FROM products p JOIN product_prices pr ON pr.product_id=p.id
+   JOIN LATERAL(SELECT slug FROM storefront_mappings WHERE product_id=p.id AND approved ORDER BY slug LIMIT 1) m ON true
+   LEFT JOIN product_editor e ON e.product_id=p.id
+   WHERE p.active AND p.sale_approved AND pr.approved AND ($1=false OR e.published IS NOT NULL)
+   AND NOT EXISTS(SELECT 1 FROM product_components c WHERE c.product_id=p.id) ORDER BY p.sku`,[this.environment==='production']);
   return rows.map(r=>({sku:r.sku,name:r.name,slug:r.slug,currency:r.currency,regularMinor:money(r.regular_minor),finalMinor:money(r.final_minor),available:r.available,...(r.content?{content:r.content}:{})}));
  }
  async createCheckout(userId:string,key:string,raw:unknown) {
@@ -53,14 +56,14 @@ export class CommerceService {
    if(!quote||new Date(quote.expires_at)<=now||quote.cart_hash!==cartHash(input.items)||quote.environment!==this.environment) throw new DomainError('INVALID_DELIVERY_QUOTE');
    const lines=[]; let subtotal=0;
    for(const item of input.items) {
-    const row=(await tx.query(`SELECT p.id,p.sku,p.name,pr.final_minor,b.on_hand,b.reserved
+    const row=(await tx.query(`SELECT p.id,p.sku,p.name,pr.final_minor,b.on_hand,b.reserved,asaya_stock_limit(p.id,b.warehouse_id,$3) AS source_limit
      FROM products p JOIN product_prices pr ON pr.product_id=p.id
      JOIN inventory_balances b ON b.product_id=p.id AND b.warehouse_id=$2
      WHERE p.sku=$1 AND p.active AND p.sale_approved AND pr.approved AND pr.currency='RUB'
      AND NOT EXISTS(SELECT 1 FROM product_components c WHERE c.product_id=p.id)
-     FOR UPDATE OF p,pr,b`,[item.sku,quote.warehouse_id])).rows[0];
+     FOR UPDATE OF p,pr,b`,[item.sku,quote.warehouse_id,this.environment==='production'])).rows[0];
     if(!row) throw new DomainError('PRODUCT_UNAVAILABLE');
-    if(row.on_hand-row.reserved<item.quantity) throw new DomainError('INSUFFICIENT_STOCK');
+    if(Math.min(row.on_hand,row.source_limit)-row.reserved<item.quantity) throw new DomainError('INSUFFICIENT_STOCK');
     const unit=money(row.final_minor); const line=money(unit*item.quantity); subtotal=money(subtotal+line);
     lines.push({...row,quantity:item.quantity,unit,line});
    }

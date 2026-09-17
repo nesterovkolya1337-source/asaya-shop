@@ -11,7 +11,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/product/[id]">): Promise<Metadata> {
   const { id } = await params;
-  if(process.env.NEXT_PUBLIC_CATALOG_SOURCE==='backend')return {title:'Товар ASAYA'};
+  if(process.env.NEXT_PUBLIC_CATALOG_SOURCE!=='demo')return {title:'Товар ASAYA'};
   const product = defaultProducts.find((item) => item.id === id);
 
   if (!product) return { title: "Товар не найден" };
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps<"/product/[id]">): 
 
 export default async function ProductPage({ params }: PageProps<"/product/[id]">) {
   const { id } = await params;
-  if (process.env.NEXT_PUBLIC_CATALOG_SOURCE!=='backend'&&!defaultProducts.some((product) => product.id === id)) notFound();
+  if (process.env.NEXT_PUBLIC_CATALOG_SOURCE==='demo'&&!defaultProducts.some((product) => product.id === id)) notFound();
 
   return (
     <>

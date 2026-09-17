@@ -2,7 +2,7 @@ import {createStoreRequest,AuthClientError} from './auth-client.ts';
 import {parseProductContent,type ProductContent} from './backend-catalog.ts';
 export type StaffSession={user:{id:string;role:'admin'};csrfToken:string};
 export type AdminDraft={sku:string;name:string;slug:string;content:ProductContent;regularMinor:number|null;finalMinor:number|null;weightG:number|null;widthMm:number|null;heightMm:number|null;depthMm:number|null};
-export type AdminProduct={id:string;revision:number;active:boolean;hasDraft:boolean;publishedAt:string|null;draft:AdminDraft;stocks:Array<{warehouseId:string;name:string;active:boolean;onHand:number;reserved:number}>};
+export type AdminProduct={id:string;revision:number;active:boolean;hasDraft:boolean;publishedAt:string|null;draft:AdminDraft;stocks:Array<{warehouseId:string;name:string;active:boolean;onHand:number;reserved:number;source?:null|{kind:'cdek_ff_yml';generatedAt:string;fetchedAt:string;expiresAt:string;healthy:boolean;available:number;reportedQuantity:number}}>};
 export type ProductRow={id:string;sku:string;name:string;active:boolean;revision:number};
 const idPattern=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 const object=(r:unknown):Record<string,unknown>=>{if(!r||typeof r!=='object'||Array.isArray(r))throw new AuthClientError('INVALID_RESPONSE');return r as Record<string,unknown>;};
@@ -21,6 +21,7 @@ const messages:Record<string,string>={
  ASSEMBLED_SET_REQUIRED:'Для этого набора задан компонентный учёт. Его публикация пока недоступна.',
  STOCK_CONFLICT:'Остаток изменился. Обновите карточку перед корректировкой.',
  STOCK_RESERVED:'Новый остаток меньше количества в резерве.',
+ STOCK_MANAGED_BY_PROVIDER:'Остаток поступает из СДЭК Фулфилмента и не редактируется вручную.',
  WAREHOUSE_UNAVAILABLE:'Склад недоступен.',
  FORBIDDEN:'Недостаточно прав.',
  PRODUCT_NOT_FOUND:'Товар не найден.'
@@ -37,7 +38,9 @@ export function parseAdminProduct(raw:unknown):AdminProduct{
   !(r.publishedAt===null||typeof r.publishedAt==='string'&&Number.isFinite(Date.parse(r.publishedAt)))||
   !['sku','name','slug'].every(k=>typeof d[k]==='string')||
   !['regularMinor','finalMinor','weightG','widthMm','heightMm','depthMm'].every(k=>d[k]===null||integer(d[k]))||!Array.isArray(r.stocks))throw new AuthClientError('INVALID_RESPONSE');
- const stocks=r.stocks.map(rawStock=>{const s=object(rawStock);if(!uuid(s.warehouseId)||typeof s.name!=='string'||typeof s.active!=='boolean'||!integer(s.onHand)||!integer(s.reserved)||s.reserved>s.onHand)throw new AuthClientError('INVALID_RESPONSE');return s as AdminProduct['stocks'][number];});
+ const stocks=r.stocks.map(rawStock=>{const s=object(rawStock);if(!uuid(s.warehouseId)||typeof s.name!=='string'||typeof s.active!=='boolean'||!integer(s.onHand)||!integer(s.reserved)||s.reserved>s.onHand)throw new AuthClientError('INVALID_RESPONSE');
+  if(s.source!=null){const source=object(s.source);if(source.kind!=='cdek_ff_yml'||typeof source.healthy!=='boolean'||!integer(source.available)||!integer(source.reportedQuantity)||!['generatedAt','fetchedAt','expiresAt'].every(k=>typeof source[k]==='string'&&Number.isFinite(Date.parse(source[k] as string))))throw new AuthClientError('INVALID_RESPONSE');}
+  return s as AdminProduct['stocks'][number];});
  return {id:r.id,revision:r.revision,active:r.active,hasDraft:r.hasDraft,publishedAt:r.publishedAt as string|null,draft:{...d,content:parseProductContent(d.content)} as AdminDraft,stocks};
 }
 export function createAdminClient(base:string,fetcher:typeof fetch=fetch){

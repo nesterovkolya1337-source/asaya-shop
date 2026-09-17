@@ -6,6 +6,8 @@ import {buildApp} from '../src/app.js';
 import {DisabledOtpSender} from '../src/auth.js';
 import type {YcpSettings} from '../src/ycp-catalog.js';
 import {CommerceService} from '../src/commerce.js';
+import {CdekStockFeed,parseStockFeed} from '../src/cdek-stock-feed.js';
+import {StockSync} from '../src/stock-sync.js';
 
 let ctx:Awaited<ReturnType<typeof testDatabase>>;
 const token='isolated-production-mode-test-'+'z'.repeat(40);
@@ -20,6 +22,10 @@ async function fixture(){
  await db.pool.query("INSERT INTO product_prices(product_id,currency,regular_minor,final_minor,approved) VALUES($1,'RUB',60000,50000,true)",[product]);
  await db.pool.query("INSERT INTO storefront_mappings(slug,product_id,approved,confidence,reason) VALUES('production-fixture',$1,true,'high','isolated test')",[product]);
  await db.pool.query('INSERT INTO inventory_balances(product_id,warehouse_id,on_hand) VALUES($1,$2,10)',[product,warehouse]);
+ await db.pool.query("INSERT INTO product_editor(product_id,revision,draft,published,published_at) VALUES($1,1,'{}','{}',now())",[product]);
+ await db.pool.query("INSERT INTO warehouse_external_ids(provider,account_id,external_id,warehouse_id) VALUES('cdek_ff','fixture','23401',$1)",[warehouse]);
+ const source=new CdekStockFeed({warehouseId:warehouse,accountId:'fixture',externalWarehouseId:'23401',environment:'production',feedUrl:'https://static.integrations.ffcdek.ru/export_products/yml/'+ '0'.repeat(32)+'.xml'});
+ await new StockSync(db,source).apply(parseStockFeed(`<yml_catalog date="${new Date().toISOString().replace(/\.\d{3}Z$/,'Z')}"><shop><offers><offer id="SKU-PROD"><param code="article">SKU-PROD</param><count>10</count></offer></offers></shop></yml_catalog>`));
  await db.pool.query("INSERT INTO product_external_ids(provider,account_id,environment,external_id,product_id) VALUES('ycp','fixture','production','OFFER',$1)",[product]);
  const settings:YcpSettings={accountId:'fixture',environment:'production',publicOrigin:origin,priceUnit:'minor',vat:0,checkout:{deliveryPriceUnit:'rubles'},button:{enabled:false},warehouses:[{warehouseId:warehouse,address:'Тестовый адрес',phone:'+79990000000',servedLocalities:['*'],ycpDeliveryEnabled:true}]};
  const app=await buildApp({db,deploymentMode:'ycp',otpSecret:'o'.repeat(32),staffSecret:'s'.repeat(32),otpSender:new DisabledOtpSender(),origin,secureCookies:true,ycp:{token,settings}});

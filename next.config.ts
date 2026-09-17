@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const backendCatalog = process.env.NEXT_PUBLIC_CATALOG_SOURCE === 'backend';
+const backendCatalog = process.env.NEXT_PUBLIC_CATALOG_SOURCE !== 'demo';
 const backendOrigin = process.env.ASAYA_BACKEND_ORIGIN ?? 'http://127.0.0.1:3100';
 if (backendCatalog && !/^http:\/\/(?:(?:127\.0\.0\.1|localhost):\d+|asaya-catalog-api:3100)$/.test(backendOrigin)) {
   throw new Error('Catalog requires a loopback or dedicated internal ASAYA_BACKEND_ORIGIN');

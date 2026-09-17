@@ -8,9 +8,9 @@ const draft={sku:'NEW',name:'Новый товар',slug:'entirely-new',content,
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status});
 test('server published cards work without hardcoded drafts and unsafe media is rejected',()=>{
  const raw={items:[{sku:'NEW',name:'Новое имя',slug:'entirely-new',content,currency:'RUB',regularMinor:50000,finalMinor:45000,available:3}]};
- const item=readBackendCatalog(raw,[])[0];assert.equal(item.name,'Новое имя');assert.equal(item.price,450);assert.equal(item.badge,'Новинка');assert.equal(item.safety,'Указания');
- assert.throws(()=>readBackendCatalog({items:[{...raw.items[0],content:{...content,image:'javascript:alert(1)'}}]},[]));
- assert.throws(()=>readBackendCatalog({items:[{...raw.items[0],slug:'../admin'}]},[]));
+ const item=readBackendCatalog(raw)[0];assert.equal(item.name,'Новое имя');assert.equal(item.price,450);assert.equal(item.badge,'Новинка');assert.equal(item.safety,'Указания');
+ assert.throws(()=>readBackendCatalog({items:[{...raw.items[0],content:{...content,image:'javascript:alert(1)'}}]}));
+ assert.throws(()=>readBackendCatalog({items:[{...raw.items[0],slug:'../admin'}]}));
 });
 test('admin session rejects customer role and malformed access tokens',()=>{
  assert.deepEqual(parseStaffSession({user:{id,role:'admin'},csrfToken:csrf}),{user:{id,role:'admin'},csrfToken:csrf});

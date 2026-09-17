@@ -46,7 +46,7 @@ export class YandexFeed {
   if(!xmlText(s.feed.name).trim()||!xmlText(s.feed.company).trim())throw new DomainError('YANDEX_FEED_SETTINGS_INVALID',503);
   const {rows}=await this.db.pool.query(`SELECT p.id,p.sku,p.name,p.weight_g,p.width_mm,p.height_mm,p.depth_mm,pr.regular_minor,pr.final_minor,e.published->'content' AS content,m.slug,
    COALESCE((SELECT jsonb_agg(x.external_id ORDER BY x.external_id) FROM product_external_ids x WHERE x.provider='ycp' AND x.account_id=$1 AND x.environment=$2 AND x.product_id=p.id),'[]'::jsonb) AS offer_ids,
-   COALESCE((SELECT sum(b.on_hand-b.reserved) FROM inventory_balances b JOIN warehouses w ON w.id=b.warehouse_id WHERE b.product_id=p.id AND w.active AND w.id=ANY($3::uuid[])),0) AS available,
+   COALESCE((SELECT sum(GREATEST(0,LEAST(b.on_hand,asaya_stock_limit(p.id,w.id,$2='production'))-b.reserved)) FROM inventory_balances b JOIN warehouses w ON w.id=b.warehouse_id WHERE b.product_id=p.id AND w.active AND w.id=ANY($3::uuid[])),0) AS available,
    COALESCE((SELECT jsonb_agg(barcode ORDER BY barcode) FROM product_barcodes WHERE product_id=p.id),'[]'::jsonb) AS barcodes
    FROM products p JOIN product_prices pr ON pr.product_id=p.id AND pr.approved AND pr.currency='RUB'
    JOIN product_editor e ON e.product_id=p.id AND e.published IS NOT NULL

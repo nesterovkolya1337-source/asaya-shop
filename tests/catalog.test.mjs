@@ -2,16 +2,19 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readBackendCatalog } from '../src/lib/backend-catalog.ts';
 
-const drafts=[{id:'shampoo',name:'Шампунь',price:500,oldPrice:700,stock:20,badge:'Новинка',active:true,image:'/shampoo.webp'}];
-const item={slug:'shampoo',sku:'TEST',currency:'RUB',regularMinor:75099,finalMinor:62050,available:3};
-test('server amounts and stock replace demo values while storefront content stays intact',()=>{
- const [product]=readBackendCatalog({items:[item]},drafts);
+const content={description:'Описание',volume:'300 мл',category:'hair',setKind:'none',usage:'',ingredients:'',aroma:'',features:[],image:'/images/test.webp',gallery:[],badge:'Новинка',instruction:{steps:[],amount:'',tip:''},safety:'',recommendations:[],sensory:[]};
+const item={slug:'brand-new-product',sku:'TEST',name:'Серверное имя',content,currency:'RUB',regularMinor:75099,finalMinor:62050,available:3};
+test('one server record supplies SKU, new slug, name, category, prices, image and stock',()=>{
+ const [product]=readBackendCatalog({items:[item]});
  assert.equal(product.price,620.5);assert.equal(product.oldPrice,750.99);assert.equal(product.stock,3);
- assert.equal(product.name,'Шампунь');assert.equal(product.image,'/shampoo.webp');assert.equal(product.badge,'');
+ assert.equal(product.name,item.name);assert.equal(product.image,content.image);assert.equal(product.category,content.category);assert.equal(product.badge,content.badge);assert.equal(product.sku,item.sku);assert.equal(product.id,item.slug);
 });
-test('empty catalog never falls back to demo products',()=>assert.deepEqual(readBackendCatalog({items:[]},drafts),[]));
+test('empty or incomplete catalog never falls back to demo products',()=>{
+ assert.deepEqual(readBackendCatalog({items:[]}),[]);
+ for(const change of [{content:undefined},{name:undefined},{content:{...content,image:''}}])assert.throws(()=>readBackendCatalog({items:[{...item,...change}]}));
+});
 test('malformed, duplicate and unknown items cannot become displayed prices',()=>{
  for(const payload of [null,{}, {items:[{...item,finalMinor:'62050'}]}, {items:[{...item,currency:'USD'}]},
-  {items:[{...item,available:-1}]}, {items:[{...item,slug:null}]}, {items:[{...item,slug:'unknown'}]},
-  {items:[item,item]}, {items:[{...item,regularMinor:1}]}]) assert.throws(()=>readBackendCatalog(payload,drafts));
+  {items:[{...item,available:-1}]}, {items:[{...item,slug:null}]}, {items:[{...item,content:null}]},
+  {items:[item,item]}, {items:[item,{...item,slug:'another'}]}, {items:[{...item,regularMinor:1}]}]) assert.throws(()=>readBackendCatalog(payload));
 });

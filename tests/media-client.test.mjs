@@ -25,7 +25,7 @@ test('uploaded image paths work in published catalog with base path and reject a
  assert.throws(()=>parseProductContent({...content,image:'/api/admin/v1/products'}));
  const old=process.env.NEXT_PUBLIC_BASE_PATH;process.env.NEXT_PUBLIC_BASE_PATH='/shop';
  try{
-  const result=readBackendCatalog({items:[{sku:'PHOTO',slug:'photo',name:'Фото',content,currency:'RUB',regularMinor:300,finalMinor:200,available:1}]},[])[0];
+  const result=readBackendCatalog({items:[{sku:'PHOTO',slug:'photo',name:'Фото',content,currency:'RUB',regularMinor:300,finalMinor:200,available:1}]})[0];
   assert.equal(result.image,'/shop'+url);assert.deepEqual(result.gallery,['/shop'+url]);
  }finally{if(old===undefined)delete process.env.NEXT_PUBLIC_BASE_PATH;else process.env.NEXT_PUBLIC_BASE_PATH=old;}
 });
