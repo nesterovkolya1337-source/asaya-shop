@@ -62,4 +62,4 @@ export class CdekDeliveryClient{
 }
 // Webhook is only a durable refresh hint. No signature is documented by CDEK;
 // customer-visible state must come from the authenticated GET above.
-export const cdekWebhookSchema=z.object({type:z.literal('ORDER_STATUS'),date_time:timestamp,uuid:z.uuid(),attributes:z.object({cdek_number:tracking,code:z.string().min(1).max(100),status_date_time:timestamp,deleted:z.boolean().default(false),is_return:z.boolean(),is_reverse:z.boolean(),is_client_return:z.boolean()})});
+export const cdekWebhookSchema=z.object({type:z.literal('ORDER_STATUS'),date_time:timestamp,uuid:z.uuid(),attributes:z.object({number:z.string().min(1).max(30).optional(),cdek_number:tracking,code:z.string().min(1).max(100),status_date_time:timestamp,deleted:z.boolean().default(false),is_return:z.boolean(),is_reverse:z.boolean(),is_client_return:z.boolean()})});

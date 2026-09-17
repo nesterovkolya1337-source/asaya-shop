@@ -1,3 +1,5 @@
+> Superseded where conflicting by [RELEASE_20260918_WEBHOOKS.md](RELEASE_20260918_WEBHOOKS.md).
+
 # Packet 06 — confirmed client-number binding
 
 Current CDEK OpenAPI re-fetched 2026-09-17 from the portal's published specification:

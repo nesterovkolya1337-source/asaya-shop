@@ -9,7 +9,6 @@ import {CommerceService} from './commerce.js';
 import {runReservationWorker} from './reservation-worker.js';
 import {CdekDeliveryClient} from './cdek-delivery.js';
 import {OrderTracking} from './order-tracking.js';
-import {runTrackingWorker} from './tracking-worker.js';
 import {CdekFulfillmentClient} from './cdek-fulfillment.js';
 import {FulfillmentDispatch,type FulfillmentBinding} from './fulfillment-dispatch.js';
 import {runFulfillmentWorker} from './fulfillment-worker.js';
@@ -22,20 +21,20 @@ const ycp=c.YCP_TOKEN&&c.YCP_SETTINGS_FILE?{token:c.YCP_TOKEN,settings:JSON.pars
 const db=new Database(c.DATABASE_URL);
 const stock=c.CDEK_STOCK_SETTINGS_FILE?new StockSync(db,new CdekStockFeed(JSON.parse(await readFile(c.CDEK_STOCK_SETTINGS_FILE,'utf8')))):undefined;
 if(stock&&c.NODE_ENV==='production'&&stock.source.settings.environment!=='production')throw new Error('Production requires a production stock source');
-const tracking=c.cdekTracking?new OrderTracking(db,new CdekDeliveryClient(c.cdekTracking.settings),{accountId:c.cdekTracking.settings.account,environment:c.cdekTracking.settings.environment}):undefined;
+if(c.cdekTracking&&(!ycp||ycp.settings.environment!==c.cdekTracking.settings.environment))throw new Error('CDEK notifications require the matching YCP environment');
+const tracking=c.cdekTracking?new OrderTracking(db,new CdekDeliveryClient(c.cdekTracking.settings),{accountId:c.cdekTracking.settings.account,environment:c.cdekTracking.settings.environment,ycpAccountId:ycp!.settings.accountId}):undefined;
 const ffBinding:FulfillmentBinding|undefined=c.FULFILLMENT_ENABLED==='true'?JSON.parse(await readFile(c.FULFILLMENT_SETTINGS_FILE!,'utf8')):undefined;
 if(ffBinding&&(!ycp||ffBinding.environment!==ycp.settings.environment||ffBinding.ycpAccountId!==ycp.settings.accountId||!c.cdekTracking||ffBinding.environment!==c.cdekTracking.settings.environment||ffBinding.deliveryAccountId!==c.cdekTracking.settings.account))throw new Error('Fulfillment must match the YCP and CDEK tracking accounts/environments');
 const fulfillment=ffBinding?new FulfillmentDispatch(db,new CdekFulfillmentClient({login:c.FULFILLMENT_LOGIN!,password:c.FULFILLMENT_PASSWORD!,shopId:ffBinding.shopId,warehouseId:ffBinding.ffWarehouseId,senderId:ffBinding.senderId,environment:ffBinding.environment}),ffBinding):undefined;
 const otpSender=c.customerSms.enabled&&c.customerSms.settings?new SmsAeroSender(c.customerSms.settings):new DisabledOtpSender();
 const app=await buildApp({stock,deploymentMode:c.DEPLOYMENT_MODE,db,otpSecret:c.OTP_SECRET,staffSecret:c.STAFF_SECRET,otpSender,customerSmsEnabled:c.customerSms.enabled,otpPolicy:c.otpPolicy,origin:new URL(c.PUBLIC_ORIGIN).origin,secureCookies:c.COOKIE_SECURE==='true',logger:true,ycp,yandexIdClientId:c.YANDEX_ID_CLIENT_ID,fulfillment,...(tracking?{cdekTracking:{service:tracking,secret:c.cdekTracking!.secret}}:{})});
 const sweepController=new AbortController();let sweep:Promise<void>|undefined;
-let trackingWorker:Promise<void>|undefined,fulfillmentWorker:Promise<void>|undefined,stockWorker:Promise<void>|undefined;
-app.addHook('onClose',async()=>{sweepController.abort();await Promise.allSettled([sweep,trackingWorker,fulfillmentWorker,stockWorker]);await db.close();});
+let fulfillmentWorker:Promise<void>|undefined,stockWorker:Promise<void>|undefined;
+app.addHook('onClose',async()=>{sweepController.abort();await Promise.allSettled([sweep,fulfillmentWorker,stockWorker]);await db.close();});
 let closing=false;
 const stop=async()=>{if(closing)return;closing=true;await app.close();};
 process.on('SIGINT',()=>void stop());process.on('SIGTERM',()=>void stop());
 try {await app.listen({host:c.HOST,port:c.PORT});} catch(e) {await app.close();throw e;}
-if(tracking)trackingWorker=runTrackingWorker(tracking,sweepController.signal,report=>app.log.error(report));
 if(stock)stockWorker=runStockWorker(stock,sweepController.signal,report=>app.log.error(report));
 if(fulfillment&&ffBinding)fulfillmentWorker=runFulfillmentWorker(db,fulfillment,ffBinding,sweepController.signal,report=>app.log.error(report));
 if(c.DEPLOYMENT_MODE==='ycp'&&ycp){

@@ -1,3 +1,4 @@
+import {applyCdekPush} from './cdek-push.js';
 import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
 import {Database,type Tx} from './db.js';
@@ -5,13 +6,14 @@ import {canonical,hash,equal,DomainError} from './core.js';
 import {cdekWebhookSchema,type CdekOrderStatus} from './cdek-delivery.js';
 import {customerOrderStatus,customerStatusLabels,type DeliveryStatus,type FulfillmentStatus} from './cdek-status.js';
 export interface CdekStatusGateway{order(expected:{trackingNumber:string;uuid?:string}):Promise<CdekOrderStatus>}
-export type TrackingScope={accountId:string;environment:'test'|'production'};
+export type TrackingScope={accountId:string;environment:'test'|'production';ycpAccountId?:string};
 export class OrderTracking{
  constructor(private db:Database,private api:CdekStatusGateway,private scope:TrackingScope,private clock=()=>new Date()){
-  z.object({accountId:z.string().min(1).max(100),environment:z.enum(['test','production'])}).strict().parse(scope);
+  z.object({accountId:z.string().min(1).max(100),environment:z.enum(['test','production']),ycpAccountId:z.string().min(1).max(100).optional()}).strict().parse(scope);
  }
  async webhook(raw:unknown){
   const e=cdekWebhookSchema.parse(raw);
+  if(this.scope.ycpAccountId)return applyCdekPush(this.db,e,{...this.scope,ycpAccountId:this.scope.ycpAccountId},this.clock());
   if(e.attributes.is_return||e.attributes.is_reverse||e.attributes.is_client_return)return;
   await this.db.transaction(async tx=>{
    const row=(await tx.query(`SELECT order_id FROM order_logistics WHERE account_id=$1 AND environment=$2 AND tracking_number=$3
@@ -79,12 +81,14 @@ export class OrderTracking{
   try{await this.refresh(orderId);}catch{await this.failed(orderId);throw new DomainError('CDEK_REFRESH_FAILED',503);}
  }
  async requestStale(orderId:string,userId:string){
+  if(this.scope.ycpAccountId)return;
   await this.db.pool.query(`UPDATE order_logistics l SET delivery_requested_at=$3 FROM orders o WHERE o.id=l.order_id AND o.id=$1 AND o.user_id=$2
    AND l.account_id=$4 AND l.environment=$5 AND l.tracking_number IS NOT NULL AND COALESCE(l.delivery_status,'created') NOT IN ('delivered','cancelled','returned')
    AND (l.delivery_synced_at IS NULL OR l.delivery_synced_at<$3::timestamptz-interval '60 minutes')
    AND (l.delivery_requested_at IS NULL OR l.delivery_requested_at<$3::timestamptz-interval '60 minutes')`,[orderId,userId,this.clock(),this.scope.accountId,this.scope.environment]);
  }
  async due(limit=20){
+  if(this.scope.ycpAccountId)return [];
   z.number().int().min(1).max(100).parse(limit);
   return (await this.db.pool.query(`SELECT order_id FROM order_logistics WHERE account_id=$1 AND environment=$2 AND tracking_number IS NOT NULL
    AND (delivery_next_attempt_at IS NULL OR delivery_next_attempt_at<=$3)

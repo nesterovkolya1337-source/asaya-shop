@@ -181,3 +181,38 @@ test('return started never marks a completed return, credits inventory or refund
  assert.deepEqual((await f.db.pool.query('SELECT on_hand,reserved FROM inventory_balances')).rows[0],{on_hand:9,reserved:0});
  assert.equal((await f.db.pool.query('SELECT 1 FROM refunds')).rowCount,0);
 });
+
+
+test('CDEK push binds by ASAYA number, consumes once, rejects conflicts and never polls',async()=>{
+ const f=await fixture(),uuid=randomUUID(),number=(await f.db.pool.query('SELECT public_number FROM orders WHERE id=$1',[f.order])).rows[0].public_number;
+ const service=new OrderTracking(f.db,{order:async()=>{throw new Error('Remote GET forbidden');}},{accountId:'cdek-test',environment:'test',ycpAccountId:'ycp-test'});
+ const event={type:'ORDER_STATUS',uuid,date_time:'2026-09-18T12:00:00Z',attributes:{number,cdek_number:'1234567890',code:'DELIVERED',status_date_time:'2026-09-18T12:00:00Z',deleted:false,is_return:false,is_reverse:false,is_client_return:false}};
+ await service.webhook({...event,attributes:{...event.attributes,number:'unknown'}});
+ await service.webhook({...event,attributes:{...event.attributes,number:undefined}});
+ assert.equal((await f.db.pool.query('SELECT 1 FROM order_logistics')).rowCount,0);
+ await Promise.all([service.webhook(event),service.webhook(event)]);
+ assert.equal((await f.db.pool.query('SELECT status FROM orders')).rows[0].status,'completed');
+ assert.equal((await f.db.pool.query('SELECT on_hand,reserved FROM inventory_balances')).rows[0].on_hand,9);
+ await service.webhook({...event,date_time:'2026-09-17T12:00:00Z',attributes:{...event.attributes,code:'CREATED',status_date_time:'2026-09-17T12:00:00Z'}});
+ assert.equal((await f.db.pool.query('SELECT delivery_status FROM order_logistics')).rows[0].delivery_status,'delivered');
+ await assert.rejects(service.webhook({...event,uuid:randomUUID()}),/BINDING_CONFLICT/);
+ assert.deepEqual(await service.due(),[]);await service.requestStale(f.order,f.user);
+ assert.equal((await f.db.pool.query('SELECT delivery_requested_at FROM order_logistics')).rows[0].delivery_requested_at,null);
+ assert.equal((await f.db.pool.query('SELECT payment_status FROM orders')).rows[0].payment_status,'paid');
+ assert.equal((await f.db.pool.query('SELECT 1 FROM fulfillment_jobs')).rowCount,0);
+});
+
+test('CDEK push checks YCP scope and handles deleted status and late replay',async()=>{
+ const f=await fixture(),uuid=randomUUID(),number=(await f.db.pool.query('SELECT public_number FROM orders WHERE id=$1',[f.order])).rows[0].public_number;
+ const gateway={order:async()=>{throw new Error('Remote GET forbidden');}};
+ const scope={accountId:'cdek-test',environment:'test' as const,ycpAccountId:'ycp-test'};
+ const service=new OrderTracking(f.db,gateway,scope);
+ const event={type:'ORDER_STATUS',uuid,date_time:'2026-09-18T12:00:00Z',attributes:{number,cdek_number:'1234567890',code:'CREATED',status_date_time:'2026-09-18T12:00:00Z',deleted:false,is_return:false,is_reverse:false,is_client_return:false}};
+ await new OrderTracking(f.db,gateway,{...scope,ycpAccountId:'foreign'}).webhook(event);
+ assert.equal((await f.db.pool.query('SELECT 1 FROM order_logistics')).rowCount,0);
+ await service.webhook(event);
+ await service.webhook({...event,date_time:'2026-09-18T13:00:00Z',attributes:{...event.attributes,deleted:true}});
+ await service.webhook({...event,date_time:'2026-09-18T12:30:00Z'});
+ assert.equal((await f.db.pool.query('SELECT delivery_status FROM order_logistics')).rows[0].delivery_status,'review');
+ assert.equal((await f.db.pool.query('SELECT deleted FROM order_logistics_events')).rows[0].deleted,true);
+});
