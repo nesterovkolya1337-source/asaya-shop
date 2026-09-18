@@ -496,7 +496,7 @@ test('multi-item shortage rolls the entire checkout back',async()=>{
  await assert.rejects(f.service.createCheckout(f.userId,newKey(),f.input),/PRODUCT_UNAVAILABLE/);
  assert.equal(await count('orders'),0);assert.equal((await db.pool.query('SELECT reserved FROM inventory_balances')).rows[0].reserved,0);
 });
-test('catalog exposes only approved storefront mappings and server prices',async()=>{
+test('catalog uses approved SKU mappings and server prices without deriving visibility from price approval',async()=>{
  const f=await seed();
  assert.deepEqual(await f.service.catalog(),[]);
  await db.pool.query(`INSERT INTO storefront_mappings(slug,candidate_sku,product_id,confidence,reason)
@@ -507,7 +507,9 @@ test('catalog exposes only approved storefront mappings and server prices',async
  assert.equal(catalog.length,1);assert.equal(catalog[0]!.slug,'hair-shampoo');
  assert.equal(catalog[0]!.finalMinor,50000);assert.equal(catalog[0]!.regularMinor,60000);assert.equal(catalog[0]!.available,10);
  await db.pool.query('UPDATE product_prices SET approved=false');
- assert.deepEqual(await f.service.catalog(),[]);
+ assert.deepEqual(await f.service.catalog(),catalog);
+ // The historical checkout price gate remains enforced independently of visibility.
+ await assert.rejects(f.service.createCheckout(f.userId,newKey(),f.input),/PRODUCT_UNAVAILABLE/);
 });
 
 test('order access is scoped to the verified user',async()=>{

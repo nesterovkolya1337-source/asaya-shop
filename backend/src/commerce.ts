@@ -40,8 +40,7 @@ export class CommerceService {
    FROM products p JOIN product_prices pr ON pr.product_id=p.id
    JOIN LATERAL(SELECT slug FROM storefront_mappings WHERE product_id=p.id AND approved ORDER BY slug LIMIT 1) m ON true
    LEFT JOIN product_editor e ON e.product_id=p.id
-   WHERE p.active AND p.sale_approved AND pr.approved AND ($1=false OR e.published IS NOT NULL)
-   AND NOT EXISTS(SELECT 1 FROM product_components c WHERE c.product_id=p.id) ORDER BY p.sku`,[this.environment==='production']);
+   WHERE p.active AND p.archived_at IS NULL AND ($1=false OR e.published IS NOT NULL) ORDER BY p.sku`,[this.environment==='production']);
   return rows.map(r=>({sku:r.sku,name:r.name,slug:r.slug,currency:r.currency,regularMinor:money(r.regular_minor),finalMinor:money(r.final_minor),available:r.available,stockState:r.available>0||r.stock_known?'known':'unknown',...(r.content?{content:r.content}:{})}));
  }
  async createCheckout(userId:string,key:string,raw:unknown) {

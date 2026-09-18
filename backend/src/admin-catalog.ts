@@ -19,7 +19,7 @@ export const contentSchema=z.object({
 export const emptyContent=contentSchema.parse({description:'',volume:'',category:'hair',setKind:'none',usage:'',ingredients:'',aroma:'',features:[],image:'',gallery:[],badge:'',instruction:{steps:[],amount:'',tip:''},safety:'',recommendations:[],sensory:[]});
 const amount=z.number().int().min(0).max(1_000_000_000_000).nullable();
 export const draftSchema=z.object({
- revision:z.number().int().min(0),sku:z.string().trim().min(1).max(100),name:text(300),
+ revision:z.number().int().min(0),sku:z.string().trim().max(100),name:text(300),
  slug:text(80).refine(v=>v===''||/^[a-z0-9][a-z0-9-]{0,79}$/.test(v)),
  content:contentSchema,regularMinor:amount,finalMinor:amount,
  weightG:z.number().int().positive().max(1000000).nullable(),widthMm:z.number().int().positive().max(10000).nullable(),
@@ -35,11 +35,23 @@ async function checkMedia(tx:Tx,content:z.infer<typeof contentSchema>){
 async function audit(tx:Tx,actor:string,action:string,id:string,detail:unknown){
  await tx.query('INSERT INTO audit_log(id,actor_id,action,entity_id,detail) VALUES($1,$2,$3,$4,$5)',[randomUUID(),actor,action,id,JSON.stringify(detail)]);
 }
+export async function writePublished(tx:Tx,id:string,d:z.infer<typeof draftSchema>,e:{published?:{slug:string}|null}){
+   if(e.published&&e.published.slug!==d.slug)throw new DomainError('SLUG_IMMUTABLE');
+   const mapping=(await tx.query('SELECT product_id FROM storefront_mappings WHERE slug=$1 FOR UPDATE',[d.slug])).rows[0];
+   if(mapping?.product_id&&mapping.product_id!==id)throw new DomainError('SLUG_IN_USE');
+   await tx.query('UPDATE products SET name=$2,active=true,sale_approved=true,weight_g=$3,width_mm=$4,height_mm=$5,depth_mm=$6,updated_at=now() WHERE id=$1',[id,d.name,d.weightG,d.widthMm,d.heightMm,d.depthMm]);
+   await tx.query(`INSERT INTO product_prices(product_id,currency,regular_minor,final_minor,approved) VALUES($1,'RUB',$2,$3,true)
+    ON CONFLICT(product_id) DO UPDATE SET regular_minor=excluded.regular_minor,final_minor=excluded.final_minor,approved=true`,[id,d.regularMinor,d.finalMinor]);
+   await tx.query('UPDATE storefront_mappings SET approved=false WHERE product_id=$1',[id]);
+   await tx.query(`INSERT INTO storefront_mappings(slug,candidate_sku,product_id,confidence,approved,reason) VALUES($1,$2,$3,'high',true,'Published by administrator')
+    ON CONFLICT(slug) DO UPDATE SET candidate_sku=excluded.candidate_sku,product_id=excluded.product_id,approved=true,reason=excluded.reason`,[d.slug,d.sku,id]);
+}
 export class AdminCatalog{
  constructor(private db:Database){}
  async list(raw:unknown){
   const {search,offset,category}=z.object({search:text(100).default(''),category:z.enum(['','hair','body','face','sets']).default(''),offset:z.coerce.number().int().min(0).max(1000000).default(0)}).strict().parse(raw);
   const r=await this.db.pool.query(`SELECT p.id,p.sku,COALESCE(e.draft->>'name',p.name) AS name,p.active,
+   CASE WHEN p.archived_at IS NOT NULL THEN 'deleted' WHEN p.active THEN 'published' WHEN e.published_at IS NOT NULL THEN 'unpublished' ELSE 'draft' END AS lifecycle,
    COALESCE(e.revision,0) AS revision,COALESCE(e.draft->'content'->>'category','') AS category,COALESCE(e.draft->'content'->>'image','') AS image FROM products p LEFT JOIN product_editor e ON e.product_id=p.id
    WHERE (p.sku ILIKE $1 OR p.name ILIKE $1 OR e.draft->>'name' ILIKE $1) AND ($3='' OR e.draft->'content'->>'category'=$3) ORDER BY p.sku,p.id LIMIT 51 OFFSET $2`,['%'+search.replace(/[\\%_]/g,'\\$&')+'%',offset,category]);
   return {items:r.rows.slice(0,50),nextOffset:r.rows.length>50?offset+50:null};
@@ -59,7 +71,7 @@ export class AdminCatalog{
     source:r.managed?{kind:'cdek_ff_yml',generatedAt:r.generated_at,fetchedAt:r.fetched_at,expiresAt:r.expires_at,healthy:r.healthy,available:r.available,reportedQuantity:r.provider_quantity}:null}));
   const draft=r.draft??{sku:r.sku,name:r.name,slug:r.slug??'',content:emptyContent,regularMinor:r.regular_minor===null?null:money(r.regular_minor),finalMinor:r.final_minor===null?null:money(r.final_minor),
    weightG:r.weight_g,widthMm:r.width_mm,heightMm:r.height_mm,depthMm:r.depth_mm};
-  return {id,revision:r.revision??0,active:r.active,hasDraft:!!r.draft,publishedAt:r.published_at,draft,stocks};
+  return {id,revision:r.revision??0,lifecycle:r.archived_at?'deleted':r.active?'published':r.published_at?'unpublished':'draft',active:r.active,hasDraft:!!r.draft,publishedAt:r.published_at,draft,stocks};
  }
  async save(actor:string,id:string,raw:unknown){
   z.uuid().parse(id);const input=draftSchema.parse(raw);const {revision,...draft}=input;
@@ -67,9 +79,15 @@ export class AdminCatalog{
   try{return await this.db.transaction(async tx=>{
    await admin(tx,actor);await lock(tx,'catalog:admin');
    await checkMedia(tx,draft.content);
-   const p=(await tx.query('SELECT sku,active FROM products WHERE id=$1 FOR UPDATE',[id])).rows[0];
-   const editor=(await tx.query('SELECT revision,published_at FROM product_editor WHERE product_id=$1 FOR UPDATE',[id])).rows[0];
+   const p=(await tx.query('SELECT sku,active,archived_at FROM products WHERE id=$1 FOR UPDATE',[id])).rows[0];
+   const editor=(await tx.query('SELECT revision,published_at,published FROM product_editor WHERE product_id=$1 FOR UPDATE',[id])).rows[0];
    if((editor?.revision??0)!==revision)throw new DomainError('EDIT_CONFLICT');
+   if(p?.archived_at)throw new DomainError('PRODUCT_ARCHIVED');
+   draft.sku ||= p?.sku ?? 'ASAYA-'+id;
+   draft.slug ||= editor?.published?.slug ?? 'product-'+id;
+   draft.regularMinor ??= draft.finalMinor; draft.finalMinor ??= draft.regularMinor;
+   draft.content.image ||= draft.content.gallery.find(v=>v.trim()) ?? '';
+   if(p?.active){const issues=publicationIssues(draft);if(issues.length)throw new DomainError('PUBLISHED_REQUIRED_'+issues[0]);}
    if(p&&p.sku!==draft.sku){
     if(p.active||editor?.published_at||(await tx.query('SELECT 1 FROM order_items WHERE product_id=$1 UNION ALL SELECT 1 FROM product_external_ids WHERE product_id=$1 UNION ALL SELECT 1 FROM inventory_reservations WHERE product_id=$1 UNION ALL SELECT 1 FROM stock_source_items WHERE product_id=$1 AND listed LIMIT 1',[id])).rowCount)throw new DomainError('SKU_IMMUTABLE');
     await tx.query('UPDATE products SET sku=$2,updated_at=now() WHERE id=$1',[id,draft.sku]);
@@ -81,7 +99,11 @@ export class AdminCatalog{
    }
    await tx.query(`INSERT INTO product_editor(product_id,revision,draft,updated_by) VALUES($1,1,$2,$3)
     ON CONFLICT(product_id) DO UPDATE SET revision=product_editor.revision+1,draft=excluded.draft,updated_by=excluded.updated_by,updated_at=now()`,[id,JSON.stringify(draft),actor]);
-   await audit(tx,actor,'product.draft_saved',id,{revision:revision+1});
+   if(p?.active){
+    await writePublished(tx,id,{...draft,revision},editor??{});
+    await tx.query('UPDATE product_editor SET published=draft WHERE product_id=$1',[id]);
+   }
+   await audit(tx,actor,p?.active?'product.saved':'product.draft_saved',id,{revision:revision+1});
    return {id,revision:revision+1};
   });}catch(e){if((e as {code?:string}).code==='23505')throw new DomainError('SKU_IN_USE');throw e;}
  }
@@ -93,18 +115,10 @@ export class AdminCatalog{
    const e=(await tx.query('SELECT * FROM product_editor WHERE product_id=$1 FOR UPDATE',[id])).rows[0];
    if(!p||!e)throw new DomainError('PRODUCT_NOT_FOUND',404);
    if(e.revision!==revision)throw new DomainError('EDIT_CONFLICT');
+   if(p.archived_at)throw new DomainError('PRODUCT_ARCHIVED');
    const d=draftSchema.parse({...e.draft,revision});await checkMedia(tx,d.content);
    if(publicationIssues(d).length)throw new DomainError('PUBLISH_INCOMPLETE');
-   if(e.published&&e.published.slug!==d.slug)throw new DomainError('SLUG_IMMUTABLE');
-   if((await tx.query('SELECT 1 FROM product_components WHERE product_id=$1',[id])).rowCount)throw new DomainError('ASSEMBLED_SET_REQUIRED');
-   const mapping=(await tx.query('SELECT product_id FROM storefront_mappings WHERE slug=$1 FOR UPDATE',[d.slug])).rows[0];
-   if(mapping?.product_id&&mapping.product_id!==id)throw new DomainError('SLUG_IN_USE');
-   await tx.query('UPDATE products SET name=$2,active=true,sale_approved=true,weight_g=$3,width_mm=$4,height_mm=$5,depth_mm=$6,updated_at=now() WHERE id=$1',[id,d.name,d.weightG,d.widthMm,d.heightMm,d.depthMm]);
-   await tx.query(`INSERT INTO product_prices(product_id,currency,regular_minor,final_minor,approved) VALUES($1,'RUB',$2,$3,true)
-    ON CONFLICT(product_id) DO UPDATE SET regular_minor=excluded.regular_minor,final_minor=excluded.final_minor,approved=true`,[id,d.regularMinor,d.finalMinor]);
-   await tx.query('UPDATE storefront_mappings SET approved=false WHERE product_id=$1',[id]);
-   await tx.query(`INSERT INTO storefront_mappings(slug,candidate_sku,product_id,confidence,approved,reason) VALUES($1,$2,$3,'high',true,'Published by administrator')
-    ON CONFLICT(slug) DO UPDATE SET candidate_sku=excluded.candidate_sku,product_id=excluded.product_id,approved=true,reason=excluded.reason`,[d.slug,d.sku,id]);
+   await writePublished(tx,id,d,e);
    await tx.query('UPDATE product_editor SET published=draft,published_at=now(),revision=revision+1,updated_by=$2,updated_at=now() WHERE product_id=$1',[id,actor]);
    await audit(tx,actor,'product.published',id,{revision:revision+1,slug:d.slug,regularMinor:d.regularMinor,finalMinor:d.finalMinor});
    return {id,revision:revision+1};
@@ -134,7 +148,7 @@ export class AdminCatalog{
     UNION ALL SELECT 1 FROM product_external_ids WHERE product_id=$1 UNION ALL SELECT 1 FROM product_barcodes WHERE product_id=$1
     UNION ALL SELECT 1 FROM storefront_mappings WHERE product_id=$1 UNION ALL SELECT 1 FROM stock_source_items WHERE product_id=$1
     UNION ALL SELECT 1 FROM product_components WHERE product_id=$1 OR component_id=$1 LIMIT 1`,[id])).rowCount;
-   if(used){await tx.query('UPDATE products SET active=false,sale_approved=false,updated_at=now() WHERE id=$1',[id]);await tx.query('UPDATE product_editor SET revision=revision+1,updated_by=$2,updated_at=now() WHERE product_id=$1',[id,actor]);}
+   if(used){await tx.query('UPDATE products SET active=false,sale_approved=false,archived_at=now(),updated_at=now() WHERE id=$1',[id]);await tx.query('UPDATE product_editor SET revision=revision+1,updated_by=$2,updated_at=now() WHERE product_id=$1',[id,actor]);}
    else {await tx.query('DELETE FROM product_editor WHERE product_id=$1',[id]);await tx.query('DELETE FROM product_prices WHERE product_id=$1',[id]);await tx.query('DELETE FROM products WHERE id=$1',[id]);}
    const outcome=used?'archived':'deleted';await audit(tx,actor,'product.'+outcome,id,{});return {outcome};
   });

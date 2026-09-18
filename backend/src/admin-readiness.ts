@@ -26,7 +26,7 @@ export class AdminReadiness{
   const items=r.items.map((p:Record<string,any>)=>{
    const parsed=draftSchema.safeParse({...p.draft??{sku:p.sku,name:p.name,slug:p.slug??'',content:emptyContent,regularMinor:p.regular_minor===null?null:Number(p.regular_minor),finalMinor:p.final_minor===null?null:Number(p.final_minor),weightG:p.weight_g,widthMm:p.width_mm,heightMm:p.height_mm,depthMm:p.depth_mm},revision:0});
    const issues=parsed.success?publicationIssues(parsed.data):['card_data'];
-   if(p.components)issues.push('components');
+   // Component logistics do not determine publication visibility.
    if(p.slug_taken)issues.push('slug_taken');
    if(parsed.success&&p.published&&p.published.slug!==parsed.data.slug)issues.push('slug_changed');
    if(p.missing_media)issues.push('missing_media');

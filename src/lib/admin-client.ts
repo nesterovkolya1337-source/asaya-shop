@@ -2,14 +2,22 @@ import {createStoreRequest,AuthClientError} from './auth-client.ts';
 import {parseProductContent,type ProductContent} from './backend-catalog.ts';
 export type StaffSession={user:{id:string;role:'admin'};csrfToken:string};
 export type AdminDraft={sku:string;name:string;slug:string;content:ProductContent;regularMinor:number|null;finalMinor:number|null;weightG:number|null;widthMm:number|null;heightMm:number|null;depthMm:number|null};
-export type AdminProduct={id:string;revision:number;active:boolean;hasDraft:boolean;publishedAt:string|null;draft:AdminDraft;stocks:Array<{warehouseId:string;name:string;active:boolean;onHand:number;reserved:number;source?:null|{kind:'cdek_ff_yml';generatedAt:string;fetchedAt:string;expiresAt:string;healthy:boolean;available:number;reportedQuantity:number}}>};
-export type ProductRow={id:string;sku:string;name:string;active:boolean;revision:number;category:''|'hair'|'body'|'face'|'sets';image:string};
+export type ProductLifecycle='draft'|'published'|'unpublished'|'deleted';
+export type AdminProduct={lifecycle?:ProductLifecycle;id:string;revision:number;active:boolean;hasDraft:boolean;publishedAt:string|null;draft:AdminDraft;stocks:Array<{warehouseId:string;name:string;active:boolean;onHand:number;reserved:number;source?:null|{kind:'cdek_ff_yml';generatedAt:string;fetchedAt:string;expiresAt:string;healthy:boolean;available:number;reportedQuantity:number}}>};
+export type ProductRow={lifecycle?:ProductLifecycle;id:string;sku:string;name:string;active:boolean;revision:number;category:''|'hair'|'body'|'face'|'sets';image:string};
 const emptyRowContent={description:'',volume:'',category:'hair',setKind:'none',usage:'',ingredients:'',aroma:'',features:[],image:'',gallery:[],badge:'',instruction:{steps:[],amount:'',tip:''},safety:'',recommendations:[],sensory:[]};
 const idPattern=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 const object=(r:unknown):Record<string,unknown>=>{if(!r||typeof r!=='object'||Array.isArray(r))throw new AuthClientError('INVALID_RESPONSE');return r as Record<string,unknown>;};
 const uuid=(r:unknown):r is string=>typeof r==='string'&&idPattern.test(r);
 const integer=(r:unknown):r is number=>typeof r==='number'&&Number.isSafeInteger(r)&&r>=0;
 const messages:Record<string,string>={
+ PRODUCT_ARCHIVED:'Товар удалён и не может быть опубликован.',
+ PUBLISHED_REQUIRED_name:'У опубликованного товара обязательно название.',
+ PUBLISHED_REQUIRED_description:'У опубликованного товара обязательно описание.',
+ PUBLISHED_REQUIRED_ingredients:'У опубликованного товара обязателен состав.',
+ PUBLISHED_REQUIRED_image:'У опубликованного товара должна остаться хотя бы одна фотография.',
+ PUBLISHED_REQUIRED_price:'У опубликованного товара обязательна цена.',
+ PUBLISHED_REQUIRED_price_order:'Цена продажи не должна превышать обычную цену.',
  MEDIA_REFERENCE_MISSING:'Одно из загруженных фото не найдено. Загрузите его заново.',
  STAFF_UNAVAILABLE:'Вход сотрудников ещё не настроен на сервере.',
  INVALID_STAFF_LOGIN:'Проверьте почту, пароль и код приложения. Использованный код повторно не принимается.',
@@ -18,7 +26,7 @@ const messages:Record<string,string>={
  SKU_IN_USE:'Такой артикул уже используется.',
  SLUG_IN_USE:'Этот адрес карточки занят другим товаром.',
  SLUG_IMMUTABLE:'Адрес опубликованной карточки менять нельзя — на него могут вести ссылки.',
- PUBLISH_INCOMPLETE:'Для публикации нужны название, адрес карточки, описание, объём, фото, применение, состав и корректные цены. Проверьте также тип набора.',
+ PUBLISH_INCOMPLETE:'Для публикации заполните название, цену, состав, описание и минимум одну фотографию.',
  ASSEMBLED_SET_REQUIRED:'Для этого набора задан компонентный учёт. Его публикация пока недоступна.',
  STOCK_CONFLICT:'Остаток изменился. Обновите карточку перед корректировкой.',
  STOCK_RESERVED:'Новый остаток меньше количества в резерве.',
@@ -42,7 +50,8 @@ export function parseAdminProduct(raw:unknown):AdminProduct{
  const stocks=r.stocks.map(rawStock=>{const s=object(rawStock);if(!uuid(s.warehouseId)||typeof s.name!=='string'||typeof s.active!=='boolean'||!integer(s.onHand)||!integer(s.reserved)||s.reserved>s.onHand)throw new AuthClientError('INVALID_RESPONSE');
   if(s.source!=null){const source=object(s.source);if(source.kind!=='cdek_ff_yml'||typeof source.healthy!=='boolean'||!integer(source.available)||!integer(source.reportedQuantity)||!['generatedAt','fetchedAt','expiresAt'].every(k=>typeof source[k]==='string'&&Number.isFinite(Date.parse(source[k] as string))))throw new AuthClientError('INVALID_RESPONSE');}
   return s as AdminProduct['stocks'][number];});
- return {id:r.id,revision:r.revision,active:r.active,hasDraft:r.hasDraft,publishedAt:r.publishedAt as string|null,draft:{...d,content:parseProductContent(d.content)} as AdminDraft,stocks};
+ if(r.lifecycle!==undefined&&!['draft','published','unpublished','deleted'].includes(String(r.lifecycle)))throw new AuthClientError('INVALID_RESPONSE');
+ return {id:r.id,revision:r.revision,lifecycle:r.lifecycle as ProductLifecycle|undefined,active:r.active,hasDraft:r.hasDraft,publishedAt:r.publishedAt as string|null,draft:{...d,content:parseProductContent(d.content)} as AdminDraft,stocks};
 }
 export function createAdminClient(base:string,fetcher:typeof fetch=fetch){
  const request=createStoreRequest(base,fetcher);
