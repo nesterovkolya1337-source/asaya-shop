@@ -29,7 +29,7 @@ async function fixture(){
  await db.pool.query("INSERT INTO product_external_ids(provider,account_id,environment,external_id,product_id) VALUES('ycp','fixture','production','OFFER',$1)",[product]);
  const settings:YcpSettings={accountId:'fixture',environment:'production',publicOrigin:origin,priceUnit:'minor',vat:0,checkout:{deliveryPriceUnit:'rubles'},button:{enabled:false},warehouses:[{warehouseId:warehouse,address:'Тестовый адрес',phone:'+79990000000',servedLocalities:['*'],ycpDeliveryEnabled:true}]};
  const app=await buildApp({db,deploymentMode:'ycp',otpSecret:'o'.repeat(32),staffSecret:'s'.repeat(32),otpSender:new DisabledOtpSender(),origin,secureCookies:true,ycp:{token,settings}});
- const body={session_id:'session',warehouse_id:warehouse,items:[{id:'SKU-PROD',quantity:1,regular_price:60000,final_price:50000}],customer:{full_name:'Тестовый покупатель',email:'buyer@example.test',phone:'+79990000000'},delivery:{delivery_method:'pickup_point',service_type:'cdek',price:100.29,address:{pickup_point_id:'TEST-PVZ'},delivery_date_interval:{start_interval:{date:'2026-09-10'},end_interval:{date:'2026-09-12'},time_zone:3}}};
+ const body={session_id:'session',warehouse_id:warehouse,items:[{id:'SKU-PROD',quantity:1,regular_price:600,final_price:500}],customer:{full_name:'Тестовый покупатель',email:'buyer@example.test',phone:'+79990000000'},delivery:{delivery_method:'pickup_point',service_type:'cdek',price:100.29,address:{pickup_point_id:'TEST-PVZ'},delivery_date_interval:{start_interval:{date:'2026-09-10'},end_interval:{date:'2026-09-12'},time_zone:3}}};
  const headers={authorization:'Bearer '+token};
  return {db,app,headers,body,product};
 }
@@ -38,7 +38,7 @@ test('working protocol checks basket, reserves, confirms Pay and handles deliver
  const f=await fixture();
  try{
   const basket=await f.app.inject({method:'POST',url:'/api/v1/checkout/basket/check',headers:f.headers,payload:{items:[{id:'OFFER',quantity:1}],offers_id_from_merchant_center:true,locality:'Владивосток',is_health_check:false}});
-  assert.equal(basket.statusCode,200);assert.equal(basket.json().items[0].final_price,50000);
+  assert.equal(basket.statusCode,200);assert.equal(basket.json().items[0].final_price,500);
   const create=await f.app.inject({method:'POST',url:'/api/v1/checkout',headers:f.headers,payload:f.body});
   assert.equal(create.statusCode,201,create.body);
   const replay=await f.app.inject({method:'POST',url:'/api/ycp/v1/checkout',headers:f.headers,payload:f.body});

@@ -38,7 +38,7 @@ async function fixture(){
  const sync=new StockSync(db,source),settings:YcpSettings={accountId:'stock-test',environment:'production',publicOrigin:'https://asaya.example.test',priceUnit:'minor',vat:0,checkout:{deliveryPriceUnit:'rubles'},warehouses:[{warehouseId:warehouse,address:'Test',phone:'+79990000000',servedLocalities:['*'],ycpDeliveryEnabled:false}]};
  const basket=new YcpCatalog(db,token,settings,true),checkout=new YcpCheckout(db,settings,undefined,true);
  const request={items:[{id:'SKU-1',quantity:1}],offers_id_from_merchant_center:false,locality:'Москва',is_health_check:false};
- const body={session_id:'session-1',warehouse_id:warehouse,items:[{id:'SKU-1',quantity:1,regular_price:60000,final_price:50000}],customer:{full_name:'Test',phone:'+79990000000',email:'buyer@example.test'},delivery:{delivery_method:'courier',service_type:'cdek',price:100,address:{locality:'Москва',address:'Test'},delivery_date_interval:{start_interval:{date:'2026-10-01'},end_interval:{date:'2026-10-02'},time_zone:3}}};
+ const body={session_id:'session-1',warehouse_id:warehouse,items:[{id:'SKU-1',quantity:1,regular_price:600,final_price:500}],customer:{full_name:'Test',phone:'+79990000000',email:'buyer@example.test'},delivery:{delivery_method:'courier',service_type:'cdek',price:100,address:{locality:'Москва',address:'Test'},delivery_date_interval:{start_interval:{date:'2026-10-01'},end_interval:{date:'2026-10-02'},time_zone:3}}};
  const available=async()=>(await basket.basket(request)).items[0]!.warehouses[0].available_quantity;
  return {db,warehouse,product,actor,at,source,sync,settings,basket,checkout,request,body,available};
 }
@@ -101,7 +101,7 @@ test('packet 03 basket quantity is a purchase ceiling from shared stock, never a
   generation=new Date(+generation+1000);await f.sync.apply(parseStockFeed(xml(generation,stock!)));
   const response=await f.basket.basket({...f.request,items:[{id:'SKU-1',quantity:requested}]});
   assert.equal(response.items[0]!.warehouses[0].available_quantity,stock);
-  assert.equal(response.items[0]!.final_price,50000);
+  assert.equal(response.items[0]!.final_price,500);
   assert.equal((await new StockState(f.db,f.source.settings).read()).items[0]!.quantity,stock);
  }
  await assert.rejects(f.basket.basket({...f.request,items:[{id:'SKU-1',quantity:1,final_price:1}]}));
@@ -339,7 +339,7 @@ test('production YCP HTTP basket follows the official contract and preserves unk
    const body=response.json();assert.deepEqual(Object.keys(body),['items']);assert.equal(body.items.length,1);
    const item=body.items[0];
    assert.deepEqual(Object.keys(item).sort(),['id','name','regular_price','final_price','vat','img','url','warehouses','dimensions','characteristics','variations'].sort());
-   assert.equal(item.id,'SKU-1');assert.equal(item.regular_price,60000);assert.equal(item.final_price,50000);
+   assert.equal(item.id,'SKU-1');assert.equal(item.regular_price,600);assert.equal(item.final_price,500);
    assert.deepEqual(item.dimensions,{width:50,height:190,depth:50,weight:500});
    assert.equal(item.warehouses.reduce((sum:number,w:{available_quantity:number})=>sum+w.available_quantity,0),allowed);
    for(const w of item.warehouses){assert.deepEqual(Object.keys(w).sort(),['available_quantity','id']);assert.equal(w.id,f.warehouse);assert.ok(Number.isInteger(w.available_quantity));}
@@ -364,7 +364,7 @@ test('production YCP HTTP basket follows the official contract and preserves unk
   await f.db.pool.query('UPDATE inventory_balances SET reserved=3 WHERE product_id=$1',[f.product]);
   await check(100,7,true,10,'fresh'); // Admin retains provider count; YCP excludes reservations.
   await f.db.pool.query('UPDATE product_prices SET final_minor=49900 WHERE product_id=$1',[f.product]);
-  assert.equal((await app.inject({method:'POST',url,headers,payload:f.request})).json().items[0].final_price,49900);
+  assert.equal((await app.inject({method:'POST',url,headers,payload:f.request})).json().items[0].final_price,499);
   for(const item of [{id:'SKU-1',quantity:1,final_price:1},{id:'SKU-1',quantity:1,available_quantity:999},{id:'SKU-1',quantity:1.5},{id:'SKU-1',quantity:0}]){
    assert.equal((await app.inject({method:'POST',url,headers,payload:{...f.request,items:[item]}})).statusCode,400);
   }

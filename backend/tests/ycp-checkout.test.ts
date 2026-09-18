@@ -21,7 +21,7 @@ async function fixture(stock=10){
  await db.pool.query("INSERT INTO storefront_mappings(slug,product_id,approved,confidence,reason) VALUES('ycp-gel',$1,true,'high','test')",[product]);
  await db.pool.query('INSERT INTO inventory_balances(product_id,warehouse_id,on_hand) VALUES($1,$2,$3)',[product,warehouse,stock]);
  const settings:YcpSettings={accountId:'ycp-test',environment:'test',publicOrigin:'https://asaya.example.test',priceUnit:'minor',vat:0,checkout:{deliveryPriceUnit:'rubles'},warehouses:[{warehouseId:warehouse,address:'Тестовый адрес',phone:'+79990000000',servedLocalities:['Москва'],ycpDeliveryEnabled:false}]};
- const body={session_id:'session-1',warehouse_id:warehouse,items:[{id:'SKU-1',quantity:1,regular_price:60000,final_price:50000}],customer:{full_name:'Тестовый покупатель',phone:'+79990000000',email:'buyer@example.test'},delivery:{delivery_method:'courier',service_type:'yandex_delivery',price:100.29,address:{locality:'Москва',address:'Тестовая, 1'},delivery_date_interval:{start_interval:{date:'2026-09-07'},end_interval:{date:'2026-09-08'},time_zone:3}}};
+ const body={session_id:'session-1',warehouse_id:warehouse,items:[{id:'SKU-1',quantity:1,regular_price:600,final_price:500}],customer:{full_name:'Тестовый покупатель',phone:'+79990000000',email:'buyer@example.test'},delivery:{delivery_method:'courier',service_type:'yandex_delivery',price:100.29,address:{locality:'Москва',address:'Тестовая, 1'},delivery_date_interval:{start_interval:{date:'2026-09-07'},end_interval:{date:'2026-09-08'},time_zone:3}}};
  const service=new YcpCheckout(db,settings,()=>now);
  const placement={session_id:body.session_id,order_id:'ycp-order-1',order_number:123,payment_method:'online',online_payment_method:'card',acquiring_id:'acquiring-1'};
  return {db,warehouse,product,settings,body,service,placement};
@@ -119,7 +119,7 @@ test('YCP creates one guest order and reservation under concurrent replay, using
 });
 test('YCP rejects changed inventory atomically and only one session gets the final item',async()=>{
  const f=await fixture(1),changed={...f.body,items:[{...f.body.items[0]!,final_price:1}]};
- await assert.rejects(f.service.create(changed),(e:any)=>{assert.equal(e.status,409);assert.equal(e.details.actual_inventory.items[0].final_price,50000);assert.equal(e.details.checkout_canceled,false);return true;});
+ await assert.rejects(f.service.create(changed),(e:any)=>{assert.equal(e.status,409);assert.equal(e.details.actual_inventory.items[0].final_price,500);assert.equal(e.details.checkout_canceled,false);return true;});
  assert.equal(await count('orders'),0);
  const r=await Promise.allSettled([f.service.create(f.body),f.service.create({...f.body,session_id:'session-2'})]);assert.equal(r.filter(i=>i.status==='fulfilled').length,1);assert.equal(await count('orders'),1);
  assert.equal((await f.db.pool.query('SELECT reserved FROM inventory_balances')).rows[0].reserved,1);
@@ -127,10 +127,8 @@ test('YCP rejects changed inventory atomically and only one session gets the fin
 test('YCP checkout validates delivery mode, address, fractional money, configuration and warehouse before reserving',async()=>{
  const f=await fixture();
  for(const body of [{...f.body,warehouse_id:randomUUID()},{...f.body,items:[...f.body.items,...f.body.items]},{...f.body,items:[...f.body.items,{id:'UNKNOWN',quantity:1,regular_price:1,final_price:1}]},{...f.body,delivery:{...f.body.delivery,price:1.001}},{...f.body,delivery:{...f.body.delivery,service_type:'ycp'}},{...f.body,delivery:{...f.body.delivery,address:{locality:'Москва'}}},{...f.body,delivery:{...f.body.delivery,address:{locality:'Казань',address:'Адрес'}}}])await assert.rejects(f.service.create(body));
- await assert.rejects(new YcpCheckout(f.db,{...f.settings,checkout:undefined}).create(f.body),/YCP_CHECKOUT_NOT_CONFIGURED/);
- await assert.rejects(new YcpCheckout(f.db,{...f.settings,priceUnit:null}).create(f.body),/YCP_CHECKOUT_NOT_CONFIGURED/);
  assert.equal(await count('orders'),0);assert.equal(await count('inventory_movements'),0);
- const rubles=new YcpCheckout(f.db,{...f.settings,priceUnit:'rubles'});
+ const rubles=new YcpCheckout(f.db,{...f.settings,priceUnit:null,vat:null,checkout:undefined});
  await rubles.create({...f.body,items:[{id:'SKU-1',quantity:1,regular_price:600,final_price:500}]});assert.equal((await order()).total_minor,'60029');
 });
 test('YCP online placement is atomic and idempotent and cannot be cancelled as an unfinished checkout',async()=>{
@@ -210,7 +208,7 @@ test('YCP checkout HTTP requires Bearer before parsing and follows create, confl
  const headers={authorization:'Bearer '+token},base='/api/ycp/v1/checkout';
  try{
   for(const path of ['', '/placed','/cancel?session_id=session-1'])assert.equal((await app.inject({method:'POST',url:base+path,headers:{'content-type':'application/json'},payload:'{broken'})).statusCode,401);
-  const conflict=await app.inject({method:'POST',url:base,headers,payload:{...f.body,items:[{...f.body.items[0]!,final_price:1}]}});assert.equal(conflict.statusCode,409);assert.equal(conflict.json().actual_inventory.items[0].final_price,50000);
+  const conflict=await app.inject({method:'POST',url:base,headers,payload:{...f.body,items:[{...f.body.items[0]!,final_price:1}]}});assert.equal(conflict.statusCode,409);assert.equal(conflict.json().actual_inventory.items[0].final_price,500);
   const created=await app.inject({method:'POST',url:base,headers,payload:f.body});assert.equal(created.statusCode,201);assert.ok(created.json().order_number.startsWith('ASAYA-'));assert.equal(created.headers['cache-control'],'no-store');
   assert.equal((await app.inject({method:'POST',url:base+'/placed',headers,payload:f.placement})).statusCode,200);
   assert.equal((await app.inject({method:'POST',url:base+'/cancel?session_id=session-1',headers})).statusCode,409);

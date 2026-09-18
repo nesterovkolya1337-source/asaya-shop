@@ -10,11 +10,11 @@ export const ycpSettingsSchema=z.object({
  accountId:nonempty,
  environment:z.enum(['test','production']),
  publicOrigin:z.url().refine(value=>{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password&&u.pathname==='/'&&!u.search&&!u.hash;}),
- // OpenAPI 0.0.14 specifies integer prices but does not name the monetary unit.
- // Null blocks basket responses until the integration's unit has been confirmed.
- priceUnit:z.enum(['minor','rubles']).nullable(),
+ // Deprecated input keys remain parseable for existing deployment files.
+ // Custom-site YCP uses rubles; these keys no longer select the wire representation.
+ priceUnit:z.enum(['minor','rubles']).nullable().optional(),
  warehouseSource:z.enum(['configuration','database']).optional(),
- vat:z.number().int().min(0).max(100).nullable(),
+ vat:z.number().int().min(0).max(100).nullable().optional(),
  checkout:z.object({deliveryPriceUnit:z.enum(['minor','rubles'])}).strict().optional(),
  button:z.object({enabled:z.boolean()}).strict().optional(),
  feed:z.object({name:z.string().trim().min(1).max(20),company:z.string().trim().min(1).max(500)}).strict().optional(),
@@ -58,7 +58,6 @@ export class YcpCatalog {
  }
  async basket(raw:unknown){
   const input=basketSchema.parse(raw),settings=this.settings;
-  if(settings.priceUnit===null||settings.vat===null)throw new DomainError('YCP_PRICING_NOT_CONFIGURED',503);
   const warehouseIds=(await ycpWarehouses(this.db.pool,settings,true)).filter(w=>w.servedLocalities.some(l=>l==='*'||localityKey(l)===localityKey(input.locality))).map(w=>w.warehouseId);
   // One statement gives all prices and warehouse balances from the same DB snapshot.
   // YCP available_quantity is the current purchase ceiling, not measured provider stock.
@@ -71,9 +70,9 @@ export class YcpCatalog {
     FROM inventory_balances b JOIN warehouses w ON w.id=b.warehouse_id
     WHERE b.product_id=p.id AND w.active AND w.id=ANY($5::uuid[])),'[]'::jsonb) AS warehouses
    FROM unnest($1::text[]) WITH ORDINALITY AS requested(request_id,position)
-   JOIN products p ON CASE WHEN $2::boolean THEN p.id=(SELECT x.product_id FROM product_external_ids x
+   JOIN products p ON (p.sku=requested.request_id OR ($2::boolean AND p.id=(SELECT x.product_id FROM product_external_ids x
     WHERE x.provider='ycp' AND x.account_id=$3 AND x.environment=$4 AND x.external_id=requested.request_id)
-    ELSE p.sku=requested.request_id END
+    ))
    JOIN product_prices pr ON pr.product_id=p.id AND pr.approved AND pr.currency='RUB'
    JOIN LATERAL(SELECT slug FROM storefront_mappings WHERE product_id=p.id AND approved ORDER BY slug LIMIT 1) m ON true
    LEFT JOIN product_editor e ON e.product_id=p.id
@@ -84,17 +83,15 @@ export class YcpCatalog {
   if(new Set(rows.map(r=>r.sku)).size!==rows.length)throw new DomainError('DUPLICATE_PRODUCT',400);
   const price=(value:unknown)=>{
    const minor=money(value);
-   if(settings.priceUnit==='minor')return minor;
    if(minor%100!==0)throw new DomainError('YCP_PRICE_NOT_REPRESENTABLE',503);
    return minor/100;
   };
   return {items:rows.map(row=>{
-   if(!row.weight_g||!row.width_mm||!row.height_mm||!row.depth_mm)throw new DomainError('YCP_DIMENSIONS_NOT_CONFIGURED',503);
    const img=row.image?new URL(row.image,settings.publicOrigin):null;
    if(img&&(img.protocol!=='https:'||img.username||img.password))throw new DomainError('YCP_IMAGE_NOT_CONFIGURED',503);
-   return {id:row.sku,name:row.name,regular_price:price(row.regular_minor),final_price:price(row.final_minor),vat:settings.vat,
+   return {id:row.sku,name:row.name,regular_price:price(row.regular_minor),final_price:price(row.final_minor),...(settings.vat!=null?{vat:settings.vat}:{}),
     ...(img?{img:img.href}:{}),url:new URL('/product/'+encodeURIComponent(row.slug)+'/',settings.publicOrigin).href,
-    warehouses:row.warehouses,dimensions:{width:row.width_mm,height:row.height_mm,depth:row.depth_mm,weight:row.weight_g},characteristics:[],variations:[]};
+    warehouses:row.warehouses,dimensions:{...(row.width_mm!=null?{width:row.width_mm}:{}),...(row.height_mm!=null?{height:row.height_mm}:{}),...(row.depth_mm!=null?{depth:row.depth_mm}:{}),...(row.weight_g!=null?{weight:row.weight_g}:{})},characteristics:[],variations:[]};
   })};
  }
 }

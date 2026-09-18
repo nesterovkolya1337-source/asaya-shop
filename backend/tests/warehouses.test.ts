@@ -61,7 +61,7 @@ test('draft warehouses cannot sell stock or reserve a YCP order even if a balanc
  const basket={items:[{id:'TEST-GEL',quantity:1}],offers_id_from_merchant_center:false,locality:'Москва',is_health_check:true};
  assert.deepEqual((await f.catalog.basket(basket)).items[0]!.warehouses,[]);
  const checkout=new YcpCheckout(ctx.db,settings);
- await assert.rejects(checkout.create({session_id:'draft-no-order',warehouse_id:f.id,items:[{id:'TEST-GEL',quantity:1,regular_price:60000,final_price:50000}],
+ await assert.rejects(checkout.create({session_id:'draft-no-order',warehouse_id:f.id,items:[{id:'TEST-GEL',quantity:1,regular_price:600,final_price:500}],
   customer:{full_name:'Тест',phone:'+79990000000',email:'buyer@example.test'},delivery:{delivery_method:'courier',service_type:'cdek',price:0,
    address:{locality:'Москва',address:'Тестовый адрес'},delivery_date_interval:{start_interval:{date:'2026-09-10'},end_interval:{date:'2026-09-11'},time_zone:3}}}),/WAREHOUSE_UNAVAILABLE/);
  assert.equal((await ctx.db.pool.query('SELECT count(*)::int n FROM orders')).rows[0].n,0);

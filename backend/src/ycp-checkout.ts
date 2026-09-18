@@ -29,12 +29,11 @@ const placedSchema=z.object({session_id:id,order_id:id,order_number:z.number().i
 export class YcpConflict extends DomainError {
  constructor(code:string,readonly details:Record<string,unknown>={}){super(code,409);}
 }
-function toMinor(value:number,unit:'minor'|'rubles'){
+function toMinor(value:number){
  // Decimal parsing avoids floating point rounding or accepting fractions of a kopeck.
  const decimal=String(value).match(/^(\d+)(?:\.(\d+))?$/);
  if(!decimal)throw new DomainError('INVALID_AMOUNT',400);
  const fraction=decimal[2]??'';
- if(unit==='minor'){if(fraction.length)throw new DomainError('INVALID_AMOUNT',400);return money(value);}
  if(fraction.length>2)throw new DomainError('INVALID_AMOUNT',400);
  return money(Number(decimal[1])*100+Number(fraction.padEnd(2,'0')));
 }
@@ -62,7 +61,6 @@ export class YcpCheckout {
     if(prior.request_hash!==digest)throw new YcpConflict('SESSION_CONFLICT');
     return {order_number:prior.public_number};
    }
-   if(!s.checkout||!s.priceUnit||s.vat===null)throw new DomainError('YCP_CHECKOUT_NOT_CONFIGURED',503);
    if(['self_pickup','merchant_ship','ycp'].includes(body.delivery.service_type)||body.delivery.delivery_method==='self_pickup'||body.delivery.ycp_delivery_option_id)throw new DomainError('YCP_DELIVERY_MODE_NOT_SUPPORTED',400);
    const profile=(await ycpWarehouses(tx,s,true,true)).find(w=>w.warehouseId===body.warehouse_id);
    const locality=body.delivery.address.locality?.trim().toLocaleLowerCase('ru-RU');
@@ -72,16 +70,15 @@ export class YcpCheckout {
     FROM products p JOIN product_prices pr ON pr.product_id=p.id AND pr.approved AND pr.currency='RUB'
     JOIN inventory_balances b ON b.product_id=p.id AND b.warehouse_id=$2
     WHERE p.sku=ANY($1::text[]) AND p.active AND p.sale_approved
-    AND p.weight_g IS NOT NULL AND p.width_mm IS NOT NULL AND p.height_mm IS NOT NULL AND p.depth_mm IS NOT NULL
     AND EXISTS(SELECT 1 FROM storefront_mappings m WHERE m.product_id=p.id AND m.approved)
     AND ($3=false OR EXISTS(SELECT 1 FROM product_editor e WHERE e.product_id=p.id AND e.published IS NOT NULL))
     AND NOT EXISTS(SELECT 1 FROM product_components c WHERE c.product_id=p.id)
     ORDER BY p.sku FOR UPDATE OF p,pr,b`,[body.items.map(i=>i.id),body.warehouse_id,s.environment==='production']);
-   const convert=(n:unknown)=>{const value=money(n);if(s.priceUnit==='minor')return value;if(value%100)throw new DomainError('YCP_PRICE_NOT_REPRESENTABLE',503);return value/100;};
+   const convert=(n:unknown)=>{const value=money(n);if(value%100)throw new DomainError('YCP_PRICE_NOT_REPRESENTABLE',503);return value/100;};
    const actual={items:rows.map(r=>({id:r.sku,regular_price:convert(r.regular_minor),final_price:convert(r.final_minor),warehouses:[{id:body.warehouse_id,available_quantity:r.available}]}))};
    if(rows.length!==body.items.length||body.items.some(i=>{const r=rows.find(r=>r.sku===i.id);return !r||i.quantity>r.available||i.regular_price!==convert(r.regular_minor)||i.final_price!==convert(r.final_minor);}))throw new YcpConflict('INVENTORY_CHANGED',{actual_inventory:actual,checkout_canceled:false});
    const subtotal=money(body.items.reduce((sum,i)=>sum+money(rows.find(r=>r.sku===i.id)!.final_minor)*i.quantity,0));
-   const deliveryMinor=toMinor(body.delivery.price,s.checkout.deliveryPriceUnit),total=money(subtotal+deliveryMinor);
+   const deliveryMinor=toMinor(body.delivery.price),total=money(subtotal+deliveryMinor);
    if(total===0)throw new DomainError('ZERO_TOTAL_NOT_SUPPORTED',400);
    const order=randomUUID(),checkout=randomUUID(),guest=randomUUID(),at=this.clock(),expires=new Date(at.getTime()+3600000);
    const publicNumber=`ASAYA-${(await tx.query("SELECT nextval('public_order_sequence') AS n")).rows[0].n}`;

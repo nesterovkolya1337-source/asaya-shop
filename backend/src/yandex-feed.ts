@@ -84,19 +84,27 @@ export class YandexFeed {
  async checkoutLink(raw:unknown,idempotencyKey:string=randomUUID()){
   z.uuid().parse(idempotencyKey);
   const s=this.settings;
-  if(!s.checkout||s.priceUnit===null||s.vat===null)throw new DomainError('YANDEX_CHECKOUT_UNAVAILABLE',503);
   const body=z.object({items:z.array(z.object({sku:z.string().min(1).max(200),quantity:z.number().int().min(1).max(100)}).strict()).min(1).max(50)}).strict()
    .refine(v=>new Set(v.items.map(i=>i.sku)).size===v.items.length).parse(raw);
   body.items.sort((a,b)=>a.sku<b.sku?-1:a.sku>b.sku?1:0);
   const tests=(await this.db.pool.query('SELECT p.sku,t.quantity FROM product_test_stock t JOIN products p ON p.id=t.product_id WHERE t.enabled AND p.active AND p.archived_at IS NULL')).rows;
   if(!s.button?.enabled&&!body.items.every(i=>tests.some(t=>t.sku===i.sku&&t.quantity>=i.quantity)))throw new DomainError('YANDEX_CHECKOUT_UNAVAILABLE',503);
-  const catalog=(await this.render(true)).items;
+  // Custom-site button: canonical SKU, prices and stock. No feed metadata or mappings.
+  const catalog=(await this.db.pool.query(`SELECT p.sku,pr.regular_minor,pr.final_minor,
+   COALESCE((SELECT sum(GREATEST(0,LEAST(b.on_hand,asaya_stock_limit(p.id,w.id,$2))-b.reserved))
+    FROM inventory_balances b JOIN warehouses w ON w.id=b.warehouse_id
+    WHERE b.product_id=p.id AND w.active AND w.id=ANY($3::uuid[])),0) AS available
+   FROM products p JOIN product_prices pr ON pr.product_id=p.id AND pr.approved AND pr.currency='RUB'
+   JOIN product_editor e ON e.product_id=p.id AND e.published IS NOT NULL
+   WHERE p.sku=ANY($1::text[]) AND p.active AND p.archived_at IS NULL AND p.sale_approved AND pr.final_minor>0
+   AND NOT EXISTS(SELECT 1 FROM product_components c WHERE c.product_id=p.id)`,
+   [body.items.map(i=>i.sku),s.environment==='production',(await ycpWarehouses(this.db.pool,s,true)).map(w=>w.warehouseId)])).rows;
   const items=body.items.map(line=>{
    const item=catalog.find(p=>p.sku===line.sku);
    if(!item||(item.available<1&&!tests.some(t=>t.sku===line.sku)))throw new DomainError('PRODUCT_UNAVAILABLE',409);
    if(line.quantity>(tests.find(t=>t.sku===line.sku)?.quantity??item.available))throw new DomainError('INSUFFICIENT_STOCK',409);
-   // The express URL uses rubles regardless of the separately configured YCP API unit.
-   return {id:item.offerId,quantity:line.quantity,price:item.regularMinor/100,final_price:item.finalMinor/100};
+   // Official custom-site button amounts are rubles; identity is our stable canonical SKU.
+   return {id:item.sku,quantity:line.quantity,price:money(item.regular_minor)/100,final_price:money(item.final_minor)/100};
   });
   const url=new URL('https://checkout.kit.yandex.ru/express');
   url.searchParams.set('host',new URL(s.publicOrigin).hostname);

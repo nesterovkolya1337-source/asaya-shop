@@ -25,13 +25,13 @@ async function fixture(){
  return {db,product,warehouse,content,settings,feed:new YandexFeed(db,settings,()=>new Date('2026-09-07T00:00:00Z'))};
 }
 
-test('checkout link uses current server prices and scoped feed IDs in UTF-8 without creating an order or reserve',async()=>{
+test('checkout link uses current server prices and canonical SKUs in UTF-8 without creating an order or reserve',async()=>{
  const f=await fixture();await f.feed.prepare(true);
  await f.db.pool.query("UPDATE product_external_ids SET external_id='Киви/500'");
  const service=new YandexFeed(f.db,{...f.settings,checkout:{deliveryPriceUnit:'rubles'},button:{enabled:true}});
  const result=await service.checkoutLink({items:[{sku:'SKU-FEED',quantity:2}]}),url=new URL(result.url);
  assert.equal(url.origin,'https://checkout.kit.yandex.ru');assert.equal(url.pathname,'/express');assert.equal(url.searchParams.get('host'),'asaya.example.test');
- assert.deepEqual(JSON.parse(Buffer.from(url.searchParams.get('data')!,'base64').toString('utf8')),{items:[{id:'Киви/500',quantity:2,price:600,final_price:500.01}]});
+ assert.deepEqual(JSON.parse(Buffer.from(url.searchParams.get('data')!,'base64').toString('utf8')),{items:[{id:'SKU-FEED',quantity:2,price:600,final_price:500.01}]});
  assert.equal((await f.db.pool.query('SELECT reserved FROM inventory_balances')).rows[0].reserved,3);
  assert.equal((await f.db.pool.query('SELECT 1 FROM orders')).rowCount,0);assert.ok(!result.url.includes(token));
  await f.db.pool.query('UPDATE product_prices SET final_minor=51002');
@@ -39,7 +39,7 @@ test('checkout link uses current server prices and scoped feed IDs in UTF-8 with
  assert.equal(JSON.parse(Buffer.from(next.searchParams.get('data')!,'base64').toString()).items[0].final_price,510.02);
 });
 
-test('checkout link rejects tampered input, unavailable goods, ambiguous mappings and excess stock',async()=>{
+test('checkout link rejects tampered input, unavailable goods and excess stock independently of feed mappings',async()=>{
  const f=await fixture();await f.feed.prepare(true);
  const service=new YandexFeed(f.db,{...f.settings,checkout:{deliveryPriceUnit:'rubles'},button:{enabled:true}});
  for(const payload of [{items:[]},{items:[{sku:'SKU-FEED',quantity:0}]},{items:[{sku:'SKU-FEED',quantity:1,price:1}]},{items:[{sku:'SKU-FEED',quantity:1}],host:'evil.test'},{items:[{sku:'SKU-FEED',quantity:1},{sku:'SKU-FEED',quantity:1}]}])await assert.rejects(service.checkoutLink(payload));
@@ -48,7 +48,7 @@ test('checkout link rejects tampered input, unavailable goods, ambiguous mapping
  await f.db.pool.query('UPDATE products SET active=false');await assert.rejects(service.checkoutLink({items:[{sku:'SKU-FEED',quantity:1}]}),/PRODUCT_UNAVAILABLE/);
  await f.db.pool.query('UPDATE products SET active=true');
  await f.db.pool.query("INSERT INTO product_external_ids(provider,environment,account_id,external_id,product_id) VALUES('ycp','test','feed-test','duplicate',$1)",[f.product]);
- await assert.rejects(service.checkoutLink({items:[{sku:'SKU-FEED',quantity:1}]}),/PRODUCT_UNAVAILABLE/);
+ assert.ok((await service.checkoutLink({items:[{sku:'SKU-FEED',quantity:1}]})).url);
 });
 
 test('checkout link HTTP requires same origin and explicit settings but no local customer login',async()=>{
@@ -63,7 +63,7 @@ test('checkout link HTTP requires same origin and explicit settings but no local
   assert.equal((await app.inject({method:'POST',url,payload,headers:{origin,'idempotency-key':'bad'}})).statusCode,400);
   const response=await app.inject({method:'POST',url,payload,headers:{origin,'idempotency-key':randomUUID()}});assert.equal(response.statusCode,200);assert.equal(response.headers['cache-control'],'no-store');assert.ok(response.json().url);assert.equal(response.headers['set-cookie'],undefined);
  }finally{await app.close();}
- for(const settings of [f.settings,{...f.settings,button:{enabled:true}},{...f.settings,button:{enabled:true},checkout:{deliveryPriceUnit:'rubles'},vat:null}]){
+ for(const settings of [f.settings,{...f.settings,button:{enabled:false}}]){
   const disabled=await buildApp({...options,ycp:{token,settings}});
   try{assert.equal((await disabled.inject({method:'POST',url,payload,headers:{origin,'idempotency-key':randomUUID()}})).statusCode,503);}finally{await disabled.close();}
  }
@@ -73,7 +73,8 @@ test('feed prepares stable offer IDs only explicitly and preserves identity thro
  await Promise.all(Array.from({length:4},()=>f.feed.prepare(true)));
  assert.equal((await f.db.pool.query('SELECT 1 FROM product_external_ids')).rowCount,1);assert.equal((await f.db.pool.query("SELECT 1 FROM audit_log WHERE action='ycp.feed_mapping.created'")).rowCount,1);
  const offer=plan.items[0]!.offerId;assert.equal(offer,`asaya-${f.product}`);assert.equal((await f.feed.prepare(true)).items[0]!.offerId,offer);
- const checked=await new YcpCatalog(f.db,token,f.settings).basket({items:[{id:offer,quantity:1}],offers_id_from_merchant_center:true,locality:'Москва',is_health_check:true});assert.equal(checked.items[0]!.id,'SKU-FEED');assert.equal(checked.items[0]!.final_price,50001);
+ await f.db.pool.query('UPDATE product_prices SET final_minor=50000');
+ const checked=await new YcpCatalog(f.db,token,f.settings).basket({items:[{id:offer,quantity:1}],offers_id_from_merchant_center:true,locality:'Москва',is_health_check:true});assert.equal(checked.items[0]!.id,'SKU-FEED');assert.equal(checked.items[0]!.final_price,500);
  assert.equal((await f.db.pool.query('SELECT reserved FROM inventory_balances')).rows[0].reserved,3);
 });
 test('feed uses published fields, precise rubles and YML units, escaping XML without enabling checkout',async()=>{
@@ -152,6 +153,7 @@ import {StorefrontControls} from '../src/storefront-controls.js';
 import {CommerceService} from '../src/commerce.js';
 test('test stock launches express only; YCP, feed, balances, reserves and orders use real stock exclusively',async()=>{
  const f=await fixture(),actor=randomUUID();await f.feed.prepare(true);await f.db.pool.query("INSERT INTO users(id,role) VALUES($1,'admin')",[actor]);await f.db.pool.query('UPDATE inventory_balances SET on_hand=0,reserved=0');
+ await f.db.pool.query('UPDATE product_prices SET final_minor=50000');
  const c=new StorefrontControls(f.db,false),service=new YandexFeed(f.db,{...f.settings,checkout:{deliveryPriceUnit:'rubles'},button:{enabled:false}}),body={items:[{sku:'SKU-FEED',quantity:5}]};
  await assert.rejects(service.checkoutLink(body),/YANDEX_CHECKOUT_UNAVAILABLE/);
  const ycp=new YcpCatalog(f.db,token,f.settings),request={items:[{id:'SKU-FEED',quantity:5}],offers_id_from_merchant_center:false,locality:'Москва',is_health_check:false};
@@ -165,4 +167,38 @@ test('test stock launches express only; YCP, feed, balances, reserves and orders
  for(const table of ['orders','inventory_reservations','integration_outbox'])assert.equal((await f.db.pool.query('SELECT 1 FROM '+table)).rowCount,0);
  await assert.rejects(service.checkoutLink({items:[{sku:'SKU-FEED',quantity:6}]}));
  await c.saveStock(actor,f.product,{enabled:false,quantity:5,revision:1});assert.equal((await new CommerceService(f.db).catalog(true))[0]!.available,0);await assert.rejects(service.checkoutLink(body),/YANDEX_CHECKOUT_UNAVAILABLE/);
+});
+
+// Production-shaped configuration: no feed, no mappings, no VAT/monetary switches.
+test('custom-site SKU checkout and authenticated basket work without feed or legacy settings; test stock never reaches YCP',async()=>{
+ const f=await fixture(),actor=randomUUID();
+ await f.db.pool.query("INSERT INTO users(id,role) VALUES($1,'admin')",[actor]);
+ await f.db.pool.query('UPDATE inventory_balances SET on_hand=0,reserved=0');
+ await f.db.pool.query('UPDATE products SET weight_g=NULL,width_mm=NULL,height_mm=NULL,depth_mm=NULL');
+ await f.db.pool.query('UPDATE product_prices SET final_minor=50000');
+ const {priceUnit,vat,feed,checkout,...settings}=f.settings;
+ const before=(await f.db.pool.query('SELECT * FROM inventory_balances ORDER BY warehouse_id')).rows;
+ const prices=(await f.db.pool.query('SELECT * FROM product_prices')).rows;
+ const controls=new StorefrontControls(f.db,false);
+ await controls.saveStock(actor,f.product,{enabled:true,quantity:3,revision:0});
+ assert.equal((await new CommerceService(f.db).catalog(true))[0]!.available,3);
+ const origin='https://asaya.example.test';
+ const app=await buildApp({db:f.db,otpSecret:token,otpSender:new DisabledOtpSender(),origin,secureCookies:true,ycp:{token,settings}});
+ try{
+  const response=await app.inject({method:'POST',url:'/api/store/v1/yandex/checkout-link',headers:{origin,'idempotency-key':randomUUID()},payload:{items:[{sku:'SKU-FEED',quantity:3}]}});
+  assert.equal(response.statusCode,200,response.body);
+  const url=new URL(response.json().url);assert.equal(url.origin,'https://checkout.kit.yandex.ru');assert.equal(url.pathname,'/express');
+  assert.deepEqual(JSON.parse(Buffer.from(url.searchParams.get('data')!,'base64').toString()),{items:[{id:'SKU-FEED',quantity:3,price:600,final_price:500}]});
+  for(const offers_id_from_merchant_center of [true,false]){
+   const r=await app.inject({method:'POST',url:'/api/v1/checkout/basket/check',headers:{authorization:'Bearer '+token},payload:{items:[{id:'SKU-FEED',quantity:3}],offers_id_from_merchant_center,locality:'Москва',is_health_check:false}});
+   assert.equal(r.statusCode,200,r.body);const item=r.json().items[0];
+   assert.equal(item.id,'SKU-FEED');assert.equal(item.regular_price,600);assert.equal(item.final_price,500);
+   assert.equal(item.warehouses[0].available_quantity,0);assert.equal('vat' in item,false);assert.deepEqual(item.dimensions,{});
+   if(process.env.ASAYA_CUSTOM_CHECKOUT_OUTPUT)await writeFile(process.env.ASAYA_CUSTOM_CHECKOUT_OUTPUT,JSON.stringify({basket:r.json(),checkoutUrl:response.json().url}),'utf8');
+  }
+  assert.equal((await f.db.pool.query('SELECT 1 FROM product_external_ids')).rowCount,0);
+  for(const table of ['orders','inventory_reservations','integration_outbox'])assert.equal((await f.db.pool.query('SELECT 1 FROM '+table)).rowCount,0);
+  assert.deepEqual((await f.db.pool.query('SELECT * FROM inventory_balances ORDER BY warehouse_id')).rows,before);
+  assert.deepEqual((await f.db.pool.query('SELECT * FROM product_prices')).rows,prices);
+ }finally{await app.close();}
 });

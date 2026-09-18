@@ -84,7 +84,7 @@ test('API discovery does not enable the public buy link or guess tax and price u
   const warehouse=await app.inject({method:'GET',url:'/api/v1/warehouses?limit=10&offset=0',headers:{authorization:'Bearer '+token}});
   assert.equal(warehouse.statusCode,200);assert.deepEqual(warehouse.json(),{warehouses:[],total_count:0});
   const basket=await app.inject({method:'POST',url:'/api/v1/checkout/basket/check',headers:{authorization:'Bearer '+token},payload:{items:[{id:'SKU',quantity:1}],offers_id_from_merchant_center:false,locality:'Москва',is_health_check:true}});
-  assert.equal(basket.statusCode,503);assert.equal(basket.json().error,'YCP_PRICING_NOT_CONFIGURED');
+  assert.equal(basket.statusCode,404);assert.equal(basket.json().error,'PRODUCTS_NOT_FOUND');
   const link=await app.inject({method:'POST',url:'/api/store/v1/yandex/checkout-link',headers:{origin:options.origin,'idempotency-key':'00000000-0000-4000-8000-000000000001'},payload:{items:[{sku:'SKU',quantity:1}]}});
   assert.equal(link.statusCode,503);assert.equal(link.json().error,'YANDEX_CHECKOUT_UNAVAILABLE');assert.equal(writes,0);
  }finally{await app.close();}

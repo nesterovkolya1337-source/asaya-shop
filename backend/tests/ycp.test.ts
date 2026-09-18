@@ -29,7 +29,7 @@ async function fixture(){
 }
 test('YCP basket resolves scoped offer IDs and exposes exact prices, dimensions and available regional stock',async()=>{
  const f=await fixture(),result=await f.service.basket(f.request);
- assert.deepEqual(result,{items:[{id:'SKU-001',name:'Тестовый гель',regular_price:60000,final_price:50000,vat:0,url:'https://asaya.example.test/product/test-gel/',warehouses:[{id:f.warehouse,available_quantity:7}],dimensions:{width:60,height:190,depth:40,weight:500},characteristics:[],variations:[]}]});
+ assert.deepEqual(result,{items:[{id:'SKU-001',name:'Тестовый гель',regular_price:600,final_price:500,vat:0,url:'https://asaya.example.test/product/test-gel/',warehouses:[{id:f.warehouse,available_quantity:7}],dimensions:{width:60,height:190,depth:40,weight:500},characteristics:[],variations:[]}]});
  assert.deepEqual(await f.service.basket({...f.request,items:[{id:'SKU-001',quantity:100}],offers_id_from_merchant_center:false,is_health_check:true,locality:'  мОсКвА  '}),result);
  assert.equal((await f.service.basket({...f.request,locality:'Казань'})).items[0]!.warehouses[0].id,f.other);
  assert.deepEqual((await f.service.basket({...f.request,locality:'Неизвестный город'})).items[0]!.warehouses,[]);
@@ -38,9 +38,9 @@ test('YCP basket resolves scoped offer IDs and exposes exact prices, dimensions 
  await f.db.pool.query('UPDATE inventory_balances SET reserved=on_hand WHERE warehouse_id=$1',[f.warehouse]);
  assert.equal((await f.service.basket(f.request)).items[0]!.warehouses[0].available_quantity,0);
 });
-test('YCP never guesses offer mappings or exposes unpublished and component-based products',async()=>{
+test('YCP keeps scoped legacy aliases and never exposes unpublished or component-based products',async()=>{
  const f=await fixture();
- for(const request of [{...f.request,items:[{id:'SKU-001',quantity:1}]},{...f.request,offers_id_from_merchant_center:false},{...f.request,items:[{id:'unknown',quantity:1}]}])await assert.rejects(f.service.basket(request),/PRODUCTS_NOT_FOUND/);
+ for(const request of [{...f.request,offers_id_from_merchant_center:false},{...f.request,items:[{id:'unknown',quantity:1}]}])await assert.rejects(f.service.basket(request),/PRODUCTS_NOT_FOUND/);
  await assert.rejects(new YcpCatalog(f.db,token,{...f.settings,accountId:'other-account'}).basket(f.request),/PRODUCTS_NOT_FOUND/);
  await f.db.pool.query("UPDATE product_external_ids SET environment='production'");await assert.rejects(f.service.basket(f.request),/PRODUCTS_NOT_FOUND/);await f.db.pool.query("UPDATE product_external_ids SET environment='test'");
  for(const [table,field] of [['products','active'],['products','sale_approved'],['product_prices','approved'],['storefront_mappings','approved']]){
@@ -49,17 +49,18 @@ test('YCP never guesses offer mappings or exposes unpublished and component-base
  const component=randomUUID();await f.db.pool.query("INSERT INTO products(id,sku,name) VALUES($1,'COMPONENT','test')",[component]);
  await f.db.pool.query('INSERT INTO product_components(product_id,component_id,quantity) VALUES($1,$2,1)',[f.product,component]);await assert.rejects(f.service.basket(f.request),/PRODUCTS_NOT_FOUND/);
 });
-test('YCP rejects invalid baskets, aliases of one SKU, unknown units and fractional ruble rounding',async()=>{
+test('YCP rejects invalid baskets, aliases of one SKU and fractional ruble rounding',async()=>{
  const f=await fixture();
  for(const raw of [{...f.request,items:[]},{...f.request,items:[{id:'feed-001',quantity:0}]},{...f.request,items:[{id:'feed-001',quantity:1.5}]},{...f.request,items:[...f.request.items,...f.request.items]},{...f.request,items:Array.from({length:51},(_,i)=>({id:String(i),quantity:1}))},{...f.request,regular_price:1},{...f.request,is_health_check:'true'}])await assert.rejects(f.service.basket(raw));
  await f.db.pool.query("INSERT INTO product_external_ids(provider,environment,account_id,external_id,product_id) VALUES('ycp','test','asaya-test','alias',$1)",[f.product]);
  await assert.rejects(f.service.basket({...f.request,items:[...f.request.items,{id:'alias',quantity:1}]}),/DUPLICATE_PRODUCT/);
- for(const setting of [{priceUnit:null},{vat:null}])await assert.rejects(new YcpCatalog(f.db,token,{...f.settings,...setting}).basket(f.request),/YCP_PRICING_NOT_CONFIGURED/);
+ for(const setting of [{priceUnit:null},{vat:null}])assert.equal((await new YcpCatalog(f.db,token,{...f.settings,...setting}).basket(f.request)).items[0]!.final_price,500);
  const rubles=new YcpCatalog(f.db,token,{...f.settings,priceUnit:'rubles'});
  assert.equal((await rubles.basket(f.request)).items[0]!.final_price,500);
  await f.db.pool.query('UPDATE product_prices SET final_minor=50001');await assert.rejects(rubles.basket(f.request),/YCP_PRICE_NOT_REPRESENTABLE/);
- assert.equal((await f.service.basket(f.request)).items[0]!.final_price,50001);
- await f.db.pool.query('UPDATE products SET weight_g=NULL');await assert.rejects(f.service.basket(f.request),/YCP_DIMENSIONS_NOT_CONFIGURED/);
+ await assert.rejects(f.service.basket(f.request),/YCP_PRICE_NOT_REPRESENTABLE/);
+ await f.db.pool.query('UPDATE product_prices SET final_minor=50000');
+ await f.db.pool.query('UPDATE products SET weight_g=NULL');assert.equal('weight' in (await f.service.basket(f.request)).items[0]!.dimensions,false);
 });
 test('YCP warehouse pagination uses configured active warehouses and returns total even beyond the last page',async()=>{
  const f=await fixture(),all=await f.service.warehouses({limit:'1000',offset:'0'});
@@ -93,4 +94,13 @@ test('YCP configuration requires paired credentials and refuses unsupported prod
  assert.throws(()=>new YcpCatalog(f.db,token,{...f.settings,environment:'production'}),/production/);
  assert.throws(()=>new YcpCatalog(f.db,'short',f.settings));
  for(const change of [{warehouses:[f.settings.warehouses[0],f.settings.warehouses[0]]},{publicOrigin:'http://example.test'},{publicOrigin:'https://user:secret@example.test'},{priceUnit:'guessed'}])assert.throws(()=>new YcpCatalog(f.db,token,{...f.settings,...change}));
+});
+
+test('custom-site SKU works with either incoming identifier flag and never creates mappings',async()=>{
+ const f=await fixture();await f.db.pool.query('DELETE FROM product_external_ids');
+ for(const flag of [true,false]){
+  const item=(await f.service.basket({...f.request,items:[{id:'SKU-001',quantity:1}],offers_id_from_merchant_center:flag})).items[0]!;
+  assert.equal(item.id,'SKU-001');assert.equal(item.final_price,500);
+ }
+ assert.equal((await f.db.pool.query('SELECT 1 FROM product_external_ids')).rowCount,0);
 });
