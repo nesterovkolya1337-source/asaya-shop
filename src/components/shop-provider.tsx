@@ -98,7 +98,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   const analyticsCart = useRef<Record<string, number> | null>(null);
 
   useEffect(()=>{
-    if(!CHECKOUT_ENABLED)return;
+    if(!CATALOG_ONLY)return;
     let saved:Record<string,number>={};
     try {
       const raw:unknown=JSON.parse(sessionStorage.getItem(CART_KEY)??'{}');
@@ -107,7 +107,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     } catch { /* Invalid saved carts start empty. */ }
     queueMicrotask(()=>{setCart(saved);setCartReady(true);});
   },[]);
-  useEffect(()=>{if(CHECKOUT_ENABLED&&cartReady){try{sessionStorage.setItem(CART_KEY,JSON.stringify(cart));}catch{/* In-memory cart still works. */}}},[cart,cartReady]);
+  useEffect(()=>{if(CATALOG_ONLY&&cartReady){try{sessionStorage.setItem(CART_KEY,JSON.stringify(cart));}catch{/* In-memory cart still works. */}}},[cart,cartReady]);
 
   useEffect(() => {
     if (CATALOG_ONLY) return;
@@ -161,7 +161,10 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     const requests=catalogRequest;
     let disposed=false;
     queueMicrotask(()=>{if(!disposed)void refreshCatalog().catch(()=>{});});
-    return()=>{disposed=true;requests.current++;};
+    const refresh=()=>{if(document.visibilityState==='visible')void refreshCatalog().catch(()=>{});};
+    const changed=(e:StorageEvent)=>{if(e.key==='asaya-stock-updated')refresh();};window.addEventListener('storage',changed);
+    const timer=setInterval(refresh,15000);window.addEventListener('focus',refresh);document.addEventListener('visibilitychange',refresh);
+    return()=>{disposed=true;requests.current++;clearInterval(timer);window.removeEventListener('storage',changed);window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh);};
   },[refreshCatalog]);
 
   useEffect(() => {
@@ -205,7 +208,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<ShopState>(() => ({
     checkoutEnabled: CHECKOUT_ENABLED,
-    yandexCheckoutEnabled: YANDEX_CHECKOUT_ENABLED,
+    yandexCheckoutEnabled: YANDEX_CHECKOUT_ENABLED || productsWithReviews.some(p=>p.testMode),
     catalogOnly: CATALOG_ONLY,
     catalogStatus,
     reloadCatalog: () => { void refreshCatalog().catch(()=>{}); },
@@ -226,7 +229,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     userEmail,
     reviews,
     cartCount: Object.values(cart).reduce((sum, quantity) => sum + quantity, 0),
-    addToCart: (id) => { if (!CATALOG_ONLY || CHECKOUT_ENABLED) setCart((current) => {
+    addToCart: (id) => { if (!CATALOG_ONLY || CHECKOUT_ENABLED || productsWithReviews.some(p=>p.id===id&&p.testMode)) setCart((current) => {
       const product=productsWithReviews.find(item=>item.id===id);
       if(!product?.active||product.stock<1)return current;
       return {...current,[id]:Math.min((current[id]??0)+1,product.stock,100)};

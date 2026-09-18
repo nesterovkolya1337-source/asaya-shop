@@ -1,3 +1,4 @@
+import {StorefrontControls} from './storefront-controls.js';
 import {AdminStocks} from './admin-stocks.js';
 import type {StockSync} from './stock-sync.js';
 import {Warehouses} from './warehouses.js';
@@ -39,6 +40,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
  if(options.cdekTracking&&(options.cdekTracking.secret.length<32||[options.otpSecret,options.staffSecret,options.ycp?.token].includes(options.cdekTracking.secret)))throw new Error('CDEK callback requires an independent secret');
  if(smsEnabled&&options.otpSender instanceof DisabledOtpSender)throw new Error('Customer SMS requires a configured sender');
  if(options.deploymentMode==='catalog'&&(!options.staffSecret||options.ycp))throw new Error('Catalog mode requires staff authentication and disables YCP');
+ const controls=new StorefrontControls(options.db,options.deploymentMode==='catalog'||options.deploymentMode==='ycp');
  const liveYcp=options.deploymentMode==='ycp';
  if(liveYcp){
   if(!options.staffSecret||!options.ycp)throw new Error('YCP mode requires staff authentication and YCP settings');
@@ -89,11 +91,11 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   if(options.deploymentMode==='catalog'&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout)|media|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
+   if(!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout)|media|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
   }
   if(liveYcp&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
-   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout)|media|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
+   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout)|media|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
    const checkoutLink=req.method==='POST'&&route==='/api/store/v1/yandex/checkout-link';
    // Yandex owns checkout/payments; CDEK callbacks have their own boundary. Do not enable the
    // local checkout or local-only order changes with customer SMS sign-in.
@@ -170,6 +172,10 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   secured.post('/api/admin/v1/orders/:id/complete-packing',async req=>{await commerce.adminCompletePacking(await actor(req.cookies[staffCookie]),id(req.params),req.body);return {ok:true};});
   secured.post('/api/admin/v1/orders/:id/dispatch',async req=>{await commerce.adminDispatch(await actor(req.cookies[staffCookie]),id(req.params),req.body);return {ok:true};});
   secured.post('/api/admin/v1/orders/:id/complete',async req=>{await commerce.adminCompleteOrder(await actor(req.cookies[staffCookie]),id(req.params),req.body);return {ok:true};});
+  secured.get('/api/admin/v1/banner',async()=>controls.banner());
+  secured.put('/api/admin/v1/banner',async req=>controls.saveBanner(await actor(req.cookies[staffCookie]),req.body));
+  secured.get('/api/admin/v1/products/:id/test-stock',async req=>controls.stock(id(req.params)));
+  secured.put('/api/admin/v1/products/:id/test-stock',async req=>controls.saveStock(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   secured.get('/api/admin/v1/products/:id',async req=>adminCatalog.detail(id(req.params)));
   secured.put('/api/admin/v1/products/:id',{bodyLimit:128*1024},async req=>adminCatalog.save(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   secured.post('/api/admin/v1/products/:id/publish',async req=>adminCatalog.publish(await actor(req.cookies[staffCookie]),id(req.params),req.body));
@@ -179,6 +185,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   secured.get('/api/admin/v1/products/:id/history',async req=>adminCatalog.history(id(req.params)));
  });
  app.post('/api/store/v1/analytics/events',{bodyLimit:8192},async req=>new ProductAnalytics(options.db).ingest(req.body));
+ app.get('/api/store/v1/banner',async()=>{const {revision,...banner}=await controls.banner();return banner;});
  app.get('/health/live',async()=>({status:'ok'}));
  if(options.cdekTracking)app.post('/api/integrations/cdek/:key',{config:{cdekWebhook:true}},async req=>{await options.cdekTracking!.service.webhook(req.body);return {ok:true};});
  app.post('/api/store/v1/yandex/checkout-link',async req=>{
@@ -202,7 +209,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   app.post(base+'/order/cancel',{config:{ycp:true}},async req=>{z.object({}).strict().parse(req.body??{});return ycpOrders!.cancel(req.query);});
  }
  app.get('/health/ready',async()=>{await options.db.pool.query('SELECT 1');return {status:'ok',stage:'foundation'};});
- app.get('/api/store/v1/products',async()=>({items:await commerce.catalog()}));
+ app.get('/api/store/v1/products',async()=>({items:await commerce.catalog(true)}));
  app.get('/api/store/v1/content/:page',async req=>siteContent.publicPage(z.object({page:z.string().max(50)}).parse(req.params).page));
  app.get('/api/store/v1/media/:id',async(req,reply)=>{
   const {id}=z.object({id:z.uuid()}).parse(req.params);const image=await media.get(id);

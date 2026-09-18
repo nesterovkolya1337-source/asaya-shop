@@ -1,3 +1,4 @@
+import {parseImageCrop} from './image-crop.js';
 import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
 import {Database,type Tx,lock} from './db.js';
@@ -7,6 +8,7 @@ const text=(max:number)=>z.string().trim().max(max);
 const mediaPath=/^\/api\/store\/v1\/media\/([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})$/;
 const image=text(1000).refine(v=>v===''||mediaPath.test(v)||/^\/images\/[A-Za-z0-9_./-]+$/.test(v)&&!v.includes('..')||/^https:\/\/[^\s]+$/.test(v)&&(()=>{try{const u=new URL(v);return !u.username&&!u.password;}catch{return false;}})());
 export const contentSchema=z.object({
+ imageCrops:z.record(image,z.string().max(500).refine(v=>{try{return !!parseImageCrop(v);}catch{return false;}})).refine(v=>Object.keys(v).length<=50).optional(),
  size:z.object({value:z.number().positive().max(1000000),unit:z.enum(['ml','g','pcs'])}).strict().optional(),
  placement:z.object({catalogOrder:z.number().int().min(0).max(100000),bestsellerOrder:z.number().int().min(0).max(100000).nullable(),newOrder:z.number().int().min(0).max(100000).nullable()}).strict().optional(),
  description:text(10000),volume:text(200),category:z.enum(['hair','body','face','sets']),setKind:z.enum(['none','combo','gift']),

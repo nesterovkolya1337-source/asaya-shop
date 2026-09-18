@@ -1,6 +1,7 @@
 "use client";
 import { CarouselArrow } from "@/components/carousel-arrow";
 
+import {CroppedImage} from './cropped-image';
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -135,20 +136,20 @@ export function ProductView({ productId }: { productId: string }) {
               {product.badge && <span className={styles.badge}>{product.badge}</span>}
               {product.discount > 0 && <span className={styles.discountBadge}>−{product.discount}%</span>}
             </div>
-            <Image
+            <CroppedImage
               alt={`${product.name} — фото ${activeImage + 1}`}
               className={`${styles.productImage} ${activeImage > 0 ? styles.lifestyleImage : ""}`}
               fill
               priority
               sizes="(max-width: 760px) 94vw, 54vw"
-              src={gallery[activeImage] ?? gallery[0]}
+              crop={product.imageCrops?.[gallery[activeImage] ?? gallery[0]]} src={gallery[activeImage] ?? gallery[0]}
             />
             <span className={styles.volume}>{product.volume}</span>
           </div>
           <div className={styles.thumbnails} aria-label="Фотографии товара">
             {gallery.map((image, index) => (
               <button aria-label={`Показать фото ${index + 1}`} aria-pressed={activeImage === index} className={activeImage === index ? styles.activeThumbnail : ""} key={image} onClick={() => setActiveImage(index)} type="button">
-                <Image alt="" fill sizes="100px" src={image} />
+                <CroppedImage crop={product.imageCrops?.[image]} alt="" fill sizes="100px" src={image} />
               </button>
             ))}
           </div>
@@ -180,15 +181,15 @@ export function ProductView({ productId }: { productId: string }) {
           <p className={styles.stock}>{product.stock > 0 ? "В наличии" : "Нет в наличии"}</p>
 
           <div className={styles.buyArea}>
-            {quantity ? (
+            {quantity && product.stock>0 ? (
               <div className={styles.quantity} aria-label={`Количество ${product.name} в корзине`}>
                 <button aria-label={`Уменьшить количество ${product.name}`} onClick={() => changeQuantity(product.id, quantity - 1)} type="button">−</button>
                 <span>{quantity}</span>
                 <button aria-label={`Увеличить количество ${product.name}`} disabled={quantity >= product.stock} onClick={() => changeQuantity(product.id, quantity + 1)} type="button">+</button>
               </div>
             ) : (
-              <button className={styles.addButton} disabled={(catalogOnly && !checkoutEnabled) || !product.stock} onClick={() => addToCart(product.id)} type="button">
-                {!product.stock ? "Нет в наличии" : catalogOnly && !checkoutEnabled ? "Продажи пока закрыты" : "Добавить в корзину"}
+              <button className={styles.addButton} disabled={(catalogOnly && !checkoutEnabled && !product.testMode) || !product.stock} onClick={() => addToCart(product.id)} type="button">
+                {!product.stock ? "Нет в наличии" : catalogOnly && !checkoutEnabled && !product.testMode ? "Продажи пока закрыты" : "Добавить в корзину"}
               </button>
             )}
             {quantity > 0 && <Link className={styles.checkoutLink} href={catalogOnly ? "/cart" : "/checkout"}>Перейти к оформлению</Link>}
@@ -276,7 +277,7 @@ export function ProductView({ productId }: { productId: string }) {
           </ul>
         </div>
         <div className={styles.sensoryVisual}>
-          <Image alt={`${product.name} — настроение и текстура`} fill sizes="(max-width: 900px) 100vw, 50vw" src={gallery[2] ?? gallery[1] ?? gallery[0]} />
+          <CroppedImage crop={product.imageCrops?.[gallery[2] ?? gallery[1] ?? gallery[0]]} alt={`${product.name} — настроение и текстура`} fill sizes="(max-width: 900px) 100vw, 50vw" src={gallery[2] ?? gallery[1] ?? gallery[0]} />
         </div>
       </section>
 
@@ -309,8 +310,8 @@ export function ProductView({ productId }: { productId: string }) {
       }
       <aside className={styles.stickyBuy} aria-label="Быстрая покупка">
         <div><small>{product.name}</small><strong>{formatPrice(product.price)}</strong></div>
-        {yandexCheckoutEnabled && product.sku ? <YandexCheckoutButton key={JSON.stringify([product.sku,quantity,product.stock])} compact items={[{sku:product.sku,quantity:quantity||1}]} disabled={product.stock<(quantity||1)} label={!product.stock ? 'Нет в наличии' : 'Купить сейчас'} /> : <button className={styles.buyNow} disabled={(catalogOnly && !checkoutEnabled) || !product.stock} onClick={buyNow} type="button">{!product.stock ? 'Нет в наличии' : catalogOnly && !checkoutEnabled ? 'Продажи пока закрыты' : 'Купить сейчас'}</button>}
-        <button className={styles.stickyCart} disabled={(catalogOnly && !checkoutEnabled) || !product.stock || quantity >= product.stock} onClick={() => addToCart(product.id)} type="button">{!product.stock ? 'Нет в наличии' : quantity ? `В корзине · ${quantity}` : "В корзину"}</button>
+        {yandexCheckoutEnabled && product.sku ? <YandexCheckoutButton key={JSON.stringify([product.sku,quantity,product.stock])} compact items={[{sku:product.sku,quantity:quantity||1}]} disabled={product.stock<(quantity||1)} label={!product.stock ? 'Нет в наличии' : 'Купить сейчас'} /> : <button className={styles.buyNow} disabled={(catalogOnly && !checkoutEnabled && !product.testMode) || !product.stock} onClick={buyNow} type="button">{!product.stock ? 'Нет в наличии' : catalogOnly && !checkoutEnabled && !product.testMode ? 'Продажи пока закрыты' : 'Купить сейчас'}</button>}
+        <button className={styles.stickyCart} disabled={(catalogOnly && !checkoutEnabled && !product.testMode) || !product.stock || quantity >= product.stock} onClick={() => addToCart(product.id)} type="button">{!product.stock ? 'Нет в наличии' : quantity ? `В корзине · ${quantity}` : "В корзину"}</button>
       </aside>
     </main>
   );

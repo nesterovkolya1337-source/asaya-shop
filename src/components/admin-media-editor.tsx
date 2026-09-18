@@ -1,5 +1,6 @@
 "use client";
-import Image from 'next/image';
+import {CroppedImage} from './cropped-image';
+import {ProductCropEditor} from './product-crop-editor';
 import {useEffect,useRef,useState} from 'react';
 import {assetPath} from '@/lib/asset-path';
 import {AuthClientError} from '@/lib/auth-client';
@@ -7,7 +8,7 @@ import {createMediaClient,mediaError,validateImageFile} from '@/lib/media-client
 import styles from './server-admin.module.css';
 const api=createMediaClient(assetPath('/api/admin/v1'));
 type Job={id:string;file:File;target:'main'|'gallery';error:string};
-type Props={image:string;gallery:string[];csrf:string;disabled:boolean;onBusy:(busy:boolean)=>void;onExpired:()=>void;
+type Props={crops?:Record<string,string>;onCrop:(url:string,crop:string|undefined)=>void;image:string;gallery:string[];csrf:string;disabled:boolean;onBusy:(busy:boolean)=>void;onExpired:()=>void;
  onUploaded:(url:string,target:'main'|'gallery')=>void;onMain:(url:string)=>void;onGallery:(urls:string[])=>void};
 function previewUrl(url:string){
  if(/^https:\/\/[^\s]+$/.test(url))return url;
@@ -44,14 +45,14 @@ export function AdminMediaEditor(props:Props){
   try{list.forEach(validateImageFile);}catch(e){setMessage(mediaError(e));return;}
   void upload(list.map(file=>({file,id:crypto.randomUUID(),target,error:''})));
  }
- const picture=(url:string,label:string)=>previewUrl(url)?<Image unoptimized src={previewUrl(url)} alt={label} width={150} height={150} className={styles.mediaImage}/>:<p>Фото не выбрано</p>;
+ const picture=(url:string,label:string)=>previewUrl(url)?<span style={{display:"block",position:"relative",width:150,height:150,overflow:"hidden"}}><CroppedImage crop={props.crops?.[url]} unoptimized src={previewUrl(url)} alt={label} width={150} height={150} className={styles.mediaImage}/></span>:<p>Фото не выбрано</p>;
  const move=(index:number,delta:number)=>{const urls=[...props.gallery];[urls[index],urls[index+delta]]=[urls[index+delta],urls[index]];props.onGallery(urls);};
  return <section aria-label="Загрузка фотографий"><p>JPG, PNG или WebP до 6 МБ. Основное фото и до 12 фото в галерее. После загрузки сохраните и опубликуйте карточку.</p>
- <div className={styles.mediaCard}>{picture(props.image,'Основное фото товара')}
+ <div className={styles.mediaCard}>{picture(props.image,'Основное фото товара')}{props.image&&<ProductCropEditor source={props.image} value={props.crops?.[props.image]} disabled={busy||props.disabled} onSave={v=>props.onCrop(props.image,v)}/>}
  <label>Загрузить основное фото<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy||props.disabled} onChange={e=>{select(e.target.files,'main');e.target.value='';}}/></label>
  {props.image&&<button type="button" disabled={busy||props.disabled} onClick={()=>props.onMain('')}>Убрать основное фото</button>}</div>
  <label>Добавить фото в галерею<input type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={busy||props.disabled||props.gallery.length>=12} onChange={e=>{select(e.target.files,'gallery');e.target.value='';}}/></label>
- <div className={styles.mediaGrid}>{props.gallery.map((url,index)=><div className={styles.mediaCard} key={index+':'+url}>{picture(url,'Фото галереи '+(index+1))}
+ <div className={styles.mediaGrid}>{props.gallery.map((url,index)=><div className={styles.mediaCard} key={index+':'+url}>{picture(url,'Фото галереи '+(index+1))}<ProductCropEditor source={url} value={props.crops?.[url]} disabled={busy||props.disabled} onSave={v=>props.onCrop(url,v)}/>
  <div className={styles.actions}><button type="button" disabled={busy||props.disabled||index===0} onClick={()=>move(index,-1)} aria-label={'Передвинуть фото '+(index+1)+' раньше'}>←</button>
  <button type="button" disabled={busy||props.disabled||index===props.gallery.length-1} onClick={()=>move(index,1)} aria-label={'Передвинуть фото '+(index+1)+' позже'}>→</button>
  <button type="button" disabled={busy||props.disabled} onClick={()=>props.onGallery(props.gallery.filter((_,i)=>i!==index))}>Убрать фото {index+1}</button></div></div>)}</div>

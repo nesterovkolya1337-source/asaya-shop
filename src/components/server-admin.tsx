@@ -8,6 +8,7 @@ import {AuthClientError} from '@/lib/auth-client';
 import {createAdminClient,adminError,type StaffSession,type AdminDraft,type AdminProduct,type ProductRow} from '@/lib/admin-client';
 import type {ProductContent} from '@/lib/backend-catalog';
 import {useShop} from './shop-provider';
+import {AdminBanner,AdminTestStock} from './admin-storefront-controls';
 import {AdminMediaEditor} from './admin-media-editor';
 import {AdminOrders} from './admin-orders';
 import {AdminIntegration} from './admin-integration';
@@ -61,6 +62,7 @@ export function ServerAdmin(){
  <div hidden={section!=='content'}><AdminSiteEditor key={session.user.id} session={session} onExpired={onExpired} onDirty={setContentDirty}/></div>
  <div className={styles.main} hidden={section==='content'}>
  <div hidden={section!=='catalog'}><h1>Товары</h1><CatalogEditor key={session.user.id} session={session} onExpired={onExpired}/></div>
+ {section==='integration'&&<AdminBanner csrf={session.csrfToken} onExpired={onExpired}/>}
  {section==='integration'&&<AdminIntegration onExpired={onExpired} onOrder={id=>{setSelectedOrder(id);setSection('orders');}}/>}
  {section==='statistics'&&<AdminStatistics onExpired={onExpired} csrf={session.csrfToken}/>}
  {section==='orders'&&<AdminOrders key={selectedOrder} initialOrderId={selectedOrder} session={session} onExpired={onExpired}/>}
@@ -147,7 +149,7 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  {contentField('Описание','description',true)}<div className={styles.columns}><label>Объём / количество<input type="number" min="0.001" max="1000000" step="any" value={draft.content.size?.value??''} onChange={e=>content({size:e.target.value?{value:Number(e.target.value),unit:draft.content.size?.unit??'ml'}:undefined})}/></label><label>Единица измерения<select disabled={!draft.content.size} value={draft.content.size?.unit??'ml'} onChange={e=>content({size:{value:draft.content.size!.value,unit:e.target.value as 'ml'|'g'|'pcs'}})}><option value="ml">мл</option><option value="g">г</option><option value="pcs">шт.</option></select></label></div>{!draft.content.size&&<><p>Для старой карточки размер сохранён текстом. Укажите число и единицу, чтобы обновить его.</p>{contentField('Текущий размер','volume')}</>}{lines('Особенности — по одной на строке','features')}
  {contentField('Применение','usage',true)}{contentField('Состав','ingredients',true)}{contentField('Аромат','aroma',true)}
  <h3>Фотографии</h3>
- <AdminMediaEditor image={draft.content.image} gallery={draft.content.gallery} csrf={session.csrfToken} disabled={operationBusy} onBusy={setMediaBusy} onExpired={onExpired}
+ <AdminMediaEditor crops={draft.content.imageCrops} onCrop={(url,crop)=>{const imageCrops={...draft.content.imageCrops};if(crop)imageCrops[url]=crop;else delete imageCrops[url];content({imageCrops});}} image={draft.content.image} gallery={draft.content.gallery} csrf={session.csrfToken} disabled={operationBusy} onBusy={setMediaBusy} onExpired={onExpired}
  onUploaded={(url,target)=>{setDraft(d=>({...d,content:{...d.content,...(target==='main'?{image:url}:{gallery:[...d.content.gallery.filter(Boolean),url].slice(0,12)})}}));setDirty(true);setConfirm(null);}}
  onMain={image=>content({image})} onGallery={gallery=>content({gallery})}/>
  <details><summary>Фото по ссылке</summary><p>Можно использовать HTTPS-ссылку или путь к изображению сайта.</p>{contentField('Основное фото — ссылка','image')}{lines('Галерея — по одной ссылке на строке','gallery')}</details>
@@ -166,6 +168,7 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  <h3>Параметры отправки</h3><div className={styles.columns}>{([['Вес, г','weightG'],['Ширина, мм','widthMm'],['Высота, мм','heightMm'],['Глубина, мм','depthMm']] as const).map(([label,key])=><label key={key}>{label}<input type="number" min={1} value={draft[key]??''} onChange={e=>change({[key]:e.target.value===''?null:Number(e.target.value)})}/></label>)}</div>
  <button className={styles.primary} disabled={product.active&&issues.length>0}>{product.active?'Сохранить изменения':'Сохранить черновик'}</button></fieldset></form>
  {product.hasDraft&&!deleted&&<button disabled={busy||dirty} onClick={()=>setConfirm('remove')}>Удалить товар</button>}
+ {product.hasDraft&&<AdminTestStock key={product.id} id={product.id} csrf={session.csrfToken} onExpired={onExpired} onSaved={reloadCatalog} disabled={busy||deleted}/>}
  {product.hasDraft&&<section><h3>Остатки по складам</h3><p>Для подключённого склада остаток обновляется из СДЭК Фулфилмента. Ручная корректировка доступна только для складов без синхронизации.</p>{!product.stocks.length&&<p>Склады ещё не заведены на сервере.</p>}
  {product.stocks.map(s=>s.source?<div className={styles.stock} key={s.warehouseId}><p>{s.name} · доступно {s.source.available} · в резерве {s.reserved}<br/>Источник: СДЭК Фулфилмент · остаток в выгрузке {s.source.reportedQuantity}<br/>Выгрузка: {new Date(s.source.generatedAt).toLocaleString("ru-RU")}<br/>{s.source.healthy&&Date.parse(s.source.expiresAt)>checkedAt?"Синхронизация работает":"Данные устарели или обновление не удалось. Продажа недоступна."}</p></div>:<form className={styles.stock} key={s.warehouseId+':'+s.onHand+':'+s.reserved} onSubmit={e=>{e.preventDefault();const onHand=Number(new FormData(e.currentTarget).get('onHand'));void run(async()=>{await api.stock(product.id,{warehouseId:s.warehouseId,expectedOnHand:s.onHand,onHand},session.csrfToken);const updated=await api.detail(product.id);setProduct(p=>p?{...p,stocks:updated.stocks}:p);setHistory(await api.history(product.id));reloadCatalog();setNotice('Остаток обновлён.');});}}><label>{s.name} · в резерве {s.reserved}<input type="number" name="onHand" required min={s.reserved} max={1000000} defaultValue={s.onHand}/></label><button disabled={busy||!s.active}>Обновить остаток</button></form>)}</section>}
  <section><h3>Последние действия</h3><ul className={styles.history}>{history.map((h,i)=><li key={i}>{new Date(h.createdAt).toLocaleString('ru-RU')} — {labels[h.action]??h.action}<small>Сотрудник: {h.actorId}</small></li>)}</ul></section></>}</section></div></>;

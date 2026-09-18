@@ -1,5 +1,6 @@
 "use client";
 
+import {CroppedImage} from './cropped-image';
 import Image from "next/image";
 import Link from "next/link";
 import { useShop } from "@/components/shop-provider";
@@ -23,12 +24,12 @@ export function ProductCard({ product }: { product: Product }) {
         {product.discount > 0 && <span className={styles.discountBadge}>−{product.discount}%</span>}
       </div>
       <Link className={styles.visualLink} href={`/product/${product.id}`} aria-label={`Открыть ${product.name}`} onClick={() => {getMetrika()?.productClick(product);getProductAnalytics()?.track('product_click',product.sku);}}>
-        <Image
+        <CroppedImage
           alt={product.name}
           className={styles.image}
           fill
           sizes="(max-width: 520px) 46vw, (max-width: 900px) 44vw, 370px"
-          src={product.image}
+          crop={product.imageCrops?.[product.image]} src={product.image}
         />
       </Link>
       <button
@@ -51,7 +52,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
         </div>
       </div>
-      {quantity ? (
+      {quantity && product.stock>0 ? (
         <div className={styles.cartControl} aria-label={`Количество ${product.name} в корзине`}>
           <button aria-label={`Уменьшить количество ${product.name}`} onClick={() => changeQuantity(product.id, quantity - 1)} type="button">−</button>
           <span>{quantity}</span>
@@ -60,11 +61,11 @@ export function ProductCard({ product }: { product: Product }) {
       ) : (
         <button
           className={styles.addButton}
-          disabled={(catalogOnly && !checkoutEnabled) || !product.stock}
+          disabled={(catalogOnly && !checkoutEnabled && !product.testMode) || !product.stock}
           onClick={() => addToCart(product.id)}
           type="button"
         >
-          {!product.stock ? "Нет в наличии" : catalogOnly && !checkoutEnabled ? "Продажи пока закрыты" : "В корзину"}
+          {!product.stock ? "Нет в наличии" : catalogOnly && !checkoutEnabled && !product.testMode ? "Продажи пока закрыты" : "В корзину"}
         </button>
       )}
     </article>

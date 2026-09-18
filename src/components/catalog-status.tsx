@@ -1,16 +1,11 @@
 "use client";
-import { useShop } from './shop-provider';
-import { usePathname } from 'next/navigation';
-
-export function CatalogStatus() {
- const {catalogStatus,products,reloadCatalog,checkoutEnabled,yandexCheckoutEnabled}=useShop();
- const pathname=usePathname();
- if(pathname==='/admin'||pathname.startsWith('/admin/'))return null;
- if(catalogStatus==='demo') return null;
- return <div role={catalogStatus==='error'?'alert':'status'} aria-live="polite" className="catalog-status">
-  <p>{catalogStatus==='loading'?'Загружаем каталог…':catalogStatus==='error'?
-   'Не удалось загрузить каталог. Попробуйте ещё раз.':products.length?
-   yandexCheckoutEnabled?'Соберите корзину для оформления в Яндексе.':checkoutEnabled?'Тестовый режим: заказы сохраняются без реальной оплаты.':'Каталог доступен для просмотра. Оформление заказов пока закрыто.':'Товары готовятся к продаже. Каталог появится после обновления ассортимента.'}</p>
-  {catalogStatus!=='loading' && <button type="button" onClick={reloadCatalog}>{catalogStatus==='error'?'Повторить':'Обновить каталог'}</button>}
- </div>;
+import {useEffect,useState} from 'react';
+import {usePathname} from 'next/navigation';
+import {assetPath} from '@/lib/asset-path';
+import {visibleBanner,type StorefrontBanner} from '@/lib/storefront-banner';
+export function CatalogStatus(){
+ const [banner,setBanner]=useState<StorefrontBanner|null>(null),pathname=usePathname();
+ useEffect(()=>{let active=true;const read=async()=>{try{const r=await fetch(assetPath('/api/store/v1/banner'),{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(8000)});const value=r.ok?visibleBanner(await r.json()):null;if(active)setBanner(value);}catch{if(active)setBanner(null);}};void read();window.addEventListener('focus',read);return()=>{active=false;window.removeEventListener('focus',read);};},[pathname]);
+ if(!banner||pathname==='/admin'||pathname.startsWith('/admin/'))return null;
+ return <div role="status" className="catalog-status"><p>{banner.message}</p>{banner.buttonText&&banner.buttonUrl&&<a href={banner.buttonUrl}>{banner.buttonText}</a>}</div>;
 }

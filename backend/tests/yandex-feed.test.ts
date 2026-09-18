@@ -148,3 +148,21 @@ test('redirect is withheld if attempt persistence fails and invalid keys create 
  try{await assert.rejects(service.checkoutLink(body),/test storage failure/);assert.equal((await f.db.pool.query('SELECT 1 FROM yandex_checkout_attempts')).rowCount,0);}
  finally{await f.db.pool.query('DROP TRIGGER reject_attempt ON yandex_checkout_attempts');await f.db.pool.query('DROP FUNCTION reject_attempt()');}
 });
+import {StorefrontControls} from '../src/storefront-controls.js';
+import {CommerceService} from '../src/commerce.js';
+test('test stock launches express only; YCP, feed, balances, reserves and orders use real stock exclusively',async()=>{
+ const f=await fixture(),actor=randomUUID();await f.feed.prepare(true);await f.db.pool.query("INSERT INTO users(id,role) VALUES($1,'admin')",[actor]);await f.db.pool.query('UPDATE inventory_balances SET on_hand=0,reserved=0');
+ const c=new StorefrontControls(f.db,false),service=new YandexFeed(f.db,{...f.settings,checkout:{deliveryPriceUnit:'rubles'},button:{enabled:false}}),body={items:[{sku:'SKU-FEED',quantity:5}]};
+ await assert.rejects(service.checkoutLink(body),/YANDEX_CHECKOUT_UNAVAILABLE/);
+ const ycp=new YcpCatalog(f.db,token,f.settings),request={items:[{id:'SKU-FEED',quantity:5}],offers_id_from_merchant_center:false,locality:'Москва',is_health_check:false};
+ const real=await ycp.basket(request),balance=(await f.db.pool.query('SELECT * FROM inventory_balances')).rows;
+ await c.saveStock(actor,f.product,{enabled:true,quantity:5,revision:0});
+ assert.equal((await new CommerceService(f.db).catalog(true))[0]!.available,5);
+ const {url}=await service.checkoutLink(body),data=JSON.parse(Buffer.from(new URL(url).searchParams.get('data')!,'base64').toString());
+ assert.deepEqual(Object.keys(data.items[0]).sort(),['final_price','id','price','quantity']);assert.equal(data.items[0].quantity,5);
+ assert.deepEqual(await ycp.basket(request),real);assert.equal((await f.feed.render()).included,0);
+ assert.deepEqual((await f.db.pool.query('SELECT * FROM inventory_balances')).rows,balance);
+ for(const table of ['orders','inventory_reservations','integration_outbox'])assert.equal((await f.db.pool.query('SELECT 1 FROM '+table)).rowCount,0);
+ await assert.rejects(service.checkoutLink({items:[{sku:'SKU-FEED',quantity:6}]}));
+ await c.saveStock(actor,f.product,{enabled:false,quantity:5,revision:1});assert.equal((await new CommerceService(f.db).catalog(true))[0]!.available,0);await assert.rejects(service.checkoutLink(body),/YANDEX_CHECKOUT_UNAVAILABLE/);
+});

@@ -1,7 +1,8 @@
+import {parseImageCrop} from '../../backend/src/image-crop.ts';
 import type { Product } from './store-data';
 
-type CatalogItem = {sku:string;name?:string;content?:unknown;slug:string;currency:'RUB';regularMinor:number;finalMinor:number;available:number;stockState?:'known'|'unknown'};
-export type ProductContent=Pick<Product,'description'|'volume'|'category'|'usage'|'ingredients'|'aroma'|'features'|'image'|'gallery'|'badge'|'instruction'|'recommendations'|'sensory'> & {size?:{value:number;unit:'ml'|'g'|'pcs'};placement?:Product['placement'];safety:string;setKind:'none'|'combo'|'gift'};
+type CatalogItem = {testMode?:boolean;sku:string;name?:string;content?:unknown;slug:string;currency:'RUB';regularMinor:number;finalMinor:number;available:number;stockState?:'known'|'unknown'};
+export type ProductContent=Pick<Product,'description'|'volume'|'category'|'usage'|'ingredients'|'aroma'|'features'|'image'|'gallery'|'badge'|'instruction'|'recommendations'|'sensory'> & {imageCrops?:Record<string,string>;size?:{value:number;unit:'ml'|'g'|'pcs'};placement?:Product['placement'];safety:string;setKind:'none'|'combo'|'gift'};
 export function parseProductContent(raw:unknown):ProductContent {
  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('INVALID_CONTENT');
  const c=raw as ProductContent;
@@ -14,7 +15,8 @@ export function parseProductContent(raw:unknown):ProductContent {
  if(c.size!==undefined&&(!c.size||!Number.isFinite(c.size.value)||c.size.value<=0||c.size.value>1000000||!['ml','g','pcs'].includes(c.size.unit)))throw new Error('INVALID_CONTENT');
  const safeImage=(v:string)=>v===''||/^\/api\/store\/v1\/media\/[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(v)||/^\/images\/[A-Za-z0-9_./-]+$/.test(v)&&!v.includes('..')||/^https:\/\/[^\s]+$/.test(v)&&(()=>{try{const u=new URL(v);return !u.username&&!u.password;}catch{return false;}})();
  if(![c.image,...c.gallery].every(safeImage))throw new Error('INVALID_CONTENT');
- return {...(c.size?{size:{...c.size}}:{}),...(c.placement?{placement:{...c.placement}}:{}),description:c.description,volume:c.volume,category:c.category,setKind:c.setKind,usage:c.usage,ingredients:c.ingredients,aroma:c.aroma,
+ if(c.imageCrops!==undefined){if(!c.imageCrops||typeof c.imageCrops!=='object'||Array.isArray(c.imageCrops)||Object.keys(c.imageCrops).length>50||!Object.entries(c.imageCrops).every(([k,v])=>safeImage(k)&&typeof v==='string'&&!!parseImageCrop(v)))throw new Error('INVALID_CONTENT');}
+ return {...(c.imageCrops?{imageCrops:{...c.imageCrops}}:{}),...(c.size?{size:{...c.size}}:{}),...(c.placement?{placement:{...c.placement}}:{}),description:c.description,volume:c.volume,category:c.category,setKind:c.setKind,usage:c.usage,ingredients:c.ingredients,aroma:c.aroma,
   features:c.features,image:c.image,gallery:c.gallery,badge:c.badge,instruction:c.instruction,safety:c.safety,recommendations:c.recommendations,sensory:c.sensory};
 }
 export function readBackendCatalog(payload:unknown):Product[] {
@@ -24,7 +26,7 @@ export function readBackendCatalog(payload:unknown):Product[] {
  return payload.items.map((raw:unknown)=>{
   if(!raw || typeof raw!=='object') throw new Error('INVALID_CATALOG');
   const item=raw as CatalogItem;
-  if(typeof item.slug!=='string' || !/^[a-z0-9][a-z0-9-]{0,79}$/.test(item.slug) || typeof item.sku!=='string' || !item.sku || item.currency!=='RUB' ||
+  if((item.testMode!==undefined&&typeof item.testMode!=='boolean')||typeof item.slug!=='string' || !/^[a-z0-9][a-z0-9-]{0,79}$/.test(item.slug) || typeof item.sku!=='string' || !item.sku || item.currency!=='RUB' ||
    ![item.regularMinor,item.finalMinor,item.available].every(Number.isSafeInteger) || item.finalMinor<0 ||
    item.regularMinor<item.finalMinor || item.regularMinor>1_000_000_000_000 || item.available<0 ||
    (item.stockState!==undefined&&!['known','unknown'].includes(item.stockState)) ||
@@ -33,7 +35,7 @@ export function readBackendCatalog(payload:unknown):Product[] {
   if(!draft.name||typeof draft.name!=='string'||!draft.image)throw new Error('INVALID_CATALOG');
   ids.add(item.slug);skus.add(item.sku);
   const displayImage=(path:string)=>(path.startsWith('/images/')||path.startsWith('/api/store/v1/media/'))?(process.env.NEXT_PUBLIC_BASE_PATH??'')+path:path;
-  return {...draft,image:displayImage(draft.image),gallery:draft.gallery.filter(Boolean).map(displayImage),name:draft.name,sku:item.sku,price:item.finalMinor/100,oldPrice:item.regularMinor/100,
+  return {...draft,...(draft.imageCrops?{imageCrops:Object.fromEntries(Object.entries(draft.imageCrops).map(([k,v])=>[displayImage(k),v]))}:{}),testMode:item.testMode===true,image:displayImage(draft.image),gallery:draft.gallery.filter(Boolean).map(displayImage),name:draft.name,sku:item.sku,price:item.finalMinor/100,oldPrice:item.regularMinor/100,
    discount:item.regularMinor>0?Math.round((item.regularMinor-item.finalMinor)/item.regularMinor*100):0,
    stock:item.available,stockState:item.stockState??(item.available>0?'known':'unknown'),active:true,badge:draft.badge,rating:0,reviews:0};
  });

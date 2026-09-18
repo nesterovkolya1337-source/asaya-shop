@@ -41,7 +41,7 @@ export class YandexFeed {
    return {applied:apply,items:changes};
   });
  }
- async render(){
+ async render(forCheckout=false){
   const s=this.settings;if(!s.feed)throw new DomainError('YANDEX_FEED_UNAVAILABLE',503);
   if(!xmlText(s.feed.name).trim()||!xmlText(s.feed.company).trim())throw new DomainError('YANDEX_FEED_SETTINGS_INVALID',503);
   const {rows}=await this.db.pool.query(`SELECT p.id,p.sku,p.name,p.weight_g,p.width_mm,p.height_mm,p.depth_mm,pr.regular_minor,pr.final_minor,e.published->'content' AS content,m.slug,
@@ -59,7 +59,7 @@ export class YandexFeed {
    if(row.offer_ids.length!==1){skip(row.offer_ids.length?'AMBIGUOUS_OFFER_ID':'MISSING_OFFER_ID');continue;}
    const offerId=row.offer_ids[0] as string;
    if(!validOfferId.test(offerId)){skip('INVALID_OFFER_ID');continue;}
-   if(Number(row.available)<1){skip('OUT_OF_STOCK');continue;}
+   if(!forCheckout&&Number(row.available)<1){skip('OUT_OF_STOCK');continue;}
    if(money(row.final_minor)===0){skip('PRICE_NOT_READY');continue;}
    const c=row.content,category=categories[c?.category];
    if(!category||typeof c?.description!=='string'||!xmlText(c.description).trim()||typeof row.name!=='string'||!xmlText(row.name).trim()||Array.from(row.name).length>150){skip('CONTENT_NOT_READY');continue;}
@@ -84,15 +84,17 @@ export class YandexFeed {
  async checkoutLink(raw:unknown,idempotencyKey:string=randomUUID()){
   z.uuid().parse(idempotencyKey);
   const s=this.settings;
-  if(!s.button?.enabled||!s.checkout||s.priceUnit===null||s.vat===null)throw new DomainError('YANDEX_CHECKOUT_UNAVAILABLE',503);
+  if(!s.checkout||s.priceUnit===null||s.vat===null)throw new DomainError('YANDEX_CHECKOUT_UNAVAILABLE',503);
   const body=z.object({items:z.array(z.object({sku:z.string().min(1).max(200),quantity:z.number().int().min(1).max(100)}).strict()).min(1).max(50)}).strict()
    .refine(v=>new Set(v.items.map(i=>i.sku)).size===v.items.length).parse(raw);
   body.items.sort((a,b)=>a.sku<b.sku?-1:a.sku>b.sku?1:0);
-  const catalog=(await this.render()).items;
+  const tests=(await this.db.pool.query('SELECT p.sku,t.quantity FROM product_test_stock t JOIN products p ON p.id=t.product_id WHERE t.enabled AND p.active AND p.archived_at IS NULL')).rows;
+  if(!s.button?.enabled&&!body.items.every(i=>tests.some(t=>t.sku===i.sku&&t.quantity>=i.quantity)))throw new DomainError('YANDEX_CHECKOUT_UNAVAILABLE',503);
+  const catalog=(await this.render(true)).items;
   const items=body.items.map(line=>{
    const item=catalog.find(p=>p.sku===line.sku);
-   if(!item)throw new DomainError('PRODUCT_UNAVAILABLE',409);
-   if(line.quantity>item.available)throw new DomainError('INSUFFICIENT_STOCK',409);
+   if(!item||(item.available<1&&!tests.some(t=>t.sku===line.sku)))throw new DomainError('PRODUCT_UNAVAILABLE',409);
+   if(line.quantity>(tests.find(t=>t.sku===line.sku)?.quantity??item.available))throw new DomainError('INSUFFICIENT_STOCK',409);
    // The express URL uses rubles regardless of the separately configured YCP API unit.
    return {id:item.offerId,quantity:line.quantity,price:item.regularMinor/100,final_price:item.finalMinor/100};
   });

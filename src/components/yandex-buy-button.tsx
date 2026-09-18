@@ -1,5 +1,6 @@
 "use client";
 
+import {useShop} from './shop-provider';
 import {useEffect,useRef,useState} from 'react';
 import {assetPath} from '@/lib/asset-path';
 import {requestYandexCheckoutLink,trackCheckoutTransition} from '@/lib/yandex-checkout';
@@ -13,11 +14,12 @@ export function YandexBuyButton({sku,stock,quantity=1}:{sku?:string;stock:number
 }
 
 export function YandexCheckoutButton({items,disabled=false,label='Купить в 1 клик',compact=false,prepareItems,onConflict}:{items:Array<{sku:string;quantity:number}>;disabled?:boolean;label?:string;compact?:boolean;prepareItems?:()=>Promise<Array<{sku:string;quantity:number}>|null>;onConflict?:()=>Promise<void>}){
+ const {yandexCheckoutEnabled}=useShop();
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const pending=useRef(false);
  const active=useRef(false);
  useEffect(()=>{active.current=true;return()=>{active.current=false;};},[]);
- if(process.env.NEXT_PUBLIC_CATALOG_SOURCE==='demo'||process.env.NEXT_PUBLIC_YANDEX_BUTTON!=='true')return null;
+ if(!yandexCheckoutEnabled)return null;
  const buy=async()=>{
   if(pending.current||disabled||!items.length)return;
   pending.current=true;setBusy(true);setError('');
