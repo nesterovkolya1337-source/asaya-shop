@@ -138,7 +138,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
    if(req.method!=='GET'&&(typeof req.headers['x-csrf-token']!=='string'||!equal(req.headers['x-csrf-token'],session.csrfToken)))throw new DomainError('CSRF_REJECTED',403);
   });
   const actor=async(token:string|undefined)=>(await staff!.session(token)).user.id;
-  secured.post('/api/admin/v1/media',{bodyLimit:9*1024*1024},async(req,reply)=>{
+  secured.post('/api/admin/v1/media',{bodyLimit:28*1024*1024},async(req,reply)=>{
    const result=await media.upload(await actor(req.cookies[staffCookie]),req.body);return reply.status(201).send(result);
   });
   secured.get('/api/admin/v1/auth/me',async req=>staff!.session(req.cookies[staffCookie]));
@@ -212,7 +212,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
  app.get('/api/store/v1/products',async()=>({items:await commerce.catalog(true)}));
  app.get('/api/store/v1/content/:page',async req=>siteContent.publicPage(z.object({page:z.string().max(50)}).parse(req.params).page));
  app.get('/api/store/v1/media/:id',async(req,reply)=>{
-  const {id}=z.object({id:z.uuid()}).parse(req.params);const image=await media.get(id);
+  const {id}=z.object({id:z.uuid()}).parse(req.params);const image=await media.get(id,req.query);
   return reply.type('image/webp').header('Cache-Control','public, max-age=31536000, immutable')
    .header('Cross-Origin-Resource-Policy','same-origin').header('ETag','"'+image.contentHash+'"').send(image.content);
  });

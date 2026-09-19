@@ -1,5 +1,5 @@
 import {AuthClientError,createStoreRequest} from './auth-client.ts';
-export const MAX_IMAGE_BYTES=6*1024*1024;
+export const MAX_IMAGE_BYTES=20*1024*1024;
 export type UploadedImage={id:string;url:string;width:number;height:number;bytes:number;mime:'image/webp'};
 export function validateImageFile(file:Pick<File,'size'|'type'>){
  if(!file.size||file.size>MAX_IMAGE_BYTES)throw new AuthClientError('IMAGE_TOO_LARGE');
@@ -14,7 +14,7 @@ export function createMediaClient(base:string,fetcher:typeof fetch=fetch){
  const request=createStoreRequest(base,fetcher);
  return {async upload(id:string,file:File,csrf:string):Promise<UploadedImage>{
   if(!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(id))throw new AuthClientError('INVALID_INPUT');
-  const raw=await request('media','POST',{id,data:await imageData(file)},csrf,undefined,30000);
+  const raw=await request('media','POST',{id,data:await imageData(file)},csrf,undefined,120000);
   if(!raw||typeof raw!=='object')throw new AuthClientError('INVALID_RESPONSE');
   const r=raw as UploadedImage;
   if(r.id!==id||r.url!=='/api/store/v1/media/'+id||r.mime!=='image/webp'||
@@ -23,7 +23,7 @@ export function createMediaClient(base:string,fetcher:typeof fetch=fetch){
  }};
 }
 const messages:Record<string,string>={
- IMAGE_TOO_LARGE:'Выберите непустой файл размером до 6 МБ.',
+ IMAGE_TOO_LARGE:'Выберите непустой файл размером до 20 МБ.',
  UNSUPPORTED_IMAGE:'Подходят фотографии JPG, PNG и WebP.',
  INVALID_IMAGE:'Изображение повреждено, содержит анимацию или превышает 25 мегапикселей. Выберите другое фото.',
  MEDIA_BUSY:'Сейчас обрабатываются другие фотографии. Повторите загрузку чуть позже.',

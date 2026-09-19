@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import {CroppedImage} from './cropped-image';
 import Link from "next/link";
 import { type FormEvent, useMemo, useState } from "react";
 import { useShop } from "@/components/shop-provider";
@@ -60,7 +60,7 @@ export function CheckoutView() {
               <div className={styles.cartList}>
                 {cartProducts.map((product) => (
                   <article className={styles.cartItem} key={product.id}>
-                    <Link className={styles.cartImage} href={`/product/${product.id}`}><Image alt={product.name} fill sizes="120px" src={product.image} /></Link>
+                    <Link className={styles.cartImage} href={`/product/${product.id}`}><CroppedImage alt={product.name} fill sizes="120px" src={product.image} /></Link>
                     <span>{cart[product.id]} шт.</span>
                   </article>
                 ))}

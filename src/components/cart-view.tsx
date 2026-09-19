@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import {CroppedImage} from './cropped-image';
 import Link from "next/link";
 import { type FormEvent, useMemo, useState } from "react";
 import { useShop } from "@/components/shop-provider";
@@ -70,7 +70,7 @@ export function CartView() {
             return (
               <article className={styles.cartItem} key={product.id}>
                 <Link className={styles.itemImage} href={`/product/${product.id}`}>
-                  <Image alt={product.name} fill sizes="120px" src={product.image} />
+                  <CroppedImage alt={product.name} fill sizes="120px" src={product.image} />
                 </Link>
                 <div className={styles.itemDetails}>
                   <Link href={`/product/${product.id}`}><h2>{product.name}</h2></Link>
@@ -108,7 +108,7 @@ export function CartView() {
               {recommendations.map((product) => (
                 <article key={product.id}>
                   <Link className={styles.recommendationImage} href={`/product/${product.id}`}>
-                    <Image alt={product.name} fill sizes="70px" src={product.image} />
+                    <CroppedImage alt={product.name} fill sizes="70px" src={product.image} />
                   </Link>
                   <div><Link href={`/product/${product.id}`}>{product.name}</Link><strong>{formatPrice(product.price)}</strong></div>
                   <button aria-label={`Добавить ${product.name} в корзину`} onClick={() => addToCart(product.id)} type="button">+</button>

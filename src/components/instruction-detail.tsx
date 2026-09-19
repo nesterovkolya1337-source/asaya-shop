@@ -1,5 +1,6 @@
 "use client";
 
+import {CroppedImage} from './cropped-image';
 import Image from "next/image";
 import Link from "next/link";
 import { useShop } from "@/components/shop-provider";
@@ -50,7 +51,7 @@ export function InstructionDetail({ productId }: { productId: string }) {
     <main>
       <nav className={styles.breadcrumbs}><Link href="/instructions">Инструкции</Link><span>/</span><span>{product.name}</span></nav>
       <section className={styles.hero}>
-        <div className={styles.visual}><Image alt={product.name} fill priority sizes="(max-width: 760px) 94vw, 48vw" src={product.image} /></div>
+        <div className={styles.visual}><CroppedImage alt={product.name} fill priority sizes="(max-width: 760px) 94vw, 48vw" src={product.image} /></div>
         <div className={styles.intro}>
           <p>{product.volume}</p>
           <h1>{product.name}</h1>

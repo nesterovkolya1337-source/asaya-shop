@@ -27,7 +27,7 @@ export function AdminMediaEditor(props:Props){
    for(const job of queue){
     if(!active.current)break;
     if(job.target==='gallery'&&latest.current.gallery.filter(Boolean).length>=12){failed.push({...job,error:'В галерее уже 12 фото. Уберите одно и повторите загрузку.'});continue;}
-    setMessage('Загружаем: '+job.file.name);
+    setMessage('Загрузка и обработка: '+job.file.name);
     try{const image=await api.upload(job.id,job.file,props.csrf);if(active.current)latest.current.onUploaded(image.url,job.target);}
     catch(e){
      if(e instanceof AuthClientError&&e.code==='UNAUTHENTICATED'){latest.current.onExpired();break;}
@@ -47,7 +47,7 @@ export function AdminMediaEditor(props:Props){
  }
  const picture=(url:string,label:string)=>previewUrl(url)?<span style={{display:"block",position:"relative",width:150,height:150,overflow:"hidden"}}><CroppedImage crop={props.crops?.[url]} unoptimized src={previewUrl(url)} alt={label} width={150} height={150} className={styles.mediaImage}/></span>:<p>Фото не выбрано</p>;
  const move=(index:number,delta:number)=>{const urls=[...props.gallery];[urls[index],urls[index+delta]]=[urls[index+delta],urls[index]];props.onGallery(urls);};
- return <section aria-label="Загрузка фотографий"><p>JPG, PNG или WebP до 6 МБ. Основное фото и до 12 фото в галерее. После загрузки сохраните и опубликуйте карточку.</p>
+ return <section aria-label="Загрузка фотографий"><p>JPG, PNG или WebP до 20 МБ. Основное фото и до 12 фото в галерее. После загрузки сохраните и опубликуйте карточку.</p>
  <div className={styles.mediaCard}>{picture(props.image,'Основное фото товара')}{props.image&&<ProductCropEditor source={props.image} value={props.crops?.[props.image]} disabled={busy||props.disabled} onSave={v=>props.onCrop(props.image,v)}/>}
  <label>Загрузить основное фото<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy||props.disabled} onChange={e=>{select(e.target.files,'main');e.target.value='';}}/></label>
  {props.image&&<button type="button" disabled={busy||props.disabled} onClick={()=>props.onMain('')}>Убрать основное фото</button>}</div>
@@ -56,7 +56,7 @@ export function AdminMediaEditor(props:Props){
  <div className={styles.actions}><button type="button" disabled={busy||props.disabled||index===0} onClick={()=>move(index,-1)} aria-label={'Передвинуть фото '+(index+1)+' раньше'}>←</button>
  <button type="button" disabled={busy||props.disabled||index===props.gallery.length-1} onClick={()=>move(index,1)} aria-label={'Передвинуть фото '+(index+1)+' позже'}>→</button>
  <button type="button" disabled={busy||props.disabled} onClick={()=>props.onGallery(props.gallery.filter((_,i)=>i!==index))}>Убрать фото {index+1}</button></div></div>)}</div>
- {message&&<p role="status">{message}</p>}
+ {busy&&<progress aria-label="Загрузка и обработка изображения"/>}{message&&<p role="status">{message}</p>}
  {jobs.length>0&&<div role="alert">{jobs.map(job=><p key={job.id}>{job.file.name}: {job.error}</p>)}<button type="button" disabled={busy||props.disabled} onClick={()=>void upload(jobs)}>Повторить незагруженные</button><button type="button" disabled={busy||props.disabled} onClick={()=>setJobs([])}>Убрать из очереди</button></div>}
  </section>;
 }
