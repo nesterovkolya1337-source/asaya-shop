@@ -1124,3 +1124,15 @@
     font-size: 15px;
   }
 }
+
+
+/* Only sections after the existing product hero use the approved new frames. */
+.figmaPdp>section{order:initial}
+.figmaPdp .reviews{margin-top:20px;padding-top:0;grid-template-columns:1fr;gap:0;background:#f0f0f0;border-radius:20px}
+.figmaPdp .reviewSummary{padding:30px 40px 10px;background:none}
+.figmaPdp .reviewSummary h2{font-size:40px;letter-spacing:0}
+.figmaPdp .reviewSummary>p,.figmaPdp .ratingBreakdown{display:none}
+.figmaPdp .reviewMeta{display:flex;margin-top:10px}
+.figmaPdp .reviewState{margin:0 40px 30px;padding:20px 0 0;border-top:1px solid #aaa;border-radius:0;box-shadow:none;background:none}
+.figmaPdp .reviewState h3{font-size:24px}.figmaPdp .reviewState p{font-size:16px}
+.figmaPdp .recommendations{margin-top:30px}.figmaPdp .sectionHeading h2{font-size:24px;font-weight:400}

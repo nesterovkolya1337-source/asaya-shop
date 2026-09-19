@@ -1,3 +1,4 @@
+import {parsePdpContent,pdpMediaSources} from './pdp-content.js';
 import {parseImageCrop} from './image-crop.js';
 import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
@@ -8,6 +9,7 @@ const text=(max:number)=>z.string().trim().max(max);
 const mediaPath=/^\/api\/store\/v1\/media\/([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})$/;
 const image=text(1000).refine(v=>v===''||mediaPath.test(v)||/^\/images\/[A-Za-z0-9_./-]+$/.test(v)&&!v.includes('..')||/^https:\/\/[^\s]+$/.test(v)&&(()=>{try{const u=new URL(v);return !u.username&&!u.password;}catch{return false;}})());
 export const contentSchema=z.object({
+ pdp:z.unknown().transform((v,ctx)=>{try{return parsePdpContent(v);}catch{ctx.addIssue({code:'custom',message:'Invalid PDP content'});return z.NEVER;}}).optional(),
  imageCrops:z.record(image,z.string().max(500).refine(v=>{try{return !!parseImageCrop(v);}catch{return false;}})).refine(v=>Object.keys(v).length<=50).optional(),
  size:z.object({value:z.number().positive().max(1000000),unit:z.enum(['ml','g','pcs'])}).strict().optional(),
  placement:z.object({catalogOrder:z.number().int().min(0).max(100000),bestsellerOrder:z.number().int().min(0).max(100000).nullable(),newOrder:z.number().int().min(0).max(100000).nullable()}).strict().optional(),
@@ -31,7 +33,7 @@ async function admin(tx:Tx,actor:string){
  if(!(await tx.query("SELECT 1 FROM users WHERE id=$1 AND role='admin' AND NOT disabled FOR SHARE",[actor])).rowCount)throw new DomainError('FORBIDDEN',403);
 }
 async function checkMedia(tx:Tx,content:z.infer<typeof contentSchema>){
- const ids=[...new Set([content.image,...content.gallery].flatMap(v=>{const m=v.match(mediaPath);return m?[m[1]!]:[];}))];
+ const ids=[...new Set([content.image,...content.gallery,...(content.pdp?pdpMediaSources(content.pdp):[])].flatMap(v=>{const m=v.match(mediaPath);return m?[m[1]!]:[];}))];
  if(ids.length&&(await tx.query('SELECT id FROM product_media WHERE id=ANY($1::uuid[])',[ids])).rowCount!==ids.length)throw new DomainError('MEDIA_REFERENCE_MISSING',400);
 }
 async function audit(tx:Tx,actor:string,action:string,id:string,detail:unknown){
@@ -73,7 +75,7 @@ export class AdminCatalog{
     source:r.managed?{kind:'cdek_ff_yml',generatedAt:r.generated_at,fetchedAt:r.fetched_at,expiresAt:r.expires_at,healthy:r.healthy,available:r.available,reportedQuantity:r.provider_quantity}:null}));
   const draft=r.draft??{sku:r.sku,name:r.name,slug:r.slug??'',content:emptyContent,regularMinor:r.regular_minor===null?null:money(r.regular_minor),finalMinor:r.final_minor===null?null:money(r.final_minor),
    weightG:r.weight_g,widthMm:r.width_mm,heightMm:r.height_mm,depthMm:r.depth_mm};
-  return {id,revision:r.revision??0,lifecycle:r.archived_at?'deleted':r.active?'published':r.published_at?'unpublished':'draft',active:r.active,hasDraft:!!r.draft,publishedAt:r.published_at,draft,stocks};
+  return {id,revision:r.revision??0,lifecycle:r.archived_at?'deleted':r.active?'published':r.published_at?'unpublished':'draft',active:r.active,hasDraft:!!r.draft,hasUnpublishedChanges:JSON.stringify(r.draft)!==JSON.stringify(r.published),publishedAt:r.published_at,draft,stocks};
  }
  async save(actor:string,id:string,raw:unknown){
   z.uuid().parse(id);const input=draftSchema.parse(raw);const {revision,...draft}=input;
@@ -89,7 +91,6 @@ export class AdminCatalog{
    draft.slug ||= editor?.published?.slug ?? 'product-'+id;
    draft.regularMinor ??= draft.finalMinor; draft.finalMinor ??= draft.regularMinor;
    draft.content.image ||= draft.content.gallery.find(v=>v.trim()) ?? '';
-   if(p?.active){const issues=publicationIssues(draft);if(issues.length)throw new DomainError('PUBLISHED_REQUIRED_'+issues[0]);}
    if(p&&p.sku!==draft.sku){
     if(p.active||editor?.published_at||(await tx.query('SELECT 1 FROM order_items WHERE product_id=$1 UNION ALL SELECT 1 FROM product_external_ids WHERE product_id=$1 UNION ALL SELECT 1 FROM inventory_reservations WHERE product_id=$1 UNION ALL SELECT 1 FROM stock_source_items WHERE product_id=$1 AND listed LIMIT 1',[id])).rowCount)throw new DomainError('SKU_IMMUTABLE');
     await tx.query('UPDATE products SET sku=$2,updated_at=now() WHERE id=$1',[id,draft.sku]);
@@ -101,11 +102,7 @@ export class AdminCatalog{
    }
    await tx.query(`INSERT INTO product_editor(product_id,revision,draft,updated_by) VALUES($1,1,$2,$3)
     ON CONFLICT(product_id) DO UPDATE SET revision=product_editor.revision+1,draft=excluded.draft,updated_by=excluded.updated_by,updated_at=now()`,[id,JSON.stringify(draft),actor]);
-   if(p?.active){
-    await writePublished(tx,id,{...draft,revision},editor??{});
-    await tx.query('UPDATE product_editor SET published=draft WHERE product_id=$1',[id]);
-   }
-   await audit(tx,actor,p?.active?'product.saved':'product.draft_saved',id,{revision:revision+1});
+   await audit(tx,actor,'product.draft_saved',id,{revision:revision+1});
    return {id,revision:revision+1};
   });}catch(e){if((e as {code?:string}).code==='23505')throw new DomainError('SKU_IN_USE');throw e;}
  }

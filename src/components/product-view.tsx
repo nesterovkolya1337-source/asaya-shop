@@ -1,4 +1,5 @@
 "use client";
+import {PdpSections} from './pdp-sections';
 import { CarouselArrow } from "@/components/carousel-arrow";
 
 import {CroppedImage} from './cropped-image';
@@ -49,7 +50,7 @@ export function ProductView({ productId }: { productId: string }) {
   const isFavorite = favorites.includes(product.id);
   const approvedReviews = reviews.filter((review) => review.productId === product.id && review.status === "approved");
   const pendingReview = reviews.find((review) => review.productId === product.id && review.email === userEmail && review.status === "pending");
-  const recommendations = product.recommendations.map((id) => products.find((item) => item.id === id)).filter((item) => item?.active && item.id !== product.id).filter((item): item is NonNullable<typeof item> => Boolean(item));
+  const recommendations = (product.pdp?.recommendations??product.recommendations).map((id) => products.find((item) => item.id === id||item.sku === id)).filter((item) => item?.active && item.id !== product.id).filter((item): item is NonNullable<typeof item> => Boolean(item));
   const gallery = [...new Set([product.image, ...product.gallery].filter(Boolean))];
   const hasReviews = product.reviews > 0;
   const ratingRows = [5, 4, 3, 2, 1];
@@ -122,7 +123,7 @@ export function ProductView({ productId }: { productId: string }) {
   };
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${product.pdp?styles.figmaPdp:''}`}>
       <nav aria-label="Хлебные крошки" className={styles.breadcrumbs}>
         <Link href="/">ASAYA</Link><span>/</span>
         <Link href={`/catalog/${product.category}`}>{categoryLabels[product.category]}</Link><span>/</span>
@@ -267,7 +268,8 @@ export function ProductView({ productId }: { productId: string }) {
         </div>
       </section>
 
-      {product.features.length>0&&<section className={styles.sensory} aria-labelledby="sensory-title">
+      {product.pdp&&<PdpSections content={product.pdp}/>}
+      {!product.pdp&&product.features.length>0&&<section className={styles.sensory} aria-labelledby="sensory-title">
         <div className={styles.sensoryCopy}>
           <p>Ощущения и результат</p>
           <h2 id="sensory-title">Комфорт на уровне ощущений</h2>
