@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   experimental: {
     cpus: 1,
+    proxyClientMaxBodySize: '28mb', // 20 MiB image plus base64/JSON; API enforces the upload limit.
   },
   images: {
     unoptimized: true,

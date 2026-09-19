@@ -3,7 +3,8 @@ import sharp from 'sharp';
 import {z} from 'zod';
 import {Database,lock} from './db.js';
 import {DomainError} from './core.js';
-export const MAX_IMAGE_BYTES=6*1024*1024;
+import {IMAGE_WIDTHS,renderDerivative,variantSettings} from './media-derivatives.js';
+export const MAX_IMAGE_BYTES=20*1024*1024;
 export const MAX_IMAGE_PIXELS=25_000_000;
 const digest=(b:Buffer)=>createHash('sha256').update(b).digest('hex');
 function rasterHeader(b:Buffer){
@@ -19,11 +20,13 @@ export async function prepareImage(input:Buffer){
   const processor=sharp(input,{failOn:'warning',limitInputPixels:MAX_IMAGE_PIXELS,animated:false});
   const metadata=await processor.metadata();
   if(!['jpeg','png','webp'].includes(metadata.format)||!metadata.width||!metadata.height||(metadata.pages??1)>1)throw new Error('unsupported');
-  // Re-encode pixels, strip original metadata, preserve transparency and orient from EXIF.
-  const {data,info}=await processor.rotate().resize({width:2048,height:2048,fit:'inside',withoutEnlargement:true})
-   .webp({quality:88,effort:4}).timeout({seconds:5}).toBuffer({resolveWithObject:true});
-  if(data.length>MAX_IMAGE_BYTES)throw new Error('output too large');
-  return {content:data,width:info.width,height:info.height,contentHash:digest(data)};
+  const rotated=(metadata.orientation??1)>=5&&(metadata.orientation??1)<=8;
+  const master={content:input,width:rotated?metadata.height:metadata.width,height:rotated?metadata.width:metadata.height,hasAlpha:!!metadata.hasAlpha&&!(await sharp(input).stats()).isOpaque};
+  const image=await renderDerivative(input,1600,master.hasAlpha,1,true);
+  if(image.content.length>6*1024*1024)throw new Error('output too large');
+  const derivatives=[];
+  for(const width of IMAGE_WIDTHS)derivatives.push({key:variantSettings(width).key,...await renderDerivative(input,width,master.hasAlpha)});
+  return {...image,master,derivatives};
  }catch{throw new DomainError('INVALID_IMAGE',400);}
 }
 export class MediaService{
@@ -55,15 +58,39 @@ export class MediaService{
     return this.result(prior);
    }
    await tx.query('INSERT INTO product_media(id,uploader_id,source_hash,content_hash,content,width,height) VALUES($1,$2,$3,$4,$5,$6,$7)',[id,actor,sourceHash,image.contentHash,image.content,image.width,image.height]);
+   await tx.query('INSERT INTO product_media_masters(media_id,content,width,height,has_alpha) VALUES($1,$2,$3,$4,$5)',[id,image.master.content,image.master.width,image.master.height,image.master.hasAlpha]);
+   for(const v of image.derivatives)await tx.query('INSERT INTO product_media_derivatives(media_id,variant_key,content,content_hash,width,height) VALUES($1,$2,$3,$4,$5,$6)',[id,v.key,v.content,v.contentHash,v.width,v.height]);
    await tx.query("INSERT INTO audit_log(id,actor_id,action,entity_id,detail) VALUES($1,$2,'media.uploaded',$3,$4)",[randomUUID(),actor,id,JSON.stringify({width:image.width,height:image.height,bytes:image.content.length})]);
    return this.result({id,width:image.width,height:image.height,bytes:image.content.length});
   });
  }
- async get(id:string){
+ async get(id:string,raw:unknown={}){
   z.uuid().parse(id);
+  const query=z.object({w:z.coerce.number().int().optional(),crop:z.string().max(500).optional()}).strict().parse(raw);
+  let variant:ReturnType<typeof variantSettings>|undefined;
+  try{if(query.w!==undefined)variant=variantSettings(query.w,query.crop);else if(query.crop)throw Error();}catch{throw new DomainError('INVALID_IMAGE_VARIANT',400);}
+  if(variant){
+   const cached=(await this.db.pool.query('SELECT content,content_hash FROM product_media_derivatives WHERE media_id=$1 AND variant_key=$2',[id,variant.key])).rows[0];
+   if(cached)return {content:cached.content as Buffer,contentHash:cached.content_hash as string};
+   const master=(await this.db.pool.query('SELECT content,has_alpha FROM product_media_masters WHERE media_id=$1',[id])).rows[0];
+   if(master){
+    if(this.processing>=2)throw new DomainError('MEDIA_BUSY',429);
+    this.processing++;
+    try{
+     const image=await renderDerivative(master.content,variant.width,master.has_alpha,variant.zoom);
+     await this.db.transaction(async tx=>{
+      await lock(tx,'media-variants:'+id);
+      await tx.query('INSERT INTO product_media_derivatives(media_id,variant_key,content,content_hash,width,height) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING',[id,variant!.key,image.content,image.contentHash,image.width,image.height]);
+      // Bound cached crop revisions; evicted variants are reproducible from the immutable master.
+      await tx.query('DELETE FROM product_media_derivatives WHERE media_id=$1 AND variant_key IN (SELECT variant_key FROM product_media_derivatives WHERE media_id=$1 ORDER BY created_at DESC,variant_key OFFSET 72)',[id]);
+     });
+     return image;
+    }finally{this.processing--;}
+   }
+  }
+  // Legacy files without a master are returned byte-for-byte. Never transcode them again.
   const row=(await this.db.pool.query('SELECT content,content_hash FROM product_media WHERE id=$1',[id])).rows[0];
   if(!row)throw new DomainError('MEDIA_NOT_FOUND',404);
   return {content:row.content as Buffer,contentHash:row.content_hash as string};
  }
 }
-
