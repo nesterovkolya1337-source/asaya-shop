@@ -14,7 +14,7 @@ import { Database } from './db.js';
 import { CommerceService } from './commerce.js';
 import { DomainError,equal,hash } from './core.js';
 import {DeliveryService,type DeliveryProvider} from './delivery.js';
-import {StaffAuth} from './staff-auth.js';
+import {StaffAuth,TRUSTED_SECONDS} from './staff-auth.js';
 import {AdminCatalog} from './admin-catalog.js';
 import {SiteContent} from './site-content.js';
 import {MediaService} from './media.js';
@@ -72,6 +72,9 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
  const media=new MediaService(options.db);
  const adminOrders=new AdminOrders(options.db,options.cdekTracking?.service);
  const staffCookie=options.secureCookies?'__Host-asaya_staff':'asaya_dev_staff';
+ const setupCookie=options.secureCookies?'__Host-asaya_staff_setup':'asaya_dev_staff_setup';
+ const staffCookieOptions={httpOnly:true,secure:options.secureCookies,sameSite:'strict' as const,path:'/',maxAge:TRUSTED_SECONDS};
+ const setupCookieOptions={...staffCookieOptions,maxAge:900};
  const cookieName=options.secureCookies?'__Host-asaya_session':'asaya_dev_session';
  const cookieOptions={httpOnly:true,secure:options.secureCookies,sameSite:'strict' as const,path:'/',maxAge:7*86400};
  const flowCookie='__Host-asaya_yandex_flow';
@@ -91,11 +94,11 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   if(options.deploymentMode==='catalog'&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout)|media|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
+   if(!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|employees(?:\/.*)?|media|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
   }
   if(liveYcp&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
-   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout)|media|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
+   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|employees(?:\/.*)?|media|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
    const checkoutLink=req.method==='POST'&&route==='/api/store/v1/yandex/checkout-link';
    // Yandex owns checkout/payments; CDEK callbacks have their own boundary. Do not enable the
    // local checkout or local-only order changes with customer SMS sign-in.
@@ -128,13 +131,36 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
  app.post('/api/admin/v1/auth/login',async(req,reply)=>{
   if(!staff)throw new DomainError('STAFF_UNAVAILABLE',503);
   const result=await staff.login(req.body,req.ip);
-  reply.setCookie(staffCookie,result.token,{httpOnly:true,secure:options.secureCookies,sameSite:'strict',path:'/',maxAge:3600});
+  reply.setCookie(staffCookie,result.token,staffCookieOptions);
   return {user:result.user,csrfToken:result.csrfToken};
  });
+ app.post('/api/admin/v1/auth/activate/start',async(req,reply)=>{
+  if(!staff)throw new DomainError('STAFF_UNAVAILABLE',503);
+  const result=await staff.activationStart(req.body,req.ip);reply.setCookie(setupCookie,result.token,setupCookieOptions);
+  return {stage:result.stage,csrfToken:result.csrfToken};
+ });
+ await app.register(async setup=>{
+  setup.addHook('onRequest',async req=>{
+   if(!staff)throw new DomainError('STAFF_UNAVAILABLE',503);
+   const session=await staff.activationSession(req.cookies[setupCookie]);
+   if(req.method!=='GET'&&(typeof req.headers['x-csrf-token']!=='string'||!equal(req.headers['x-csrf-token'],session.csrfToken)))throw new DomainError('CSRF_REJECTED',403);
+  });
+  setup.get('/api/admin/v1/auth/activate/me',async req=>staff!.activationSession(req.cookies[setupCookie]));
+  setup.get('/api/admin/v1/auth/activate/setup',async req=>staff!.activationSetup(req.cookies[setupCookie]!));
+  setup.post('/api/admin/v1/auth/activate/password',async req=>staff!.activationPassword(req.cookies[setupCookie]!,req.body));
+  setup.post('/api/admin/v1/auth/activate/confirm',async(req,reply)=>{
+   const result=await staff!.activationConfirm(req.cookies[setupCookie]!,req.body);
+   reply.clearCookie(setupCookie,setupCookieOptions).setCookie(staffCookie,result.token,staffCookieOptions);
+   return {user:result.user,csrfToken:result.csrfToken,recoveryCodes:result.recoveryCodes};
+  });
+ });
  await app.register(async secured=>{
-  secured.addHook('onRequest',async req=>{
+  secured.addHook('onRequest',async(req,reply)=>{
    if(!staff)throw new DomainError('STAFF_UNAVAILABLE',503);
    const session=await staff.session(req.cookies[staffCookie]);
+   reply.setCookie(staffCookie,req.cookies[staffCookie]!,staffCookieOptions);
+   const route=req.routeOptions.url??'';
+   if(session.user.staffRole==='manager'&&(!/^\/api\/admin\/v1\/(auth\/(me|logout)|products(?:\/.*)?|orders(?:\/.*)?|analytics(?:\/.*)?|statistics|site-pages(?:\/.*)?|banner|media)$/.test(route)||route.endsWith('/privacy')))throw new DomainError('FORBIDDEN',403);
    if(req.method!=='GET'&&(typeof req.headers['x-csrf-token']!=='string'||!equal(req.headers['x-csrf-token'],session.csrfToken)))throw new DomainError('CSRF_REJECTED',403);
   });
   const actor=async(token:string|undefined)=>(await staff!.session(token)).user.id;
@@ -145,6 +171,9 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   secured.post('/api/admin/v1/auth/logout',async(req,reply)=>{
    await staff!.logout(req.cookies[staffCookie]!);reply.clearCookie(staffCookie,{path:'/',httpOnly:true,secure:options.secureCookies,sameSite:'strict'});return {ok:true};
   });
+  secured.get('/api/admin/v1/employees',async req=>staff!.employees(await actor(req.cookies[staffCookie])));
+  secured.post('/api/admin/v1/employees',async req=>staff!.createEmployee(await actor(req.cookies[staffCookie]),req.body));
+  secured.post('/api/admin/v1/employees/:id',async req=>staff!.changeEmployee(await actor(req.cookies[staffCookie]),z.object({id:z.uuid()}).parse(req.params).id,req.body));
   secured.get('/api/admin/v1/products',async req=>adminCatalog.list(req.query));
   const pageId=(raw:unknown)=>z.object({page:z.string().max(50)}).parse(raw).page;
   secured.get('/api/admin/v1/site-pages/:page',async req=>siteContent.get(pageId(req.params)));
