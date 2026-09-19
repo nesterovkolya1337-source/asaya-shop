@@ -1,6 +1,6 @@
 import {createStoreRequest,AuthClientError} from './auth-client.ts';
 import {parseProductContent,type ProductContent} from './backend-catalog.ts';
-export type StaffSession={user:{id:string;role:'admin'};csrfToken:string};
+export type StaffSession={user:{id:string;role:'admin';staffRole?:'owner'|'administrator'|'manager'};csrfToken:string};
 export type AdminDraft={sku:string;name:string;slug:string;content:ProductContent;regularMinor:number|null;finalMinor:number|null;weightG:number|null;widthMm:number|null;heightMm:number|null;depthMm:number|null};
 export type ProductLifecycle='draft'|'published'|'unpublished'|'deleted';
 export type AdminProduct={lifecycle?:ProductLifecycle;id:string;revision:number;active:boolean;hasDraft:boolean;publishedAt:string|null;draft:AdminDraft;stocks:Array<{warehouseId:string;name:string;active:boolean;onHand:number;reserved:number;source?:null|{kind:'cdek_ff_yml';generatedAt:string;fetchedAt:string;expiresAt:string;healthy:boolean;available:number;reportedQuantity:number}}>};
@@ -11,6 +11,11 @@ const object=(r:unknown):Record<string,unknown>=>{if(!r||typeof r!=='object'||Ar
 const uuid=(r:unknown):r is string=>typeof r==='string'&&idPattern.test(r);
 const integer=(r:unknown):r is number=>typeof r==='number'&&Number.isSafeInteger(r)&&r>=0;
 const messages:Record<string,string>={
+ OWNER_PROTECTED:'Учётную запись владельца изменять нельзя.',
+ STAFF_ALREADY_EXISTS:'Сотрудник с такой почтой уже существует.',
+ STAFF_RESET_REQUIRED:'Для этого сотрудника сначала сбросьте доступ и выдайте новый временный пароль.',
+ NEW_PASSWORD_REQUIRED:'Придумайте новый пароль, отличный от временного.',
+ INVALID_ACTIVATION:'Этот этап активации уже завершён или недоступен.',
  PRODUCT_ARCHIVED:'Товар удалён и не может быть опубликован.',
  PUBLISHED_REQUIRED_name:'У опубликованного товара обязательно название.',
  PUBLISHED_REQUIRED_description:'У опубликованного товара обязательно описание.',
@@ -39,7 +44,8 @@ export const adminError=(e:unknown)=>e instanceof AuthClientError?(messages[e.co
 export function parseStaffSession(raw:unknown):StaffSession{
  const r=object(raw),u=object(r.user);
  if(!uuid(u.id)||u.role!=='admin'||typeof r.csrfToken!=='string'||!/^[a-f0-9]{64}$/.test(r.csrfToken))throw new AuthClientError('INVALID_RESPONSE');
- return {user:{id:u.id,role:'admin'},csrfToken:r.csrfToken};
+ if(u.staffRole!==undefined&&!['owner','administrator','manager'].includes(String(u.staffRole)))throw new AuthClientError('INVALID_RESPONSE');
+ return {user:{id:u.id,role:'admin',...(u.staffRole?{staffRole:u.staffRole as 'owner'|'administrator'|'manager'}:{})},csrfToken:r.csrfToken};
 }
 export function parseAdminProduct(raw:unknown):AdminProduct{
  const r=object(raw),d=object(r.draft);

@@ -34,7 +34,8 @@ test('staff requires password plus unused TOTP; credentials encrypted, session e
  const r=(await ctx.db.pool.query('SELECT * FROM staff_credentials')).rows[0];assert.notEqual(r.password_hash,password);assert.ok(!r.totp_encrypted.includes(key));
  await a.logout(session.token);await assert.rejects(a.session(session.token),/UNAUTHENTICATED/);
  clock=new Date(clock.getTime()+30000);const next=await a.login({email:'admin@example.test',password,code:code()},'ip');
- clock=new Date(clock.getTime()+3600001);await assert.rejects(a.session(next.token),/UNAUTHENTICATED/);
+ clock=new Date(clock.getTime()+3600001);assert.equal((await a.session(next.token)).user.id,id);
+ clock=new Date(clock.getTime()+90*86400000+1);await assert.rejects(a.session(next.token),/UNAUTHENTICATED/);
 });
 test('staff failures remain rate limited and disabled users lose existing access',async()=>{
  const id=await staff(),a=auth();
