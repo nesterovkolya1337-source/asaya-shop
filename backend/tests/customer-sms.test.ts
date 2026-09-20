@@ -123,3 +123,18 @@ test('request-code shape is identical for a known profile and a new phone and do
  assert.equal((await ctx.db.pool.query('SELECT 1 FROM auth_sessions')).rowCount,0);
  assert.equal((await ctx.db.pool.query('SELECT 1 FROM users WHERE NOT disabled')).rowCount,1);
 });
+
+test('daily SMS budget survives hourly resets, phone aliases and IP changes; blocked attempts do not send',async()=>{
+ let now=new Date();const start=+now,sender=new MemorySender(),auth=new AuthService(ctx.db,secret,sender,()=>now,{},true);
+ for(let n=0;n<10;n++){
+  now=new Date(start+Math.floor(n/5)*3600_000+(n%5)*61_000);
+  await auth.request('sms',n%2?'8 (999) 111-11-11':'+79991111111','ip-'+n);
+  if(n===4){now=new Date(+now+61_000);await assert.rejects(auth.request('sms','9991111111','hour-overflow'),/RATE_LIMITED/);}
+ }
+ now=new Date(start+2*3600_000);
+ const attempts=await Promise.allSettled([auth.request('sms','9991111111','new-ip'),auth.request('sms','79991111111','another-ip')]);
+ assert.ok(attempts.every(r=>r.status==='rejected'&&/RATE_LIMITED/.test(String(r.reason))));
+ assert.equal(sender.messages.length,10);
+ now=new Date(start+86400_000);await auth.request('sms','+79991111111','tomorrow');
+ assert.equal(sender.messages.length,11);
+});

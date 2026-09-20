@@ -2,7 +2,7 @@ import {test,before,after,beforeEach} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {testDatabase} from './postgres.js';
-import {CustomerAccount} from '../src/customer-account.js';
+import {CustomerAccount,saveYcpCustomer} from '../src/customer-account.js';
 import {AuthService,type OtpSender} from '../src/auth.js';
 import {CommerceService} from '../src/commerce.js';
 import {normalizeCustomerPhone} from '../src/customer-phone.js';
@@ -20,6 +20,30 @@ async function guestOrder(phone:string,owner?:string){
 }
 test('SMS normalization in database matches login, including invalid values',async()=>{
  for(const value of ['+79991234567','8 (999) 123-45-67','9991234567','79991234567','+89991234567','phone79991234567','+7 (999) 123-45-67','123','', '  +79991234567  '])assert.equal((await ctx.db.pool.query('SELECT asaya_customer_phone($1) value',[value])).rows[0].value,normalizeCustomerPhone(value));
+});
+
+test('OTP registers a customer before any purchase, reuses normalized identity and associates a future order',async()=>{
+ let now=new Date(),code='';const sender:OtpSender={sendOtp:async input=>{code=input.code;}};
+ const auth=new AuthService(ctx.db,'s'.repeat(32),sender,()=>now,{},true),account=new CustomerAccount(ctx.db);
+ const first=await auth.request('sms','8 (999) 123-45-67','ip');
+ assert.equal((await ctx.db.pool.query('SELECT 1 FROM customer_profiles')).rowCount,0);
+ const session=await auth.verify(first.challengeId,code,'ip');
+ assert.deepEqual(await account.profile(session.user.id),{name:'',email:'',phone:'+79991234567'});
+ assert.equal((await ctx.db.pool.query('SELECT 1 FROM orders')).rowCount,0);
+ assert.equal((await auth.session(session.token)).id,session.user.id);
+ await auth.logout(session.token);await assert.rejects(auth.session(session.token),/UNAUTHENTICATED/);
+ now=new Date(+now+61000);
+ const again=await auth.request('sms','9991234567','ip');
+ const second=await auth.verify(again.challengeId,code,'ip');assert.equal(second.user.id,session.user.id);
+ assert.equal((await ctx.db.pool.query('SELECT 1 FROM customer_profiles')).rowCount,1);
+ assert.equal((await ctx.db.pool.query('SELECT 1 FROM users')).rowCount,1);
+ const order=await guestOrder('+79991234567');
+ await ctx.db.transaction(tx=>saveYcpCustomer(tx,order.id));
+ const profile=(await ctx.db.pool.query('SELECT id,user_id FROM customer_profiles')).rows[0];
+ assert.equal(profile.user_id,session.user.id);
+ assert.equal((await ctx.db.pool.query('SELECT customer_id FROM orders WHERE id=$1',[order.id])).rows[0].customer_id,profile.id);
+ await account.claim(session.user.id);
+ assert.equal((await new CommerceService(ctx.db).order(session.user.id,order.id)).id,order.id);
 });
 test('only completed SMS verification claims past guest YCP orders, idempotently; other real accounts stay isolated',async()=>{
  const past=await guestOrder('8 (999) 123-45-67'),other=await guestOrder('+79990000000');

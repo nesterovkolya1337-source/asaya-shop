@@ -9,6 +9,10 @@ test('customer phone has one canonical identity across accepted Russian number f
 test('OTP limits are configurable within bounds and cannot silently disable throttling',()=>{
  assert.equal(otpPolicy().ttlSeconds,300);
  assert.equal(otpPolicy().resendSeconds,60);assert.equal(otpPolicy().maxAttempts,5);
+ assert.equal(otpPolicy().sendPerPhonePerDay,10);
+ assert.equal(otpPolicyFromEnv({OTP_SEND_PER_PHONE_PER_DAY:'8'}).sendPerPhonePerDay,8);
+ assert.throws(()=>otpPolicyFromEnv({OTP_SEND_PER_PHONE_PER_DAY:'0'}));
+ assert.throws(()=>otpPolicyFromEnv({OTP_RESEND_SECONDS:'59'}));
  assert.throws(()=>otpPolicyFromEnv({OTP_MAX_ATTEMPTS:'6'}));
  assert.equal(otpPolicyFromEnv({OTP_TTL_SECONDS:'120',OTP_MAX_ATTEMPTS:'3',OTP_RESEND_SECONDS:'90'}).maxAttempts,3);
  for(const env of [{OTP_TTL_SECONDS:'0'},{OTP_MAX_ATTEMPTS:'0'},{OTP_RESEND_SECONDS:'0'},{OTP_SEND_PER_PHONE_PER_HOUR:'9999'},{OTP_TTL_SECONDS:'NaN'},{OTP_TTL_SECONDS:''}])assert.throws(()=>otpPolicyFromEnv(env));

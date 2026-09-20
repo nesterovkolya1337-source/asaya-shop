@@ -117,6 +117,7 @@ export function ServerAccountView({smsOnly=false}:{smsOnly?:boolean}) {
     {view==='error' && <button className={styles.logoutButton} onClick={()=>void refresh()} type="button">Проверить вход ещё раз</button>}
     {view==='signed-in' && <><span>Вход подтверждён. Сессия сохранится после обновления страницы.</span><button className={styles.logoutButton} disabled={busy} onClick={()=>void logout()} type="button">{busy?'Выходим…':'Выйти'}</button></>}
     {view==='guest' && (!challenge ? <>
+     {smsOnly&&<p>Вход и регистрация — одно и то же. Если вы здесь впервые, мы автоматически создадим личный кабинет после подтверждения номера телефона.</p>}
      {!smsOnly&&<div className={styles.authChannels} role="group" aria-label="Способ получения кода">
       <button aria-pressed={channel==='email'} disabled={busy} onClick={()=>{setChannel('email');setDestination('');setNotice('');}} type="button">По почте</button>
       <button aria-pressed={channel==='sms'} disabled={busy} onClick={()=>{setChannel('sms');setDestination('');setNotice('');}} type="button">По SMS</button>
@@ -125,7 +126,7 @@ export function ServerAccountView({smsOnly=false}:{smsOnly?:boolean}) {
       <label>{channel==='email'?'Email':'Телефон'}<input autoComplete={channel==='email'?'email':'tel'} disabled={busy} maxLength={channel==='sms'?32:254}
        onChange={event=>setDestination(event.target.value)} placeholder={channel==='email'?'name@example.com':'+7 999 123-45-67'}
        required type={channel==='email'?'email':'tel'} value={destination}/></label>
-      <button disabled={busy||(smsOnly&&!smsAvailable)} type="submit">{busy?'Отправляем…':'Получить код'}</button>
+      <button disabled={busy||(smsOnly&&!smsAvailable)||(channel==='sms'&&!normalizeCustomerPhone(destination))} type="submit">{busy?'Отправляем…':'Получить код'}</button>
      </form>
      <span>{smsOnly&&!smsAvailable?'Вход по SMS пока недоступен. Каталог открыт для просмотра.':'Подтвердите номер кодом из SMS. После входа вы сможете увидеть свои заказы.'}</span>
      <Link href="/legal/privacy/">Политика конфиденциальности</Link>

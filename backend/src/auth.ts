@@ -44,6 +44,7 @@ export class AuthService {
    const latest=(await tx.query('SELECT created_at FROM otp_challenges WHERE channel=$1 AND destination=$2 ORDER BY created_at DESC LIMIT 1',[channel,target])).rows[0];
    if(latest&&now.getTime()-new Date(latest.created_at).getTime()<this.policy.resendSeconds*1000) throw new DomainError('OTP_COOLDOWN',429);
    await limit(tx,`otp-target:${mac(this.secret,channel+':'+target)}`,this.policy.sendPerPhonePerHour,3600,now);
+   if(channel==='sms')await limit(tx,`otp-target-day:${mac(this.secret,channel+':'+target)}`,this.policy.sendPerPhonePerDay,86400,now);
    await tx.query('UPDATE otp_challenges SET consumed_at=$3 WHERE channel=$1 AND destination=$2 AND consumed_at IS NULL',[channel,target,now]);
    await tx.query(`INSERT INTO otp_challenges(id,channel,destination,code_mac,expires_at,delivery_status,created_at)
     VALUES($1,$2,$3,$4,$5,'pending',$6)`,[id,channel,target,mac(this.secret,`${id}:${code}`),new Date(now.getTime()+this.policy.ttlSeconds*1000),now]);
