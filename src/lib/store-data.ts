@@ -1,3 +1,4 @@
+import type {PdpContent} from '../../backend/src/pdp-content';
 import { assetPath } from "@/lib/asset-path";
 
 export type ProductCategory = "hair" | "body" | "face" | "sets";
@@ -5,6 +6,7 @@ export type ProductCategory = "hair" | "body" | "face" | "sets";
 export const badgeOptions = ["", "Бестселлер", "Новинка", "Выбор ASAYA", "Лимитированная серия"] as const;
 
 export type Product = {
+  pdp?:PdpContent;
   imageCrops?:Record<string,string>;
   testMode?:boolean;
   placement?: {catalogOrder:number;bestsellerOrder:number|null;newOrder:number|null};

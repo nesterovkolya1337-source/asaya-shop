@@ -5,3 +5,12 @@
 .orderList{list-style:none;padding:0;display:grid;gap:14px}.orderList>li{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border:1px solid #ddd;border-radius:12px;padding:16px}.main nav[aria-label="Разделы админки"]{justify-content:flex-start;margin:24px 0}.main button[aria-current="page"]{background:#252525;color:white}
 
 .sidebar .productRow{display:flex;align-items:center;gap:12px;margin:0}.sidebar .thumbnail{display:flex;align-items:center;justify-content:center;width:56px;height:64px;flex:0 0 56px;object-fit:contain;background:#eeece8;border-radius:8px;margin:0;font-size:10px}.productRow strong{overflow-wrap:anywhere}.diagnostics{overflow-wrap:anywhere}.diagnostics dt{font-weight:600;margin-top:12px}.diagnostics dd{margin:4px 0 12px}
+
+.productToolbar {position:sticky;top:0;z-index:12;background:#fff;padding:16px;border-bottom:1px solid #ddd}
+.productTabs {display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.productTabs button[aria-pressed="true"] {background:#202020;color:white}
+.editor [hidden] {display:none!important}
+.dangerZone {margin-top:32px;border:1px solid #ba3030;padding:20px;border-radius:12px;background:#fff7f7}
+.dangerZone button {background:#a61919;color:#fff}
+.confirmModal {position:fixed;inset:25% 20%;z-index:100;background:white;box-shadow:0 0 0 100vmax #0008;padding:32px;border-radius:16px;overflow:auto}
+@media(max-width:700px){.confirmModal{inset:15% 5%}.productToolbar{padding:10px}.productTabs{gap:4px}}

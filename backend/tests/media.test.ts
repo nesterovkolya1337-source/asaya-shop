@@ -76,7 +76,7 @@ test('upload retries persist one immutable image and one audit event, including 
  await assert.rejects(service.upload(actor,{id:randomUUID(),data:'!!!!'}),/INVALID_IMAGE/);
  await assert.rejects(service.get(randomUUID()),/MEDIA_NOT_FOUND/);
 });
-test('uploaded photo references must exist; published replacement is live; removing a reference retains bytes',async()=>{
+test('uploaded photo references must exist; replacement stays draft until publication; removing a reference retains bytes',async()=>{
  const media=new MediaService(ctx.db),catalog=new AdminCatalog(ctx.db),commerce=new CommerceService(ctx.db),id=randomUUID();
  const image=await media.upload(actor,{id:randomUUID(),data:(await png()).toString('base64')});
  const d={revision:0,sku:'PHOTO',name:'Фото',slug:'photo-product',regularMinor:30000,finalMinor:25000,weightG:null,widthMm:null,heightMm:null,depthMm:null,
@@ -86,7 +86,7 @@ test('uploaded photo references must exist; published replacement is live; remov
  await catalog.save(actor,id,d);await catalog.publish(actor,id,{revision:1});
  assert.equal((await commerce.catalog())[0]!.content.image,image.url);
  await catalog.save(actor,id,{...d,revision:2,content:{...d.content,image:'/images/replacement.webp'}});
- assert.equal((await commerce.catalog())[0]!.content.image,'/images/replacement.webp');
+ assert.equal((await commerce.catalog())[0]!.content.image,image.url);
  await catalog.publish(actor,id,{revision:3});assert.equal((await commerce.catalog())[0]!.content.image,'/images/replacement.webp');
  assert.ok((await media.get(image.id)).content.length);
 });
