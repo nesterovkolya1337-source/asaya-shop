@@ -84,7 +84,7 @@ export function ServerOrders({session,onSessionExpired}:{session:ServerSession;o
   <div className={styles.heading}><h2 id="orders-title">Мои заказы</h2><button disabled={busy} onClick={()=>void load()} type="button">Обновить список</button></div>
   {busy&&!loaded&&<p role="status">Загружаем заказы…</p>}
   {error&&<p className={styles.notice} role="alert">{error}</p>}
-  {loaded&&!items.length&&!error&&<p className={styles.empty}>У вас пока нет заказов.</p>}
+  {loaded&&!items.length&&!error&&<div className={styles.empty}><h3>У вас пока нет заказов</h3><p>Здесь появятся заказы, оформленные на ваш подтверждённый номер телефона.</p></div>}
   <div className={styles.list}>
    {items.map(order=><article className={styles.card} key={order.id}>
     <div><h3>{order.public_number}</h3><p>{date(order.created_at)}</p></div>

@@ -5,8 +5,9 @@ import {useCallback,useEffect,useRef,useState,type FormEvent} from 'react';
 import {createAuthClient,type AuthChannel,type OtpChallenge,type ServerSession} from '@/lib/auth-client';
 import {assetPath} from '@/lib/asset-path';
 import {ServerOrders} from './server-orders';
-import styles from './account-view.module.css';
-import {useShop} from './shop-provider';
+import styles from './customer-account.module.css';
+import {CustomerPhoneInput} from './customer-phone-input';
+import {displayPhone} from '@/lib/customer-phone-input';
 import {normalizeCustomerPhone} from '../../backend/src/customer-phone';
 import {CustomerProfileForm} from './customer-profile';
 
@@ -15,8 +16,6 @@ type Challenge=OtpChallenge & {destination:string;channel:AuthChannel;expiresAt:
 type View='checking'|'guest'|'signed-in'|'error';
 
 export function ServerAccountView({smsOnly=false}:{smsOnly?:boolean}) {
- const {checkoutEnabled:cartEnabled,yandexCheckoutEnabled}=useShop();
- const checkoutEnabled=cartEnabled&&!yandexCheckoutEnabled;
  const [view,setView]=useState<View>('checking');
  const [session,setSession]=useState<ServerSession|null>(null);
  const [channel,setChannel]=useState<AuthChannel>(smsOnly?'sms':'email');
@@ -110,28 +109,25 @@ export function ServerAccountView({smsOnly=false}:{smsOnly?:boolean}) {
  const retrySeconds=challenge?Math.max(0,Math.ceil((challenge.retryAt-now)/1000)):0;
  const expired=challenge!==null&&now>=challenge.expiresAt;
  return <main className={styles.main}>
-  <header className={styles.heading}><p>ASAYA / Профиль</p><h1>Личный кабинет</h1><span>{smsOnly?'Вход по номеру телефона и коду из SMS.':'Вход по одноразовому коду.'}</span></header>
-  <div className={styles.dashboard}>
+  <header className={styles.heading}><div><p>ASAYA / Профиль</p><h1>Личный кабинет</h1>{view==='signed-in'&&<span>Рады видеть вас в ASAYA</span>}</div>{view==='signed-in'&&<button className={styles.logoutButton} disabled={busy} onClick={()=>void logout()} type="button">{busy?'Выходим…':'Выйти'}</button>}</header>
+  {view!=='signed-in'&&<div className={styles.dashboard}>
    <section className={styles.loginCard} aria-labelledby="server-account-title" aria-busy={busy||view==='checking'}>
-    <h2 id="server-account-title">{view==='signed-in'?'Вы вошли в аккаунт':view==='checking'?'Проверяем вход…':'Вход в аккаунт'}</h2>
-    {view==='error' && <button className={styles.logoutButton} onClick={()=>void refresh()} type="button">Проверить вход ещё раз</button>}
-    {view==='signed-in' && <><span>Вход подтверждён. Сессия сохранится после обновления страницы.</span><button className={styles.logoutButton} disabled={busy} onClick={()=>void logout()} type="button">{busy?'Выходим…':'Выйти'}</button></>}
+    <h2 id="server-account-title">{view==='checking'?'Загружаем…':challenge?'Введите код из SMS':smsOnly?'Войдите по номеру телефона':'Вход в аккаунт'}</h2>
+    {view==='error' && <button className={styles.logoutButton} onClick={()=>void refresh()} type="button">Попробовать снова</button>}
     {view==='guest' && (!challenge ? <>
-     {smsOnly&&<p>Вход и регистрация — одно и то же. Если вы здесь впервые, мы автоматически создадим личный кабинет после подтверждения номера телефона.</p>}
+     {smsOnly&&<p>Если вы у нас впервые, личный кабинет создастся автоматически после подтверждения номера.</p>}
      {!smsOnly&&<div className={styles.authChannels} role="group" aria-label="Способ получения кода">
       <button aria-pressed={channel==='email'} disabled={busy} onClick={()=>{setChannel('email');setDestination('');setNotice('');}} type="button">По почте</button>
       <button aria-pressed={channel==='sms'} disabled={busy} onClick={()=>{setChannel('sms');setDestination('');setNotice('');}} type="button">По SMS</button>
      </div>}
      <form onSubmit={sendCode}>
-      <label>{channel==='email'?'Email':'Телефон'}<input autoComplete={channel==='email'?'email':'tel'} disabled={busy} maxLength={channel==='sms'?32:254}
-       onChange={event=>setDestination(event.target.value)} placeholder={channel==='email'?'name@example.com':'+7 999 123-45-67'}
-       required type={channel==='email'?'email':'tel'} value={destination}/></label>
+      <label>{channel==='email'?'Email':'Телефон'}{channel==='sms'?<CustomerPhoneInput value={destination} onChange={setDestination} disabled={busy}/>:<input autoComplete="email" disabled={busy} maxLength={254} onChange={event=>setDestination(event.target.value)} placeholder="name@example.com" required type="email" value={destination}/>}</label>
       <button disabled={busy||(smsOnly&&!smsAvailable)||(channel==='sms'&&!normalizeCustomerPhone(destination))} type="submit">{busy?'Отправляем…':'Получить код'}</button>
      </form>
-     <span>{smsOnly&&!smsAvailable?'Вход по SMS пока недоступен. Каталог открыт для просмотра.':'Подтвердите номер кодом из SMS. После входа вы сможете увидеть свои заказы.'}</span>
+     {smsOnly&&!smsAvailable&&<p role="status">Вход по SMS пока недоступен. Попробуйте позже.</p>}
      <Link href="/legal/privacy/">Политика конфиденциальности</Link>
     </> : <>
-     <span>Код отправлен на {challenge.destination}. Срок действия — {Math.ceil(challenge.expiresInSeconds/60)} мин.</span>
+     <p>Отправили код на <strong>{challenge.channel==='sms'?displayPhone(challenge.destination):challenge.destination}</strong>. Код действует {Math.ceil(challenge.expiresInSeconds/60)} мин.</p>
      <form onSubmit={verify}>
       <label>Код из 6 цифр<input autoComplete="one-time-code" disabled={busy||expired} inputMode="numeric" maxLength={6}
        onChange={event=>setCode(event.target.value.replace(/\D/g,''))} pattern="[0-9]{6}" required type="text" value={code}/></label>
@@ -139,15 +135,13 @@ export function ServerAccountView({smsOnly=false}:{smsOnly?:boolean}) {
      </form>
      {expired && <div className={styles.notice} role="status">Срок действия кода истёк. Запросите новый.</div>}
      <div className={styles.authChannels}>
-      <button disabled={busy||retrySeconds>0} onClick={()=>void sendCode()} type="button">{retrySeconds>0?`Новый код через ${retrySeconds} с`:'Отправить код ещё раз'}</button>
+      <button disabled={busy||retrySeconds>0} onClick={()=>void sendCode()} type="button">{retrySeconds>0?`Новый код через ${retrySeconds} с`:'Получить новый код'}</button>
       <button disabled={busy} onClick={()=>{setChallenge(null);setCode('');setNotice('');}} type="button">Изменить номер</button>
      </div>
-     <button className={styles.logoutButton} disabled={busy} onClick={()=>void refresh()} type="button">Проверить состояние входа</button>
     </>)}
     {notice && <div className={styles.notice} role="alert">{notice}</div>}
    </section>
-   <section className={styles.orders}><p>ASAYA</p><h2>Ваш уход начинается здесь</h2><span>{yandexCheckoutEnabled?'Покупки оформляются в Яндексе. Здесь отображаются заказы, привязанные к аккаунту сайта.':view==='signed-in'?(checkoutEnabled?'Ваши заказы, их состав и статус доступны ниже. Оформление покупки доступно в корзине.':'Ваши заказы, их состав и статус доступны ниже. Новые покупки пока закрыты.'):'Войдите, чтобы посмотреть свои заказы. Каталог доступен для просмотра.'}</span><div className={styles.orderActions}><Link href="/catalog">Перейти в каталог</Link>{checkoutEnabled&&view==='signed-in'&&<Link href="/cart">Перейти в корзину</Link>}</div></section>
-  </div>
-  {view==='signed-in'&&session&&<>{smsOnly&&<CustomerProfileForm key={'profile:'+session.user.id} session={session} onExpired={refresh}/>}<div id="orders"><ServerOrders key={session.user.id} session={session} onSessionExpired={refresh}/></div></>}
+  </div>}
+  {view==='signed-in'&&session&&<>{notice&&<div className={styles.notice} role="alert">{notice}</div>}<div id="orders"><ServerOrders key={session.user.id} session={session} onSessionExpired={refresh}/></div>{smsOnly&&<CustomerProfileForm key={'profile:'+session.user.id} session={session} onExpired={refresh}/>}</>}
  </main>;
 }

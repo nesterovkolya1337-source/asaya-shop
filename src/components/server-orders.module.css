@@ -1,6 +1,6 @@
-.section { padding: 42px 0; scroll-margin-top: 110px; }
+.section { padding: 8px 0 28px; scroll-margin-top: 110px; }
 .heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
-.heading h2 { font-size: 34px; font-weight: 500; }
+.heading h2 { font-size: 28px; font-weight: 500; }
 .section button { border: 1px solid var(--color-foreground); border-radius: 999px; background: white; padding: 12px 20px; cursor: pointer; }
 .section button:disabled { opacity: .5; cursor: default; }
 .section button:focus-visible { outline: 2px solid var(--color-foreground); outline-offset: 3px; }
@@ -25,6 +25,9 @@
 .totals div:last-child { font-weight: 600; }
 .totals dd { margin: 0; }
 .notice,.empty,.confirm { padding: 20px; border-radius: 14px; background: #f5eee4; line-height: 1.5; }
+.empty {padding:36px 28px;background:#faf7f9;border:1px solid #ece6ea;}
+.empty h3 {font-size:22px;font-weight:500;margin:0 0 10px;}
+.empty p {font-size:15px;color:#626262;max-width:520px;margin:0;}
 .confirm button { margin: 12px 8px 0 0; }
 .timeline {display:flex;flex-wrap:wrap;list-style:none;padding:0;margin:24px 0;gap:14px;}
 .timeline li {display:grid;gap:6px;border-left:3px solid #f4cce6;padding:8px 14px;}
