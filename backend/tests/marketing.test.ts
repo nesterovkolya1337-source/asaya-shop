@@ -22,7 +22,7 @@ test('quantity units, repeated SKU, sale price, sets, downward transitions and c
  const q=priceCart([{...line,quantity:3},set],defaults);assert.equal(q.eligibleUnits,3);assert.equal(q.items[1]!.unitMinor,150000);assert.equal(q.subtotalMinor,366000);
  assert.equal(priceCart([line],{...defaults,freeShippingMinor:120000}).shippingRemainingMinor,40000);
  assert.equal(priceCart([{...line,quantity:2}],{...defaults,twoPercent:8}).items[0]!.unitMinor,73600);
- assert.equal(priceCart([{...line,quantity:3,finalMinor:79900}],defaults).items[0]!.unitMinor,71900);
+ assert.equal(priceCart([{...line,quantity:3,finalMinor:79900}],defaults).items[0]!.unitMinor,71910);
 });
 test('draft/live/default separation, manager permissions, conflict and audit',async()=>{
  const db=ctx.db,a=new StaffAuth(db,'marketing-test-secret-with-at-least-32-characters');
@@ -73,3 +73,17 @@ test('canonical published classification and price shared by cart, button, baske
  assert.equal((await app.inject({method:'POST',url:'/api/admin/v1/marketing/publish',headers:{origin:'http://localhost:3200'},payload:{revision:0}})).statusCode,401);
  }finally{await app.close();}
 });
+
+ test('kopecks survive canonical cart totals and redirect without relaxing separate YCP contracts',async()=>{
+ const db=ctx.db;await db.pool.query("UPDATE product_prices SET final_minor=79900 WHERE product_id=(SELECT id FROM products WHERE sku='M-SKU')");
+ const items=[{sku:'M-SKU',quantity:3}],q=await cartPricing(db.pool,{items});
+ assert.equal(q.items[0]!.unitMinor,71910);assert.equal(q.subtotalMinor,215730);
+ const warehouse=(await db.pool.query("SELECT id FROM warehouses WHERE code='MARKETING'")).rows[0].id;
+ const settings:YcpSettings={accountId:'kopecks',environment:'test',publicOrigin:'https://asaya.example.test',button:{enabled:true},warehouses:[{warehouseId:warehouse,address:'Test',phone:'+79990000000',servedLocalities:['*'],ycpDeliveryEnabled:true}]};
+ const result=await new YandexFeed(db,settings).checkoutLink({items});
+ const data=JSON.parse(Buffer.from(new URL(result.url).searchParams.get('data')!,'base64').toString());
+ assert.equal(data.items[0].final_price,719.10);assert.equal(Math.round(data.items[0].final_price*100)*3,q.subtotalMinor);
+ assert.equal((await db.pool.query("SELECT final_minor FROM product_prices WHERE product_id=(SELECT id FROM products WHERE sku='M-SKU')")).rows[0].final_minor,'79900');
+ // These separately documented integer contracts are deliberately NOT widened by the redirect change.
+ await assert.rejects(new YcpCatalog(db,'kopeck-test-token-at-least-32-characters',settings).basket({items:[{id:'M-SKU',quantity:3}],offers_id_from_merchant_center:false,locality:'Москва',is_health_check:false}),/YCP_PRICE_NOT_REPRESENTABLE/);
+ });
