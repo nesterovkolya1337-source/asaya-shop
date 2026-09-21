@@ -135,6 +135,8 @@ test('YCP online placement is atomic and idempotent and cannot be cancelled as a
  const f=await fixture();await f.service.create(f.body);
  assert.equal(await count('customer_profiles'),0);
  await Promise.all(Array.from({length:5},()=>f.service.placed(f.placement)));
+ assert.equal((await f.db.pool.query("SELECT points FROM loyalty_ledger WHERE type='purchase_cashback'")).rows[0].points,'15');
+ assert.equal((await f.db.pool.query("SELECT count(*)::int n FROM loyalty_ledger WHERE type='purchase_cashback'")).rows[0].n,1);
  const o=await order();assert.equal(o.status,'placed');assert.equal(o.payment_status,'paid');assert.equal(o.external_ycp_order_id,'ycp-order-1');assert.equal(await count('payments'),1);
  assert.equal(await count('customer_profiles'),1);assert.equal(o.customer_phone_normalized,'+79990000000');assert.ok(o.customer_id);
  assert.equal((await f.db.pool.query('SELECT user_id FROM customer_profiles')).rows[0].user_id,null);

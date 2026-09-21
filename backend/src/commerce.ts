@@ -1,3 +1,4 @@
+import {earnLoyalty} from './loyalty.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { Database,lock,type Tx } from './db.js';
@@ -335,6 +336,7 @@ export class CommerceService {
     await tx.query("INSERT INTO order_status_history(id,order_id,kind,status,source) VALUES($1,$2,'payment','paid',$3)",[randomUUID(),o.id,e.provider]);
     await event(tx,o.id,o.status==='cancelled'?'payment.late_review':'order.paid');
    }
+   await earnLoyalty(tx,o.id);
    await tx.query('INSERT INTO integration_inbox(provider,account_id,environment,event_id,payload_hash) VALUES($1,$2,$3,$4,$5)',[e.provider,e.accountId,e.environment,e.eventId,digest]);
   });
  }

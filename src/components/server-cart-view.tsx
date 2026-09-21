@@ -58,6 +58,7 @@ export function ServerCartView(){
  <button aria-label={'Увеличить количество '+(p?.name??'товара')} disabled={catalogStatus!=='ready'||!purchasableQuantity||!p||quantity>=p.stock||quantity>=100} onClick={()=>changeQuantity(id,quantity+1)}>+</button>
  </div><button className={cartStyles.remove} onClick={()=>changeQuantity(id,0)}>Удалить</button></article>):<p>Корзина пока пуста.</p>}
  {rows.length>0&&<><p>Товары к оформлению: <strong>{quote?rubles(quote.subtotalMinor):'Рассчитываем…'}</strong></p>
+ {quote&&(quote.loyalty?<section aria-label="Бонусы в корзине"><p>Ваш баланс: {quote.loyalty.balance} баллов · Максимум по условиям программы: {quote.loyalty.maximum} баллов</p><p>Списание баллов при оформлении пока недоступно.</p></section>:<p><Link href="/account/">Войдите, чтобы видеть бонусный баланс</Link></p>)}
  {quote&&<>{quote.discountMinor>0&&<p>Скидка за количество: {rubles(quote.discountMinor)}</p>}{quantityProgress(quote)&&<p role="status">{quantityProgress(quote)}</p>}{valid&&<p>{quote.shippingRemainingMinor===0?'Бесплатная доставка доступна':'До бесплатной доставки осталось '+rubles(quote.shippingRemainingMinor)}. Стандартная доставка в ПВЗ СДЭК. Итоговые условия — при оформлении.</p>}</>}
  {!valid&&catalogStatus==='ready'&&<p role="status">Сейчас в корзине нет товаров, доступных к оформлению.</p>}
  {yandexCheckoutEnabled&&<YandexCheckoutButton key={basket.signature} items={items} disabled={catalogStatus!=='ready'||!valid||!quote||!!pricingError} prepareItems={prepareItems} onConflict={conflict} label="Оформить в Яндексе" />}

@@ -10,7 +10,7 @@ import {YcpCatalog,type YcpSettings} from '../src/ycp-catalog.js';
 import {YcpCheckout} from '../src/ycp-checkout.js';
 import {buildApp} from '../src/app.js';
 import {DisabledOtpSender} from '../src/auth.js';
-const defaults={twoPercent:5,threePercent:10,freeShippingMinor:100000};
+const defaults={loyalty:{cashbackPercent:3,maxRedemptionPercent:20},twoPercent:5,threePercent:10,freeShippingMinor:100000};
 let ctx:Awaited<ReturnType<typeof testDatabase>>;
 before(async()=>{ctx=await testDatabase();});after(async()=>ctx?.stop());
 test('quantity units, repeated SKU, sale price, sets, downward transitions and configurable shipping',()=>{

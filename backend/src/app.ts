@@ -1,3 +1,4 @@
+import {Loyalty,loyaltyAmounts} from './loyalty.js';
 import {Marketing} from './marketing.js';
 import {cartPricing} from './cart-pricing.js';
 import {StorefrontControls} from './storefront-controls.js';
@@ -220,7 +221,14 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   secured.get('/api/admin/v1/products/:id/history',async req=>adminCatalog.history(id(req.params)));
  });
  app.post('/api/store/v1/analytics/events',{bodyLimit:8192},async req=>new ProductAnalytics(options.db).ingest(req.body));
- app.post('/api/store/v1/cart/pricing',async req=>cartPricing(options.db.pool,req.body));
+ app.post('/api/store/v1/cart/pricing',async req=>{
+  const quote=await cartPricing(options.db.pool,req.body);
+  try{
+   const user=await auth.session(req.cookies[cookieName]);
+   const loyalty=await new Loyalty(options.db).account(user.id);
+   return {...quote,loyalty:{balance:loyalty.balance,maximum:loyaltyAmounts(quote.subtotalMinor,loyalty.balance,0,quote.settings.loyalty).maximum,redemptionAvailable:false}};
+  }catch(e){if(e instanceof DomainError&&e.code==='UNAUTHENTICATED')return {...quote,loyalty:null};throw e;}
+ });
  app.get('/api/store/v1/banner',async()=>{const {revision,...banner}=await controls.banner();return banner;});
  app.get('/health/live',async()=>({status:'ok'}));
  if(options.cdekTracking)app.post('/api/integrations/cdek/:key',{config:{cdekWebhook:true}},async req=>{await options.cdekTracking!.service.webhook(req.body);return {ok:true};});
@@ -304,6 +312,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   protectedApp.post('/api/store/v1/auth/logout',async(req,reply)=>{
    await auth.logout(req.cookies[cookieName]!);reply.clearCookie(cookieName,cookieOptions);return {ok:true};
   });
+  protectedApp.get('/api/store/v1/account/loyalty',async req=>{const user=await auth.session(req.cookies[cookieName]);await account.claim(user.id);return new Loyalty(options.db).account(user.id);});
   protectedApp.get('/api/store/v1/account/profile',async req=>{const user=await auth.session(req.cookies[cookieName]);return account.profile(user.id);});
   protectedApp.put('/api/store/v1/account/profile',async req=>{const user=await auth.session(req.cookies[cookieName]);return account.save(user.id,req.body);});
   protectedApp.post('/api/store/v1/delivery/quotes',async req=>{

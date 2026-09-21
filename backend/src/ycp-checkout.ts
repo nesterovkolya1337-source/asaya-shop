@@ -1,3 +1,4 @@
+import {snapshotLoyalty,earnLoyalty} from './loyalty.js';
 import {priceRows} from './cart-pricing.js';
 import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
@@ -94,6 +95,7 @@ export class YcpCheckout {
     JSON.stringify({name:body.customer.full_name,phone:body.customer.phone,email:body.customer.email,source:'ycp'}),
     JSON.stringify({source:'ycp',label:body.delivery.service_display_name??body.delivery.service_type,address:{city:address.locality??'',address:[address.address??(address.pickup_point_id?`ПВЗ ${address.pickup_point_id}`:undefined),address.apartment&&`кв. ${address.apartment}`,address.entrance&&`подъезд ${address.entrance}`,address.floor&&`этаж ${address.floor}`,address.intercom&&`домофон ${address.intercom}`].filter(Boolean).join(', ')},ycp:body.delivery}),
     JSON.stringify({source:'ycp',localConsentNotAsserted:true}),at,guest]);
+   await snapshotLoyalty(tx,order,subtotal);
    for(const i of body.items){const row=rows.find(r=>r.sku===i.id)!;
     await tx.query('INSERT INTO order_items(order_id,product_id,sku,name_snapshot,quantity,unit_minor,line_minor) VALUES($1,$2,$3,$4,$5,$6,$7)',[order,row.id,row.sku,row.name,i.quantity,row.final_minor,money(money(row.final_minor)*i.quantity)]);
     await tx.query('UPDATE inventory_balances SET reserved=reserved+$3 WHERE product_id=$1 AND warehouse_id=$2',[row.id,body.warehouse_id,i.quantity]);
@@ -154,6 +156,7 @@ export class YcpCheckout {
    const payment=body.payment_method==='online'?'paid':'pending';
    await tx.query("UPDATE orders SET status='placed',payment_status=$2,updated_at=$3 WHERE id=$1",[row.order_id,payment,this.clock()]);
    await tx.query("UPDATE checkout_sessions SET status='placed' WHERE id=$1",[row.checkout_id]);
+   if(payment==='paid')await earnLoyalty(tx,row.order_id);
    await history(tx,row.order_id,'order','placed');if(payment==='paid')await history(tx,row.order_id,'payment','paid');
    await notify(tx,row.order_id,payment==='paid'?'order.paid':'ycp.order.placed');return false;
   });

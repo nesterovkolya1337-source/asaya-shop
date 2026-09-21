@@ -3,12 +3,13 @@ import {useEffect,useState} from 'react';
 import {AuthClientError,createAuthClient,type CustomerProfile,type ServerSession} from '@/lib/auth-client';
 import {assetPath} from '@/lib/asset-path';
 import {displayPhone} from '@/lib/customer-phone-input';
+import {CustomerLoyalty} from './customer-loyalty';
 import {ServerOrders} from './server-orders';
 import {CustomerProfileForm} from './customer-profile';
 import styles from './customer-dashboard.module.css';
 
 const auth=createAuthClient(assetPath('/api/store/v1'));
-const sections=[{id:'overview',label:'Обзор'},{id:'orders',label:'Мои заказы'},{id:'profile',label:'Профиль'}] as const;
+const sections=[{id:'overview',label:'Обзор'},{id:'orders',label:'Мои заказы'},{id:'profile',label:'Профиль'},{id:'bonuses',label:'Бонусы'}] as const;
 type Section=typeof sections[number]['id'];
 export function CustomerDashboard({session,onExpired,onLogout,busy}:{session:ServerSession;onExpired:()=>void;onLogout:()=>void;busy:boolean}) {
  const [section,setSection]=useState<Section>('overview');
@@ -36,6 +37,7 @@ export function CustomerDashboard({session,onExpired,onLogout,busy}:{session:Ser
     <section className={styles.profileSummary} aria-label="Кратко о профиле"><div><h3>Ваш профиль</h3>{profile?<p><span className={styles.verified}>Телефон подтверждён</span><br/>{displayPhone(profile.phone)}</p>:<p>{error||'Загружаем профиль…'}</p>}</div><button type="button" onClick={()=>setSection('profile')}>Изменить данные</button></section>
    </>}
    {section==='orders'&&<ServerOrders key="orders" session={session} onSessionExpired={onExpired}/>}
+   {section==='bonuses'&&<CustomerLoyalty onExpired={onExpired}/>}
    {section==='profile'&&<CustomerProfileForm session={session} onExpired={onExpired} onSaved={setProfile}/>}
   </div>
  </div>;
