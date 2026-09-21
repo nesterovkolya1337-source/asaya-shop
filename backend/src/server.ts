@@ -12,14 +12,14 @@ import {OrderTracking} from './order-tracking.js';
 import {CdekFulfillmentClient} from './cdek-fulfillment.js';
 import {FulfillmentDispatch,type FulfillmentBinding} from './fulfillment-dispatch.js';
 import {runFulfillmentWorker} from './fulfillment-worker.js';
-import {CdekStockFeed} from './cdek-stock-feed.js';
+import {createStockSource} from './cdek-stock-source.js';
 import {StockSync,runStockWorker} from './stock-sync.js';
 const c=config();
 // config() keeps foundation mode out of production; ycp explicitly enables only
 // the authenticated Yandex protocol, while its public buy button remains separate.
 const ycp=c.YCP_TOKEN&&c.YCP_SETTINGS_FILE?{token:c.YCP_TOKEN,settings:JSON.parse(await readFile(c.YCP_SETTINGS_FILE,'utf8'))}:undefined;
 const db=new Database(c.DATABASE_URL);
-const stock=c.CDEK_STOCK_SETTINGS_FILE?new StockSync(db,new CdekStockFeed(JSON.parse(await readFile(c.CDEK_STOCK_SETTINGS_FILE,'utf8')))):undefined;
+const stock=c.CDEK_STOCK_SETTINGS_FILE?new StockSync(db,createStockSource(JSON.parse(await readFile(c.CDEK_STOCK_SETTINGS_FILE,'utf8')))):undefined;
 if(stock&&c.NODE_ENV==='production'&&stock.source.settings.environment!=='production')throw new Error('Production requires a production stock source');
 if(c.cdekTracking&&(!ycp||ycp.settings.environment!==c.cdekTracking.settings.environment))throw new Error('CDEK notifications require the matching YCP environment');
 const tracking=c.cdekTracking?new OrderTracking(db,new CdekDeliveryClient(c.cdekTracking.settings),{accountId:c.cdekTracking.settings.account,environment:c.cdekTracking.settings.environment,ycpAccountId:ycp!.settings.accountId}):undefined;

@@ -40,6 +40,9 @@ test('admin mutations carry server revision and CSRF; malformed success and conf
 test('admin product validates stock reservations and session lookup distinguishes errors from guests',async()=>{
  const p={id,revision:2,active:true,hasDraft:true,publishedAt:null,draft,stocks:[{warehouseId:id,name:'Test',active:true,onHand:3,reserved:2}]};
  assert.equal(parseAdminProduct(p).stocks[0].reserved,2);
+ const source={kind:'cdek_ff_api',generatedAt:'2026-09-21T12:00:00Z',fetchedAt:'2026-09-21T12:00:00Z',expiresAt:'2026-09-21T12:15:00Z',healthy:true,available:1,reportedQuantity:3};
+ assert.equal(parseAdminProduct({...p,stocks:[{...p.stocks[0],source}]}).stocks[0].source.kind,'cdek_ff_api');
+ assert.throws(()=>parseAdminProduct({...p,stocks:[{...p.stocks[0],source:{...source,kind:'unknown'}}]}));
  assert.throws(()=>parseAdminProduct({...p,stocks:[{...p.stocks[0],reserved:4}]}));
  assert.equal(await createAdminClient('/api',async()=>reply({error:'UNAUTHENTICATED'},401)).me(),null);
  await assert.rejects(createAdminClient('/api',async()=>{throw new Error('offline');}).me(),e=>e.code==='NETWORK_ERROR');

@@ -1,13 +1,13 @@
-// Read-only preflight. Uses the existing YML contract; never starts StockSync.
+// Read-only preflight. Uses the configured official source contract; never starts StockSync.
 import {readFile} from 'node:fs/promises';
 import {Database} from '../src/db.js';
-import {CdekStockFeed} from '../src/cdek-stock-feed.js';
+import {createStockSource,sourceKind} from '../src/cdek-stock-source.js';
 import {stockSourceHash} from '../src/stock-state.js';
 let db:Database|undefined;
 try{
  const path=process.env.CDEK_STOCK_SETTINGS_FILE;
  if(!path||!process.env.DATABASE_URL)throw new Error('STOCK_PREFLIGHT_CONFIG_MISSING');
- const source=new CdekStockFeed(JSON.parse(await readFile(path,'utf8')),async(input,init)=>{
+ const source=createStockSource(JSON.parse(await readFile(path,'utf8')),async(input,init)=>{
   const response=await fetch(input,init);
   console.log(JSON.stringify({stage:'provider',httpStatus:response.status,contentType:response.headers.get('content-type')}));
   return response;
@@ -28,7 +28,7 @@ try{
  if(unknown.length)throw new Error('STOCK_PREFLIGHT_UNKNOWN_SKUS');
  console.log('STOCK_PREFLIGHT_PASSED');
 }catch(error){
- const known=['STOCK_PREFLIGHT_CONFIG_MISSING','STOCK_PREFLIGHT_NOT_PRODUCTION','STOCK_WAREHOUSE_SCOPE_MISMATCH','STOCK_SOURCE_CHANGE_REQUIRES_REVIEW','STOCK_SOURCE_STALE','STOCK_PREFLIGHT_UNKNOWN_SKUS','STOCK_SOURCE_UNAVAILABLE','STOCK_SOURCE_RATE_LIMITED'];
+ const known=['STOCK_PREFLIGHT_CONFIG_MISSING','STOCK_PREFLIGHT_NOT_PRODUCTION','STOCK_WAREHOUSE_SCOPE_MISMATCH','STOCK_SOURCE_CHANGE_REQUIRES_REVIEW','STOCK_SOURCE_STALE','STOCK_PREFLIGHT_UNKNOWN_SKUS','STOCK_SOURCE_UNAVAILABLE','STOCK_SOURCE_UNAUTHORIZED','STOCK_SOURCE_RATE_LIMITED'];
  const code=error instanceof Error?error.message:'';
  console.error(known.includes(code)?code:'STOCK_PREFLIGHT_FAILED');process.exitCode=1;
 }finally{await db?.close();}

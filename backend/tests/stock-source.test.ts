@@ -4,6 +4,7 @@ import {randomUUID} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {testDatabase} from './postgres.js';
 import {CdekStockFeed,parseStockFeed,stockSettingsSchema,StockRateLimitError} from '../src/cdek-stock-feed.js';
+import {CdekStockApi} from '../src/cdek-stock-source.js';
 import {StockSync} from '../src/stock-sync.js';
 import {StockState} from '../src/stock-state.js';
 import {YcpCatalog,type YcpSettings} from '../src/ycp-catalog.js';
@@ -45,6 +46,26 @@ async function fixture(){
  return {db,warehouse,product,actor,at,source,sync,settings,basket,checkout,request,body,available};
 }
 
+test('live API feeds shared REAL stock; publication/test stock preserved; cache expiry and API failure close availability',async()=>{
+ const f=await fixture();let now=new Date(),quantity=24,fail=false;
+ const before=(await f.db.pool.query('SELECT active,sale_approved FROM products WHERE id=$1',[f.product])).rows[0];
+ await f.db.pool.query('INSERT INTO product_test_stock(product_id,enabled,quantity) VALUES($1,true,999)',[f.product]);
+ const source=new CdekStockApi({kind:'cdek_ff_api',warehouseId:f.warehouse,accountId:'asaya',externalWarehouseId:'23401',shopId:220216,environment:'production',login:'fixture',password:'secret',pollSeconds:30,maxAgeSeconds:60},async()=>{
+  if(fail)return new Response('private-secret',{status:401});
+  return new Response(JSON.stringify({page:1,page_count:1,page_size:100,total_items:1,_embedded:{product_offer:[{id:1,article:'SKU-1',items:[{count:quantity,state:'normal',warehouse:23401}],inventoryUpdated:new Date(+now-86400000).toISOString(),_embedded:{shop:{id:220216}}}]}}),{headers:{date:now.toUTCString()}});
+ },()=>now);
+ const sync=new StockSync(f.db,source,()=>now),state=new StockState(f.db,source.settings,()=>now);
+ await sync.refresh();assert.equal(await f.available(),24);
+ const report=await new AdminStocks(f.db,sync).read(f.actor,{});assert.equal(report.items[0]!.quantity,24);assert.equal(report.source!.kind,'cdek_ff_api');
+ assert.equal((await new AdminCatalog(f.db).detail(f.product)).stocks[0]!.source!.kind,'cdek_ff_api');
+ assert.deepEqual((await f.db.pool.query('SELECT active,sale_approved FROM products WHERE id=$1',[f.product])).rows[0],before);
+ assert.equal((await f.db.pool.query('SELECT quantity FROM product_test_stock WHERE product_id=$1',[f.product])).rows[0].quantity,999);
+ now=new Date(+now+61000);assert.equal((await state.read()).source.syncStatus,'stale');
+ quantity=0;await sync.refresh();assert.equal(await f.available(),0);assert.equal((await state.read()).items[0]!.quantity,0);
+ now=new Date(+now+31000);fail=true;await assert.rejects(sync.refresh(),/STOCK_REFRESH_FAILED/);
+ assert.equal((await state.read()).source.lastError,'STOCK_SOURCE_UNAUTHORIZED');assert.equal(await f.available(),0);
+});
+
 test('admin stock report reads shared quantities and canonical metadata; never substitutes missing with zero',async()=>{
  const f=await fixture(),service=new AdminStocks(f.db,f.sync);
  assert.equal((await service.read(f.actor,{})).items[0]!.quantity,null);
@@ -56,6 +77,18 @@ test('admin stock report reads shared quantities and canonical metadata; never s
  await assert.rejects(service.read(randomUUID(),{}),/FORBIDDEN/);
  await assert.rejects(service.refresh(f.actor,{quantity:99}));
  assert.deepEqual(await new AdminStocks(f.db).read(f.actor,{}),{configured:false,source:null,items:[]});
+});
+
+test('new live observation cannot replenish a local dispatch before FF inventory mutation',async()=>{
+ const f=await fixture();const source=new CdekStockApi({kind:'cdek_ff_api',warehouseId:f.warehouse,accountId:'asaya',externalWarehouseId:'23401',shopId:220216,environment:'production',login:'fixture',password:'secret'});
+ const sync=new StockSync(f.db,source),changedAt=new Date(Date.now()-86400000);
+ const snapshot=(generatedAt:Date)=>({generatedAt,items:[{sku:'SKU-1',quantity:2,changedAt}],digest:'same-provider-inventory'});
+ await sync.apply(snapshot(new Date()));
+ await f.checkout.create(f.body);await f.checkout.placed({session_id:f.body.session_id,order_id:'api-external',order_number:123,payment_method:'online',acquiring_id:'api-paid'});
+ await new YcpOrders(f.db,f.settings,undefined,true).delivered({order_id:'api-external'},{purchased_items:[{id:'SKU-1',quantity:1}]});
+ assert.equal(await f.available(),1);
+ await sync.apply(snapshot(new Date(Date.now()+1000)));assert.equal(await f.available(),1);
+ assert.equal((await new StockState(f.db,source.settings).read()).items[0]!.quantity,2);
 });
 
 test('admin refresh shares worker lock and schedule, exposes changed quantity, preserves successful snapshot after error',async()=>{
@@ -240,7 +273,7 @@ test('diagnostic migration preserves a pre-existing successful source snapshot',
   // A transaction-local copy of the old shape; no changes to the actual test source.
   await tx.query(`CREATE TEMP TABLE stock_sources (LIKE public.stock_sources INCLUDING ALL) ON COMMIT DROP;
    ALTER TABLE stock_sources DROP CONSTRAINT stock_success_has_snapshot,
-    DROP COLUMN last_attempt_at,DROP COLUMN next_attempt_at,DROP COLUMN consecutive_failures,
+    DROP COLUMN last_attempt_at,DROP COLUMN next_attempt_at,DROP COLUMN consecutive_failures,DROP COLUMN source_kind,
     ALTER COLUMN generated_at SET NOT NULL,ALTER COLUMN fetched_at SET NOT NULL,
     ALTER COLUMN expires_at SET NOT NULL,ALTER COLUMN payload_hash SET NOT NULL;
    INSERT INTO stock_sources SELECT warehouse_id,source_hash,environment,generated_at,fetched_at,expires_at,

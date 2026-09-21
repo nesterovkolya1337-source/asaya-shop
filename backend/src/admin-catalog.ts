@@ -67,12 +67,12 @@ export class AdminCatalog{
    FROM products p LEFT JOIN product_editor e ON e.product_id=p.id LEFT JOIN product_prices pr ON pr.product_id=p.id WHERE p.id=$1`,[id])).rows[0];
   if(!r)throw new DomainError('PRODUCT_NOT_FOUND',404);
   const stocks=(await this.db.pool.query(`SELECT w.id AS warehouseId,w.name,w.active,COALESCE(b.on_hand,0) AS on_hand,COALESCE(b.reserved,0) AS reserved,
-   s.generated_at,s.fetched_at,s.expires_at,s.healthy,s.warehouse_id IS NOT NULL AS managed,COALESCE(i.provider_quantity,0) AS provider_quantity,
+   s.source_kind,s.generated_at,s.fetched_at,s.expires_at,s.healthy,s.warehouse_id IS NOT NULL AS managed,COALESCE(i.provider_quantity,0) AS provider_quantity,
    GREATEST(0,LEAST(COALESCE(b.on_hand,0),asaya_stock_limit($1,w.id,true))-COALESCE(b.reserved,0)) AS available
    FROM warehouses w LEFT JOIN inventory_balances b ON b.warehouse_id=w.id AND b.product_id=$1
    LEFT JOIN stock_sources s ON s.warehouse_id=w.id LEFT JOIN stock_source_items i ON i.warehouse_id=w.id AND i.product_id=$1
    ORDER BY w.code`,[id])).rows.map(r=>({warehouseId:r.warehouseid,name:r.name,active:r.active,onHand:r.on_hand,reserved:r.reserved,
-    source:r.managed?{kind:'cdek_ff_yml',generatedAt:r.generated_at,fetchedAt:r.fetched_at,expiresAt:r.expires_at,healthy:r.healthy,available:r.available,reportedQuantity:r.provider_quantity}:null}));
+    source:r.managed?{kind:r.source_kind,generatedAt:r.generated_at,fetchedAt:r.fetched_at,expiresAt:r.expires_at,healthy:r.healthy,available:r.available,reportedQuantity:r.provider_quantity}:null}));
   const draft=r.draft??{sku:r.sku,name:r.name,slug:r.slug??'',content:emptyContent,regularMinor:r.regular_minor===null?null:money(r.regular_minor),finalMinor:r.final_minor===null?null:money(r.final_minor),
    weightG:r.weight_g,widthMm:r.width_mm,heightMm:r.height_mm,depthMm:r.depth_mm};
   return {id,revision:r.revision??0,lifecycle:r.archived_at?'deleted':r.active?'published':r.published_at?'unpublished':'draft',active:r.active,hasDraft:!!r.draft,hasUnpublishedChanges:JSON.stringify(r.draft)!==JSON.stringify(r.published),publishedAt:r.published_at,draft,stocks};

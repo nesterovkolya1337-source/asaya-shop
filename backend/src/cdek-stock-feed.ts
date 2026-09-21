@@ -12,7 +12,7 @@ export const stockSettingsSchema=z.object({
  maxAgeSeconds:z.number().int().min(60).max(172800).default(2400)
 }).strict().refine(s=>s.environment!=='production'||s.externalWarehouseId!=='7460',{message:'Test warehouse cannot supply production stock'});
 export type StockSettings=z.infer<typeof stockSettingsSchema>;
-export type StockSnapshot={generatedAt:Date;items:Array<{sku:string;quantity:number}>;digest:string};
+export type StockSnapshot={generatedAt:Date;items:Array<{sku:string;quantity:number;changedAt?:Date}>;digest:string};
 export class StockRateLimitError extends DomainError {
  constructor(readonly retryAfterSeconds:number){super('STOCK_SOURCE_RATE_LIMITED',503);}
 }

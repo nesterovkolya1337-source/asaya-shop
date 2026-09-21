@@ -2,11 +2,12 @@ import {randomUUID} from 'node:crypto';
 import {setTimeout as delay} from 'node:timers/promises';
 import {Database,lock} from './db.js';
 import {DomainError} from './core.js';
-import {CdekStockFeed,StockRateLimitError,type StockSnapshot} from './cdek-stock-feed.js';
+import {StockRateLimitError,type StockSnapshot} from './cdek-stock-feed.js';
+import {sourceKind,type StockSource} from './cdek-stock-source.js';
 import {safeStockError,stockSourceHash} from './stock-state.js';
 
 export class StockSync {
- constructor(private db:Database,readonly source:CdekStockFeed,private clock=()=>new Date()){}
+ constructor(private db:Database,readonly source:StockSource,private clock=()=>new Date()){}
  async refresh(){
   const s=this.source.settings,client=await this.db.pool.connect(),key='stock-refresh:'+s.warehouseId;
   let acquired=false,destroy=false;
@@ -27,10 +28,10 @@ export class StockSync {
     await this.db.transaction(async tx=>{
      await lock(tx,'stock-source:'+s.warehouseId);
      // Only diagnostics change. Last successful generation, quantities and reserves survive.
-     await tx.query(`INSERT INTO stock_sources(warehouse_id,source_hash,environment,healthy,last_error,last_attempt_at,next_attempt_at,consecutive_failures)
-      VALUES($1,$2,$3,false,$4,$5,$6,$7) ON CONFLICT(warehouse_id) DO UPDATE SET healthy=false,last_error=excluded.last_error,
+     await tx.query(`INSERT INTO stock_sources(warehouse_id,source_hash,environment,healthy,last_error,last_attempt_at,next_attempt_at,consecutive_failures,source_kind)
+      VALUES($1,$2,$3,false,$4,$5,$6,$7,$8) ON CONFLICT(warehouse_id) DO UPDATE SET healthy=false,last_error=excluded.last_error,
       last_attempt_at=excluded.last_attempt_at,next_attempt_at=excluded.next_attempt_at,consecutive_failures=excluded.consecutive_failures
-      WHERE stock_sources.source_hash=excluded.source_hash`,[s.warehouseId,stockSourceHash(s),s.environment,safe,at,new Date(+at+seconds*1000),failures]);
+      WHERE stock_sources.source_hash=excluded.source_hash`,[s.warehouseId,stockSourceHash(s),s.environment,safe,at,new Date(+at+seconds*1000),failures,sourceKind(s)]);
      await tx.query("UPDATE warehouse_external_ids SET sync_status='error' WHERE provider='cdek_ff' AND warehouse_id=$1 AND account_id=$2 AND external_id=$3",[s.warehouseId,s.accountId,s.externalWarehouseId]);
     });
     throw new DomainError('STOCK_REFRESH_FAILED',503);
@@ -57,10 +58,10 @@ export class StockSync {
    const known=new Set(products.map(p=>p.sku)),unknown=snapshot.items.filter(i=>!known.has(i.sku)).map(i=>i.sku);
    const expires=new Date(Math.min(+snapshot.generatedAt+s.maxAgeSeconds*1000,+now+s.pollSeconds*3*1000));
    const changed=!previous?.generated_at||+previous.generated_at<+snapshot.generatedAt;
-   await tx.query(`INSERT INTO stock_sources(warehouse_id,source_hash,environment,generated_at,fetched_at,expires_at,payload_hash,unknown_skus)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(warehouse_id) DO UPDATE SET
+   await tx.query(`INSERT INTO stock_sources(warehouse_id,source_hash,environment,generated_at,fetched_at,expires_at,payload_hash,unknown_skus,source_kind)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(warehouse_id) DO UPDATE SET
     generated_at=excluded.generated_at,fetched_at=excluded.fetched_at,expires_at=excluded.expires_at,payload_hash=excluded.payload_hash,
-    healthy=true,last_error=NULL,unknown_skus=excluded.unknown_skus`,[s.warehouseId,sourceHash,s.environment,snapshot.generatedAt,now,expires,snapshot.digest,unknown]);
+    healthy=true,last_error=NULL,unknown_skus=excluded.unknown_skus`,[s.warehouseId,sourceHash,s.environment,snapshot.generatedAt,now,expires,snapshot.digest,unknown,sourceKind(s)]);
    await tx.query('UPDATE stock_sources SET last_attempt_at=$2,next_attempt_at=$3,consecutive_failures=0 WHERE warehouse_id=$1',
     [s.warehouseId,now,new Date(+now+s.pollSeconds*1000)]);
    for(const p of products){
@@ -71,7 +72,7 @@ export class StockSync {
     const balance=(await tx.query('SELECT reserved FROM inventory_balances WHERE product_id=$1 AND warehouse_id=$2 FOR UPDATE',[p.id,s.warehouseId])).rows[0];
     // A cached snapshot can predate a confirmed dispatch. Keep its local debit until
     // a provider generation after that dispatch; never infer a return from a cancellation.
-    const consumed=(await tx.query("SELECT COALESCE(sum(quantity),0)::integer n FROM inventory_movements WHERE product_id=$1 AND warehouse_id=$2 AND kind='ship' AND created_at>=$3",[p.id,s.warehouseId,snapshot.generatedAt])).rows[0].n;
+    const consumed=(await tx.query("SELECT COALESCE(sum(quantity),0)::integer n FROM inventory_movements WHERE product_id=$1 AND warehouse_id=$2 AND kind='ship' AND created_at>=$3",[p.id,s.warehouseId,item?.changedAt??snapshot.generatedAt])).rows[0].n;
     const sellable=Math.max(0,quantity-consumed);
     await tx.query('UPDATE inventory_balances SET on_hand=$3 WHERE product_id=$1 AND warehouse_id=$2',[p.id,s.warehouseId,Math.max(balance.reserved,sellable)]);
     await tx.query(`INSERT INTO stock_source_items(warehouse_id,product_id,quantity,provider_quantity,listed) VALUES($1,$2,$3,$4,$5)

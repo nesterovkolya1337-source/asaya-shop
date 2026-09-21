@@ -1,16 +1,16 @@
 import {Database} from './db.js';
 import {canonical,DomainError,hash} from './core.js';
-import type {StockSettings} from './cdek-stock-feed.js';
+import {sourceKind,type SourceSettings} from './cdek-stock-source.js';
 
-export const stockSourceHash=(s:StockSettings)=>hash(canonical([s.feedUrl,s.accountId,s.externalWarehouseId,s.environment]));
-const safeErrors=new Set(['STOCK_SOURCE_UNAVAILABLE','STOCK_SOURCE_RATE_LIMITED','STOCK_SOURCE_STALE',
+export const stockSourceHash=(s:SourceSettings)=>hash(canonical('kind' in s?[s.kind,s.shopId,s.accountId,s.externalWarehouseId,s.environment]:[s.feedUrl,s.accountId,s.externalWarehouseId,s.environment]));
+const safeErrors=new Set(['STOCK_SOURCE_UNAVAILABLE','STOCK_SOURCE_UNAUTHORIZED','STOCK_SOURCE_RATE_LIMITED','STOCK_SOURCE_STALE',
  'STOCK_SOURCE_REGRESSED','STOCK_SOURCE_VERSION_CONFLICT','STOCK_REFRESH_FAILED']);
 export const safeStockError=(value:unknown)=>typeof value==='string'&&safeErrors.has(value)?value:'STOCK_REFRESH_FAILED';
 
 // Shared read model; no second stock table and no changes to the YCP wire contract.
 // Provider count is NOT a claim that the provider exposes separate available/reserved fields.
 export class StockState {
- constructor(private db:Database,private settings:StockSettings,private clock=()=>new Date()){}
+ constructor(private db:Database,private settings:SourceSettings,private clock=()=>new Date()){}
  async read(){
   const s=this.settings,at=this.clock();
   // One statement: metadata and per-SKU values must describe the same snapshot.
@@ -32,7 +32,7 @@ export class StockState {
    lastError:r.last_error?safeStockError(r.last_error):null,lastAttemptAt:r.last_attempt_at??null,
    nextAttemptAt:r.next_attempt_at??null,consecutiveFailures:r.consecutive_failures??0
   });
-  return {source:{kind:'cdek_ff_yml',warehouseId:s.warehouseId,accountId:s.accountId,
+  return {source:{kind:sourceKind(s),warehouseId:s.warehouseId,accountId:s.accountId,
    externalWarehouseId:s.externalWarehouseId,environment:s.environment,...project(source)},
    items:(source.items as Array<{sku:string;productId:string;name:string;category:string|null;image:string|null;listed:boolean|null;quantity:number|null}>).map(r=>{
     return {sku:r.sku,productId:r.productId,name:r.name,category:r.category,image:r.image,quantity:r.listed?r.quantity:null,
