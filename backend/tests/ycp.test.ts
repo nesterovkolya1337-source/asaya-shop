@@ -29,8 +29,8 @@ async function fixture(){
 }
 test('YCP basket resolves scoped offer IDs and exposes exact prices, dimensions and available regional stock',async()=>{
  const f=await fixture(),result=await f.service.basket(f.request);
- assert.deepEqual(result,{items:[{id:'SKU-001',name:'Тестовый гель',regular_price:600,final_price:500,vat:0,url:'https://asaya.example.test/product/test-gel/',warehouses:[{id:f.warehouse,available_quantity:7}],dimensions:{width:60,height:190,depth:40,weight:500},characteristics:[],variations:[]}]});
- assert.deepEqual(await f.service.basket({...f.request,items:[{id:'SKU-001',quantity:100}],offers_id_from_merchant_center:false,is_health_check:true,locality:'  мОсКвА  '}),result);
+ assert.deepEqual(result,{items:[{id:'SKU-001',name:'Тестовый гель',regular_price:600,final_price:475,vat:0,url:'https://asaya.example.test/product/test-gel/',warehouses:[{id:f.warehouse,available_quantity:7}],dimensions:{width:60,height:190,depth:40,weight:500},characteristics:[],variations:[]}]});
+ assert.deepEqual(await f.service.basket({...f.request,items:[{id:'SKU-001',quantity:100}],offers_id_from_merchant_center:false,is_health_check:true,locality:'  мОсКвА  '}),{items:result.items.map(i=>({...i,final_price:450}))});
  assert.equal((await f.service.basket({...f.request,locality:'Казань'})).items[0]!.warehouses[0].id,f.other);
  assert.deepEqual((await f.service.basket({...f.request,locality:'Неизвестный город'})).items[0]!.warehouses,[]);
  for(const table of ['orders','integration_inbox','integration_outbox'])assert.equal((await f.db.pool.query(`SELECT count(*)::int n FROM ${table}`)).rows[0].n,0);
@@ -54,11 +54,11 @@ test('YCP rejects invalid baskets, aliases of one SKU and fractional ruble round
  for(const raw of [{...f.request,items:[]},{...f.request,items:[{id:'feed-001',quantity:0}]},{...f.request,items:[{id:'feed-001',quantity:1.5}]},{...f.request,items:[...f.request.items,...f.request.items]},{...f.request,items:Array.from({length:51},(_,i)=>({id:String(i),quantity:1}))},{...f.request,regular_price:1},{...f.request,is_health_check:'true'}])await assert.rejects(f.service.basket(raw));
  await f.db.pool.query("INSERT INTO product_external_ids(provider,environment,account_id,external_id,product_id) VALUES('ycp','test','asaya-test','alias',$1)",[f.product]);
  await assert.rejects(f.service.basket({...f.request,items:[...f.request.items,{id:'alias',quantity:1}]}),/DUPLICATE_PRODUCT/);
- for(const setting of [{priceUnit:null},{vat:null}])assert.equal((await new YcpCatalog(f.db,token,{...f.settings,...setting}).basket(f.request)).items[0]!.final_price,500);
+ for(const setting of [{priceUnit:null},{vat:null}])assert.equal((await new YcpCatalog(f.db,token,{...f.settings,...setting}).basket(f.request)).items[0]!.final_price,475);
  const rubles=new YcpCatalog(f.db,token,{...f.settings,priceUnit:'rubles'});
- assert.equal((await rubles.basket(f.request)).items[0]!.final_price,500);
- await f.db.pool.query('UPDATE product_prices SET final_minor=50001');await assert.rejects(rubles.basket(f.request),/YCP_PRICE_NOT_REPRESENTABLE/);
- await assert.rejects(f.service.basket(f.request),/YCP_PRICE_NOT_REPRESENTABLE/);
+ assert.equal((await rubles.basket(f.request)).items[0]!.final_price,475);
+ await f.db.pool.query('UPDATE product_prices SET final_minor=50001');await assert.rejects(rubles.basket({...f.request,items:[{id:'feed-001',quantity:1}]}),/YCP_PRICE_NOT_REPRESENTABLE/);
+ await assert.rejects(f.service.basket({...f.request,items:[{id:'feed-001',quantity:1}]}),/YCP_PRICE_NOT_REPRESENTABLE/);
  await f.db.pool.query('UPDATE product_prices SET final_minor=50000');
  await f.db.pool.query('UPDATE products SET weight_g=NULL');assert.equal('weight' in (await f.service.basket(f.request)).items[0]!.dimensions,false);
 });

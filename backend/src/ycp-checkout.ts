@@ -1,3 +1,4 @@
+import {priceRows} from './cart-pricing.js';
 import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
 import {Database,lock,type Tx} from './db.js';
@@ -74,6 +75,8 @@ export class YcpCheckout {
     AND ($3=false OR EXISTS(SELECT 1 FROM product_editor e WHERE e.product_id=p.id AND e.published IS NOT NULL))
     AND NOT EXISTS(SELECT 1 FROM product_components c WHERE c.product_id=p.id)
     ORDER BY p.sku FOR UPDATE OF p,pr,b`,[body.items.map(i=>i.id),body.warehouse_id,s.environment==='production']);
+   const pricing=await priceRows(tx,rows,body.items.map(i=>({sku:i.id,quantity:i.quantity})));
+   for(const row of rows)row.final_minor=pricing.items.find(i=>i.sku===row.sku)!.unitMinor;
    const convert=(n:unknown)=>{const value=money(n);if(value%100)throw new DomainError('YCP_PRICE_NOT_REPRESENTABLE',503);return value/100;};
    const actual={items:rows.map(r=>({id:r.sku,regular_price:convert(r.regular_minor),final_price:convert(r.final_minor),warehouses:[{id:body.warehouse_id,available_quantity:r.available}]}))};
    if(rows.length!==body.items.length||body.items.some(i=>{const r=rows.find(r=>r.sku===i.id);return !r||i.quantity>r.available||i.regular_price!==convert(r.regular_minor)||i.final_price!==convert(r.final_minor);}))throw new YcpConflict('INVENTORY_CHANGED',{actual_inventory:actual,checkout_canceled:false});

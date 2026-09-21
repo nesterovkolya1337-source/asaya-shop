@@ -1,3 +1,4 @@
+import {priceRows} from './cart-pricing.js';
 import {ycpWarehouses} from './warehouses.js';
 import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
@@ -99,12 +100,13 @@ export class YandexFeed {
    WHERE p.sku=ANY($1::text[]) AND p.active AND p.archived_at IS NULL AND p.sale_approved AND pr.final_minor>0
    AND NOT EXISTS(SELECT 1 FROM product_components c WHERE c.product_id=p.id)`,
    [body.items.map(i=>i.sku),s.environment==='production',(await ycpWarehouses(this.db.pool,s,true)).map(w=>w.warehouseId)])).rows;
+  const pricing=await priceRows(this.db.pool,catalog,body.items);
   const items=body.items.map(line=>{
    const item=catalog.find(p=>p.sku===line.sku);
    if(!item||(item.available<1&&!tests.some(t=>t.sku===line.sku)))throw new DomainError('PRODUCT_UNAVAILABLE',409);
    if(line.quantity>(tests.find(t=>t.sku===line.sku)?.quantity??item.available))throw new DomainError('INSUFFICIENT_STOCK',409);
    // Official custom-site button amounts are rubles; identity is our stable canonical SKU.
-   return {id:item.sku,quantity:line.quantity,price:money(item.regular_minor)/100,final_price:money(item.final_minor)/100};
+   return {id:item.sku,quantity:line.quantity,price:money(item.regular_minor)/100,final_price:pricing.items.find(i=>i.sku===item.sku)!.unitMinor/100};
   });
   const url=new URL('https://checkout.kit.yandex.ru/express');
   url.searchParams.set('host',new URL(s.publicOrigin).hostname);

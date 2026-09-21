@@ -13,6 +13,7 @@ import {AdminPdpEditor} from './admin-pdp-editor';
 import {AdminMediaEditor} from './admin-media-editor';
 import {AdminOrders} from './admin-orders';
 import {AdminEmployees,StaffActivation} from './admin-employees';
+import {AdminMarketing} from './admin-marketing';
 import {AdminIntegration} from './admin-integration';
 import {AdminStatistics} from './admin-analytics';
 import styles from './server-admin.module.css';
@@ -36,7 +37,7 @@ function PriceField({label,value,onChange}:{label:string;value:number|null;onCha
  return <label>{label}<input inputMode="decimal" value={raw} onChange={e=>{const v=e.target.value;if(/^\d*(?:[.,]\d{0,2})?$/.test(v)){setRaw(v);onChange(v===''||v==='.'||v===','?null:Math.round(Number(v.replace(',','.'))*100));}}}/></label>;
 }
 export function ServerAdmin(){
- const [section,setSection]=useState<'content'|'catalog'|'orders'|'statistics'|'integration'|'employees'>('content');
+ const [section,setSection]=useState<'content'|'catalog'|'orders'|'statistics'|'integration'|'employees'|'marketing'>('content');
  const [contentDirty,setContentDirty]=useState(false),[logoutConfirm,setLogoutConfirm]=useState(false);
  const [selectedOrder,setSelectedOrder]=useState<string|undefined>();
  const [session,setSession]=useState<StaffSession|null>(null),[checking,setChecking]=useState(true),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
@@ -56,7 +57,7 @@ export function ServerAdmin(){
   try{await api.logout(session.csrfToken);setSession(null);setNotice('');}catch(e){setNotice(adminError(e));}finally{pending.current=false;setBusy(false);}}
  return <div className={shell.shell}>
  <header className={shell.header}><div className={shell.brand}><strong>ASAYA</strong><small>Управление магазином</small></div>
- {session&&<nav className={shell.nav} aria-label="Разделы админки">{([['content','Редактор сайта'],['catalog','Товары'],['orders','Заказы'],['statistics','Аналитика'],['integration','Настройки'],['employees','Сотрудники']] as const).filter(([key])=>session.user.staffRole!=='manager'||!['employees','integration'].includes(key)).map(([key,label])=><button key={key} aria-current={section===key?'page':undefined} onClick={()=>setSection(key)}>{label}{key==='content'&&contentDirty?' •':''}</button>)}</nav>}
+ {session&&<nav className={shell.nav} aria-label="Разделы админки">{([['content','Редактор сайта'],['catalog','Товары'],['orders','Заказы'],['statistics','Аналитика'],['marketing','Маркетинг'],['integration','Настройки'],['employees','Сотрудники']] as const).filter(([key])=>session.user.staffRole!=='manager'||!['employees','integration'].includes(key)).map(([key,label])=><button key={key} aria-current={section===key?'page':undefined} onClick={()=>setSection(key)}>{label}{key==='content'&&contentDirty?' •':''}</button>)}</nav>}
  <div className={shell.headerActions}><Link href="/">Открыть сайт ↗</Link>{session&&<button disabled={busy} onClick={()=>contentDirty?setLogoutConfirm(true):void logout()}>Выйти</button>}</div></header>
  {process.env.NEXT_PUBLIC_EDITOR_PREVIEW==='true'&&<p className={shell.notice}>Предпросмотр редактора · тестовые данные на этом компьютере. Изменения не затрагивают сайт ASAYA.</p>}
  {notice&&<p role="alert" className={shell.notice}>{notice}</p>}
@@ -67,6 +68,7 @@ export function ServerAdmin(){
  <div hidden={section!=='catalog'}><h1>Товары</h1><CatalogEditor key={session.user.id} session={session} onExpired={onExpired}/></div>
  {section==='integration'&&session.user.staffRole!=='manager'&&<AdminBanner csrf={session.csrfToken} onExpired={onExpired}/>}
  {section==='integration'&&session.user.staffRole!=='manager'&&<AdminIntegration onExpired={onExpired} onOrder={id=>{setSelectedOrder(id);setSection('orders');}}/>}
+ <div hidden={section!=='marketing'}><AdminMarketing session={session} onExpired={onExpired}/></div>
  {section==='statistics'&&<AdminStatistics onExpired={onExpired} csrf={session.csrfToken}/>}
  {section==='orders'&&<AdminOrders key={selectedOrder} initialOrderId={selectedOrder} session={session} onExpired={onExpired}/>}
  {section==='employees'&&session.user.staffRole!=='manager'&&<AdminEmployees session={session} onExpired={onExpired}/>}

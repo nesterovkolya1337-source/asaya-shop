@@ -1,3 +1,4 @@
+import {priceRows} from './cart-pricing.js';
 import {z} from 'zod';
 import type {Database} from './db.js';
 import {DomainError,equal,hash,money} from './core.js';
@@ -81,6 +82,7 @@ export class YcpCatalog {
    ORDER BY requested.position`,[input.items.map(i=>i.id),input.offers_id_from_merchant_center,settings.accountId,settings.environment,warehouseIds]);
   if(rows.length!==input.items.length)throw new DomainError('PRODUCTS_NOT_FOUND',404);
   if(new Set(rows.map(r=>r.sku)).size!==rows.length)throw new DomainError('DUPLICATE_PRODUCT',400);
+  const pricing=await priceRows(this.db.pool,rows,rows.map(r=>({sku:r.sku,quantity:input.items.find(i=>i.id===r.request_id)!.quantity})));
   const price=(value:unknown)=>{
    const minor=money(value);
    if(minor%100!==0)throw new DomainError('YCP_PRICE_NOT_REPRESENTABLE',503);
@@ -89,7 +91,7 @@ export class YcpCatalog {
   return {items:rows.map(row=>{
    const img=row.image?new URL(row.image,settings.publicOrigin):null;
    if(img&&(img.protocol!=='https:'||img.username||img.password))throw new DomainError('YCP_IMAGE_NOT_CONFIGURED',503);
-   return {id:row.sku,name:row.name,regular_price:price(row.regular_minor),final_price:price(row.final_minor),...(settings.vat!=null?{vat:settings.vat}:{}),
+   return {id:row.sku,name:row.name,regular_price:price(row.regular_minor),final_price:price(pricing.items.find(i=>i.sku===row.sku)!.unitMinor),...(settings.vat!=null?{vat:settings.vat}:{}),
     ...(img?{img:img.href}:{}),url:new URL('/product/'+encodeURIComponent(row.slug)+'/',settings.publicOrigin).href,
     warehouses:row.warehouses,dimensions:{...(row.width_mm!=null?{width:row.width_mm}:{}),...(row.height_mm!=null?{height:row.height_mm}:{}),...(row.depth_mm!=null?{depth:row.depth_mm}:{}),...(row.weight_g!=null?{weight:row.weight_g}:{})},characteristics:[],variations:[]};
   })};
