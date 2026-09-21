@@ -23,23 +23,18 @@ API checks roles, same origin, CSRF, revision and records mutations in audit_log
 from both threshold and discount. Names and unpublished draft classifications do
 not influence eligibility. Discount is applied on product_prices.final_minor.
 
-Correction: discounted unit prices are rounded once to the nearest **kopeck**.
-79900 minor RUB less 10% = 71910 minor RUB; three units total 215730 minor RUB.
-Cart and redirect use that same unit value. Redirect serializes unitMinor/100 as a
-JSON number (719.1 and 719.10 represent the same amount). No product price is rewritten.
+Current approved business rule: quantity-discounted unit prices round down once to
+whole rubles after applying the quantity discount on the existing sale price.
+79900 minor RUB less 10% → 71900 minor RUB; three units total 215700 minor RUB.
+The internal monetary model remains integer kopecks. Cart, redirect, basket/check
+and persisted order items/totals all use this exact unit amount. Original product
+prices are not rewritten; sets remain excluded from the quantity discount.
 
-Contract verification on 2026-09-21:
-- https://yandex.ru/support/merchants/ru/buy-button-site — redirect price/final_price are floating-point numbers.
-- https://yandex.ru/support/merchants-ru-ycp/ru/openapi/checkoutbasketcheck-post — final_price/regular_price still documented as integer.
-- https://yandex.ru/support/merchants-ru-ycp/ru/openapi/checkout-post — item final_price/regular_price still documented as integer.
-
-The redirect builder already supported fractional rubles and has no `.int()` price
-validator. The `.int()` in ycp-checkout.ts belongs to the **incoming create-session
-contract**, not redirect data; it is unchanged, as are basket/check representation
-guards. Therefore fractional-price redirect is supported, but a complete fractional
-YCP session is still blocked by these distinct contracts. No silent whole-ruble
-fallback or different price is used. Confirmation from Yandex is needed before
-widening these server contracts. This is not a verified end-to-end payment flow.
+This is a business rounding rule, not a claim that redirect prohibits fractions.
+Redirect price/final_price support floating-point numbers. Separate basket/check
+and checkout contract validators are unchanged. No YCP/CDEK architecture change.
+The integration test verifies 719 RUB in redirect and basket, 71900 unit_minor,
+215700 subtotal_minor/total_minor for three units in the stored order.
 
 The same server calculation is used by public POST `/api/store/v1/cart/pricing`,
 custom-site checkout-link, authenticated YCP basket/check and checkout creation

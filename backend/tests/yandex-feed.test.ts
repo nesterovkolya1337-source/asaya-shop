@@ -31,7 +31,7 @@ test('checkout link uses current server prices and canonical SKUs in UTF-8 witho
  const service=new YandexFeed(f.db,{...f.settings,checkout:{deliveryPriceUnit:'rubles'},button:{enabled:true}});
  const result=await service.checkoutLink({items:[{sku:'SKU-FEED',quantity:2}]}),url=new URL(result.url);
  assert.equal(url.origin,'https://checkout.kit.yandex.ru');assert.equal(url.pathname,'/express');assert.equal(url.searchParams.get('host'),'asaya.example.test');
- assert.deepEqual(JSON.parse(Buffer.from(url.searchParams.get('data')!,'base64').toString('utf8')),{items:[{id:'SKU-FEED',quantity:2,price:600,final_price:475.01}]});
+ assert.deepEqual(JSON.parse(Buffer.from(url.searchParams.get('data')!,'base64').toString('utf8')),{items:[{id:'SKU-FEED',quantity:2,price:600,final_price:475}]});
  assert.equal((await f.db.pool.query('SELECT reserved FROM inventory_balances')).rows[0].reserved,3);
  assert.equal((await f.db.pool.query('SELECT 1 FROM orders')).rowCount,0);assert.ok(!result.url.includes(token));
  await f.db.pool.query('UPDATE product_prices SET final_minor=51002');
@@ -130,7 +130,7 @@ test('redirect attempts commit one snapshot under retry, isolate accounts and re
  const results=await Promise.all(Array.from({length:6},()=>service.checkoutLink(body,key)));
  assert.ok(results.every(r=>r.url===results[0]!.url));
  const rows=(await f.db.pool.query('SELECT * FROM yandex_checkout_attempts')).rows;assert.equal(rows.length,1);
- assert.deepEqual(rows[0].request_snapshot,body);assert.equal(rows[0].checkout_snapshot.items[0].final_price,475.01);
+ assert.deepEqual(rows[0].request_snapshot,body);assert.equal(rows[0].checkout_snapshot.items[0].final_price,475);
  assert.equal(rows[0].redirect_url,results[0]!.url);assert.equal(new Date(rows[0].expires_at).getTime()-now.getTime(),3600000);
  assert.equal((await f.db.pool.query('SELECT 1 FROM orders')).rowCount,0);
  await assert.rejects(service.checkoutLink({items:[{sku:'SKU-FEED',quantity:1}]},key),/CHECKOUT_ATTEMPT_CONFLICT/);

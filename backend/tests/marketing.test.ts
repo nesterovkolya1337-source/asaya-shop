@@ -22,7 +22,7 @@ test('quantity units, repeated SKU, sale price, sets, downward transitions and c
  const q=priceCart([{...line,quantity:3},set],defaults);assert.equal(q.eligibleUnits,3);assert.equal(q.items[1]!.unitMinor,150000);assert.equal(q.subtotalMinor,366000);
  assert.equal(priceCart([line],{...defaults,freeShippingMinor:120000}).shippingRemainingMinor,40000);
  assert.equal(priceCart([{...line,quantity:2}],{...defaults,twoPercent:8}).items[0]!.unitMinor,73600);
- assert.equal(priceCart([{...line,quantity:3,finalMinor:79900}],defaults).items[0]!.unitMinor,71910);
+ assert.equal(priceCart([{...line,quantity:3,finalMinor:79900}],defaults).items[0]!.unitMinor,71900);
 });
 test('draft/live/default separation, manager permissions, conflict and audit',async()=>{
  const db=ctx.db,a=new StaffAuth(db,'marketing-test-secret-with-at-least-32-characters');
@@ -74,16 +74,21 @@ test('canonical published classification and price shared by cart, button, baske
  }finally{await app.close();}
 });
 
- test('kopecks survive canonical cart totals and redirect without relaxing separate YCP contracts',async()=>{
+ test('whole-ruble discounted unit is identical in cart, redirect, basket and persisted order',async()=>{
  const db=ctx.db;await db.pool.query("UPDATE product_prices SET final_minor=79900 WHERE product_id=(SELECT id FROM products WHERE sku='M-SKU')");
  const items=[{sku:'M-SKU',quantity:3}],q=await cartPricing(db.pool,{items});
- assert.equal(q.items[0]!.unitMinor,71910);assert.equal(q.subtotalMinor,215730);
+ assert.equal(q.items[0]!.unitMinor,71900);assert.equal(q.subtotalMinor,215700);
  const warehouse=(await db.pool.query("SELECT id FROM warehouses WHERE code='MARKETING'")).rows[0].id;
  const settings:YcpSettings={accountId:'kopecks',environment:'test',publicOrigin:'https://asaya.example.test',button:{enabled:true},warehouses:[{warehouseId:warehouse,address:'Test',phone:'+79990000000',servedLocalities:['*'],ycpDeliveryEnabled:true}]};
  const result=await new YandexFeed(db,settings).checkoutLink({items});
  const data=JSON.parse(Buffer.from(new URL(result.url).searchParams.get('data')!,'base64').toString());
- assert.equal(data.items[0].final_price,719.10);assert.equal(Math.round(data.items[0].final_price*100)*3,q.subtotalMinor);
+ assert.equal(data.items[0].final_price,719);assert.equal(Math.round(data.items[0].final_price*100)*3,q.subtotalMinor);
  assert.equal((await db.pool.query("SELECT final_minor FROM product_prices WHERE product_id=(SELECT id FROM products WHERE sku='M-SKU')")).rows[0].final_minor,'79900');
- // These separately documented integer contracts are deliberately NOT widened by the redirect change.
- await assert.rejects(new YcpCatalog(db,'kopeck-test-token-at-least-32-characters',settings).basket({items:[{id:'M-SKU',quantity:3}],offers_id_from_merchant_center:false,locality:'Москва',is_health_check:false}),/YCP_PRICE_NOT_REPRESENTABLE/);
+ const basket=await new YcpCatalog(db,'kopeck-test-token-at-least-32-characters',settings).basket({items:[{id:'M-SKU',quantity:3}],offers_id_from_merchant_center:false,locality:'Москва',is_health_check:false});
+ assert.equal(basket.items[0]!.final_price,data.items[0].final_price);
+ const created=await new YcpCheckout(db,settings).create({session_id:'rounded-order',warehouse_id:warehouse,items:[{id:'M-SKU',quantity:3,regular_price:1000,final_price:719}],customer:{full_name:'Test',phone:'+79990000000',email:'test@example.test'},delivery:{delivery_method:'pickup_point',service_type:'cdek',price:0,address:{locality:'Москва',pickup_point_id:'test'},delivery_date_interval:{start_interval:{date:'2026-10-01'},end_interval:{date:'2026-10-02'},time_zone:3}}});
+ const order=(await db.pool.query('SELECT id,subtotal_minor,total_minor FROM orders WHERE public_number=$1',[created.order_number])).rows[0];
+ assert.equal(Number(order.subtotal_minor),q.subtotalMinor);assert.equal(Number(order.total_minor),215700);
+ const line=(await db.pool.query('SELECT unit_minor,line_minor FROM order_items WHERE order_id=$1',[order.id])).rows[0];
+ assert.equal(Number(line.unit_minor),71900);assert.equal(Number(line.line_minor),215700);
  });

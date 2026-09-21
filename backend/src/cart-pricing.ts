@@ -14,8 +14,8 @@ export async function priceRows(db:Pick<Tx,'query'>,rows:Array<{sku:string;final
 export function priceCart(lines:Line[],settings:MarketingConfig){
  const eligibleUnits=lines.reduce((n,i)=>n+(i.eligible?i.quantity:0),0);
  const percent=eligibleUnits>=3?settings.threePercent:eligibleUnits===2?settings.twoPercent:0;
- // Round once to the nearest kopeck; all totals multiply this canonical unit amount.
- const items=lines.map(i=>({...i,unitMinor:i.eligible&&percent?Math.round(i.finalMinor*(100-percent)/100):i.finalMinor}));
+ // Quantity-discounted unit price rounds down once to whole RUB; totals use this value.
+ const items=lines.map(i=>({...i,unitMinor:i.eligible&&percent?Math.floor(i.finalMinor*(100-percent)/10000)*100:i.finalMinor}));
  const subtotalMinor=money(items.reduce((n,i)=>n+i.unitMinor*i.quantity,0));
  const beforeMinor=money(lines.reduce((n,i)=>n+i.finalMinor*i.quantity,0));
  return {items,eligibleUnits,percent,subtotalMinor,discountMinor:beforeMinor-subtotalMinor,settings,shippingRemainingMinor:Math.max(0,settings.freeShippingMinor-subtotalMinor)};
