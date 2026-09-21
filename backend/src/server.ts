@@ -21,6 +21,7 @@ const ycp=c.YCP_TOKEN&&c.YCP_SETTINGS_FILE?{token:c.YCP_TOKEN,settings:JSON.pars
 const db=new Database(c.DATABASE_URL);
 const stock=c.CDEK_STOCK_SETTINGS_FILE?new StockSync(db,createStockSource(JSON.parse(await readFile(c.CDEK_STOCK_SETTINGS_FILE,'utf8')))):undefined;
 if(stock&&c.NODE_ENV==='production'&&stock.source.settings.environment!=='production')throw new Error('Production requires a production stock source');
+if(stock&&c.NODE_ENV==='production'&&'kind' in stock.source.settings&&stock.source.settings.pollSeconds!==300)throw new Error('Production FF API stock poll interval must be 300 seconds');
 if(c.cdekTracking&&(!ycp||ycp.settings.environment!==c.cdekTracking.settings.environment))throw new Error('CDEK notifications require the matching YCP environment');
 const tracking=c.cdekTracking?new OrderTracking(db,new CdekDeliveryClient(c.cdekTracking.settings),{accountId:c.cdekTracking.settings.account,environment:c.cdekTracking.settings.environment,ycpAccountId:ycp!.settings.accountId}):undefined;
 const ffBinding:FulfillmentBinding|undefined=c.FULFILLMENT_ENABLED==='true'?JSON.parse(await readFile(c.FULFILLMENT_SETTINGS_FILE!,'utf8')):undefined;

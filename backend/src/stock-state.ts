@@ -3,7 +3,7 @@ import {canonical,DomainError,hash} from './core.js';
 import {sourceKind,type SourceSettings} from './cdek-stock-source.js';
 
 export const stockSourceHash=(s:SourceSettings)=>hash(canonical('kind' in s?[s.kind,s.shopId,s.accountId,s.externalWarehouseId,s.environment]:[s.feedUrl,s.accountId,s.externalWarehouseId,s.environment]));
-const safeErrors=new Set(['STOCK_SOURCE_UNAVAILABLE','STOCK_SOURCE_UNAUTHORIZED','STOCK_SOURCE_RATE_LIMITED','STOCK_SOURCE_STALE',
+const safeErrors=new Set(['STOCK_PUBLISHED_MAPPING_ERROR','STOCK_SOURCE_UNAVAILABLE','STOCK_SOURCE_UNAUTHORIZED','STOCK_SOURCE_RATE_LIMITED','STOCK_SOURCE_STALE',
  'STOCK_SOURCE_REGRESSED','STOCK_SOURCE_VERSION_CONFLICT','STOCK_REFRESH_FAILED']);
 export const safeStockError=(value:unknown)=>typeof value==='string'&&safeErrors.has(value)?value:'STOCK_REFRESH_FAILED';
 
@@ -33,6 +33,7 @@ export class StockState {
    nextAttemptAt:r.next_attempt_at??null,consecutiveFailures:r.consecutive_failures??0
   });
   return {source:{kind:sourceKind(s),warehouseId:s.warehouseId,accountId:s.accountId,
+   mappingErrors:source.last_error==='STOCK_PUBLISHED_MAPPING_ERROR'?(source.unknown_skus??[]):[],
    externalWarehouseId:s.externalWarehouseId,environment:s.environment,...project(source)},
    items:(source.items as Array<{sku:string;productId:string;name:string;category:string|null;image:string|null;listed:boolean|null;quantity:number|null}>).map(r=>{
     return {sku:r.sku,productId:r.productId,name:r.name,category:r.category,image:r.image,quantity:r.listed?r.quantity:null,

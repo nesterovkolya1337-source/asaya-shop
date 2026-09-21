@@ -2,6 +2,7 @@
 import {readFile} from 'node:fs/promises';
 import {Database} from '../src/db.js';
 import {createStockSource,sourceKind} from '../src/cdek-stock-source.js';
+import {checkPublishedStockCoverage,StockMappingError} from '../src/stock-coverage.js';
 import {stockSourceHash} from '../src/stock-state.js';
 let db:Database|undefined;
 try{
@@ -15,6 +16,7 @@ try{
  if(source.settings.environment!=='production')throw new Error('STOCK_PREFLIGHT_NOT_PRODUCTION');
  db=new Database(process.env.DATABASE_URL);
  const s=source.settings;
+ if(sourceKind(s)!=='cdek_ff_api'||s.pollSeconds!==300||s.externalWarehouseId!=='23401')throw new Error('STOCK_PRODUCTION_PROFILE_INVALID');
  const binding=(await db.pool.query(`SELECT 1 FROM warehouse_external_ids x JOIN warehouses w ON w.id=x.warehouse_id
   WHERE w.id=$1 AND w.active AND x.provider='cdek_ff' AND x.account_id=$2 AND x.external_id=$3`,[s.warehouseId,s.accountId,s.externalWarehouseId])).rowCount;
  if(!binding)throw new Error('STOCK_WAREHOUSE_SCOPE_MISMATCH');
@@ -25,10 +27,11 @@ try{
  const unknown=snapshot.items.filter(i=>!skus.has(i.sku)).map(i=>i.sku);
  console.log(JSON.stringify({stage:'snapshot',warehouse:s.externalWarehouseId,generatedAt:snapshot.generatedAt,ageSeconds:Math.floor((now-Number(snapshot.generatedAt))/1000),maxAgeSeconds:s.maxAgeSeconds,offers:snapshot.items.length,unknownSkus:unknown,examples:snapshot.items.filter(i=>skus.has(i.sku)&&i.quantity>0).slice(0,5),productionWritten:false}));
  if(Number(snapshot.generatedAt)>now+60000||Number(snapshot.generatedAt)+s.maxAgeSeconds*1000<=now)throw new Error('STOCK_SOURCE_STALE');
- if(unknown.length)throw new Error('STOCK_PREFLIGHT_UNKNOWN_SKUS');
+ await checkPublishedStockCoverage(db.pool,snapshot.items.map(i=>i.sku));
  console.log('STOCK_PREFLIGHT_PASSED');
 }catch(error){
- const known=['STOCK_PREFLIGHT_CONFIG_MISSING','STOCK_PREFLIGHT_NOT_PRODUCTION','STOCK_WAREHOUSE_SCOPE_MISMATCH','STOCK_SOURCE_CHANGE_REQUIRES_REVIEW','STOCK_SOURCE_STALE','STOCK_PREFLIGHT_UNKNOWN_SKUS','STOCK_SOURCE_UNAVAILABLE','STOCK_SOURCE_UNAUTHORIZED','STOCK_SOURCE_RATE_LIMITED'];
+ if(error instanceof StockMappingError)console.error(JSON.stringify({code:error.code,articles:error.articles}));
+ const known=['STOCK_PUBLISHED_MAPPING_ERROR','STOCK_PRODUCTION_PROFILE_INVALID','STOCK_PREFLIGHT_CONFIG_MISSING','STOCK_PREFLIGHT_NOT_PRODUCTION','STOCK_WAREHOUSE_SCOPE_MISMATCH','STOCK_SOURCE_CHANGE_REQUIRES_REVIEW','STOCK_SOURCE_STALE','STOCK_PREFLIGHT_UNKNOWN_SKUS','STOCK_SOURCE_UNAVAILABLE','STOCK_SOURCE_UNAUTHORIZED','STOCK_SOURCE_RATE_LIMITED'];
  const code=error instanceof Error?error.message:'';
  console.error(known.includes(code)?code:'STOCK_PREFLIGHT_FAILED');process.exitCode=1;
 }finally{await db?.close();}

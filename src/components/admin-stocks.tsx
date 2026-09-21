@@ -32,6 +32,7 @@ export function AdminStocks({csrf,onExpired}:{csrf:string;onExpired:()=>void}){
  {source&&<><p>Склад {source.externalWarehouseId} · {source.environment==='test'?'Тестовые данные':'Рабочий источник'} · <strong>{statusLabel}</strong></p>
  <p>Последняя успешная синхронизация: {time(source.syncedAt)}. Выгрузка СДЭК: {time(source.sourceUpdatedAt)}.</p>
  {source.nextAttemptAt&&<p className={styles.note}>Следующая попытка разрешена с {time(source.nextAttemptAt)} МСК. Повторные нажатия не ускоряют расписание.</p>}
+ {source.lastError==='STOCK_PUBLISHED_MAPPING_ERROR'&&<p role="alert" className={styles.notice}>Нет опубликованных карточек ASAYA для артикулов СДЭК: {source.mappingErrors?.join(', ')}. Новые остатки не применены.</p>}
  {status==='error'&&<p className={styles.notice}>Не удалось обновить источник. Показаны последние успешно полученные значения.</p>}
  {status==='stale'&&<p className={styles.notice}>Срок свежести данных истёк. Значения требуют обновления.</p>}
  <p className={styles.note}>Количество — из выгрузки СДЭК. Источник не передаёт отдельные значения «доступно» и «резерв». Ручное редактирование остатков здесь недоступно.</p>

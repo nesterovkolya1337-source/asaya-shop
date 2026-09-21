@@ -1,0 +1,10 @@
+{
+  "kind": "cdek_ff_api",
+  "warehouseId": "18d1c0ba-86e3-46c9-8a08-ad555326bc62",
+  "accountId": "asaya",
+  "externalWarehouseId": "23401",
+  "shopId": 220216,
+  "environment": "production",
+  "pollSeconds": 300,
+  "maxAgeSeconds": 900
+}

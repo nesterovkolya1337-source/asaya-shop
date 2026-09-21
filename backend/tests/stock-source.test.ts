@@ -5,6 +5,7 @@ import {readFile} from 'node:fs/promises';
 import {testDatabase} from './postgres.js';
 import {CdekStockFeed,parseStockFeed,stockSettingsSchema,StockRateLimitError} from '../src/cdek-stock-feed.js';
 import {CdekStockApi} from '../src/cdek-stock-source.js';
+import {checkPublishedStockCoverage} from '../src/stock-coverage.js';
 import {StockSync} from '../src/stock-sync.js';
 import {StockState} from '../src/stock-state.js';
 import {YcpCatalog,type YcpSettings} from '../src/ycp-catalog.js';
@@ -36,7 +37,7 @@ async function fixture(){
  await db.pool.query("INSERT INTO product_prices(product_id,currency,regular_minor,final_minor,approved) VALUES($1,'RUB',60000,50000,true)",[product]);
  await db.pool.query("INSERT INTO storefront_mappings(slug,product_id,approved,confidence,reason) VALUES('canonical-gel',$1,true,'high','test')",[product]);
  await db.pool.query("INSERT INTO users(id,role) VALUES($1,'admin')",[actor]);
- await db.pool.query('INSERT INTO product_editor(product_id,revision,draft,published,published_at,updated_by) VALUES($1,1,$2,$2,now(),$3)',[product,JSON.stringify({content}),actor]);
+ await db.pool.query('INSERT INTO product_editor(product_id,revision,draft,published,published_at,updated_by) VALUES($1,1,$2,$2,now(),$3)',[product,JSON.stringify({sku:'SKU-1',content}),actor]);
  const source=new CdekStockFeed({warehouseId:warehouse,accountId:'asaya',externalWarehouseId:'23401',environment:'production',feedUrl});
  const sync=new StockSync(db,source),settings:YcpSettings={accountId:'stock-test',environment:'production',publicOrigin:'https://asaya.example.test',priceUnit:'minor',vat:0,checkout:{deliveryPriceUnit:'rubles'},warehouses:[{warehouseId:warehouse,address:'Test',phone:'+79990000000',servedLocalities:['*'],ycpDeliveryEnabled:false}]};
  const basket=new YcpCatalog(db,token,settings,true),checkout=new YcpCheckout(db,settings,undefined,true);
@@ -77,6 +78,40 @@ test('admin stock report reads shared quantities and canonical metadata; never s
  await assert.rejects(service.read(randomUUID(),{}),/FORBIDDEN/);
  await assert.rejects(service.refresh(f.actor,{quantity:99}));
  assert.deepEqual(await new AdminStocks(f.db).read(f.actor,{}),{configured:false,source:null,items:[]});
+});
+
+for(const problem of ['unknown','draft','unpublished','deleted','sku_mismatch','no_storefront_mapping'])test('API coverage fails closed atomically for '+problem,async()=>{
+ const f=await fixture();let items=[{sku:'SKU-1',quantity:24}];
+ const source=new CdekStockApi({kind:'cdek_ff_api',warehouseId:f.warehouse,accountId:'asaya',externalWarehouseId:'23401',shopId:220216,environment:'production',login:'fixture',password:'secret'});
+ const sync=new StockSync(f.db,{settings:source.settings,read:async()=>({generatedAt:new Date(),items,digest:JSON.stringify(items)})});
+ await sync.refresh();assert.equal(await f.available(),24);
+ if(problem==='unknown')items=[{sku:'SKU-1',quantity:99},{sku:'UNKNOWN',quantity:5}];
+ if(problem==='draft')await f.db.pool.query('UPDATE product_editor SET published=NULL WHERE product_id=$1',[f.product]);
+ if(problem==='unpublished')await f.db.pool.query('UPDATE products SET active=false WHERE id=$1',[f.product]);
+ if(problem==='deleted')await f.db.pool.query('UPDATE products SET archived_at=now() WHERE id=$1',[f.product]);
+ if(problem==='sku_mismatch')await f.db.pool.query(`UPDATE product_editor SET published=jsonb_set(published,'{sku}','"WRONG"') WHERE product_id=$1`,[f.product]);
+ if(problem==='no_storefront_mapping')await f.db.pool.query('UPDATE storefront_mappings SET approved=false WHERE product_id=$1',[f.product]);
+ await f.db.pool.query("UPDATE stock_sources SET next_attempt_at=now()-interval '1 second'");
+ await assert.rejects(sync.refresh(),/STOCK_PUBLISHED_MAPPING_ERROR/);
+ const state=await new StockState(f.db,source.settings).read();assert.equal(state.source.syncStatus,'error');assert.equal(state.source.lastError,'STOCK_PUBLISHED_MAPPING_ERROR');
+ assert.deepEqual(state.source.mappingErrors,[problem==='unknown'?'UNKNOWN':'SKU-1']);
+ assert.equal((await f.db.pool.query('SELECT provider_quantity FROM stock_source_items WHERE product_id=$1',[f.product])).rows[0].provider_quantity,24);
+ assert.equal((await f.db.pool.query('SELECT asaya_stock_limit($1,$2,true) AS n',[f.product,f.warehouse])).rows[0].n,0);
+});
+
+test('published ASAYA SKU absent from CDEK is not a coverage error and stays published',async()=>{
+ const f=await fixture(),other=randomUUID();
+ await f.db.pool.query("INSERT INTO products(id,sku,name,active,sale_approved) VALUES($1,'NOT-SHIPPED','Not shipped',true,true)",[other]);
+ await f.db.pool.query("INSERT INTO product_prices(product_id,currency,regular_minor,final_minor,approved) VALUES($1,'RUB',50000,50000,true)",[other]);
+ await f.db.pool.query("INSERT INTO product_editor(product_id,revision,draft,published,updated_by) VALUES($1,1,$2,$2,$3)",[other,{sku:'NOT-SHIPPED',content},f.actor]);
+ await f.db.pool.query("INSERT INTO storefront_mappings(slug,product_id,approved,confidence,reason) VALUES('not-shipped',$1,true,'high','test')",[other]);
+ await checkPublishedStockCoverage(f.db.pool,['SKU-1']);
+ const source=new CdekStockApi({kind:'cdek_ff_api',warehouseId:f.warehouse,accountId:'asaya',externalWarehouseId:'23401',shopId:220216,environment:'production',login:'fixture',password:'secret'});
+ await new StockSync(f.db,source).apply({generatedAt:new Date(),items:[{sku:'SKU-1',quantity:24}],digest:'fixture'});
+ const state=await new StockState(f.db,source.settings).read();assert.equal(state.source.syncStatus,'fresh');assert.deepEqual(state.source.mappingErrors,[]);
+ assert.equal(state.items.find(i=>i.sku==='NOT-SHIPPED')!.quantityState,'missing');
+ assert.equal((await f.db.pool.query('SELECT active FROM products WHERE id=$1',[other])).rows[0].active,true);
+ assert.equal((await f.db.pool.query('SELECT asaya_stock_limit($1,$2,true) AS n',[other,f.warehouse])).rows[0].n,0);
 });
 
 test('new live observation cannot replenish a local dispatch before FF inventory mutation',async()=>{
