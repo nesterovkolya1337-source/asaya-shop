@@ -1,9 +1,11 @@
-.profile {margin-top:8px;padding:28px;border:1px solid #dedede;border-radius:18px;}
-.profile h2 {font-size:24px;font-weight:500;margin-bottom:20px;}
-.profile fieldset {border:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;}
+.profile {padding:8px 0 28px;max-width:620px;}
+.profile h2 {font-size:28px;font-weight:500;margin:0 0 16px;}
+.profile>p {line-height:1.6;color:#626262;font-size:15px;margin:0 0 28px;}
+.profile fieldset {border:0;padding:0;display:grid;grid-template-columns:1fr;gap:22px;}
 .profile label {display:grid;gap:8px;font-size:14px;}
-.profile input {width:100%;min-width:0;padding:12px;border:1px solid #ccc;border-radius:8px;background:#fff;}
+.profile input {width:100%;min-width:0;padding:14px;border:1px solid #ccc;border-radius:10px;background:#fff;font-size:16px;}
 .profile input[readonly] {background:#f4f4f4;}
 .profile button {grid-column:1/-1;justify-self:start;padding:12px 24px;border:0;border-radius:99px;background:#202020;color:white;cursor:pointer;}
 .profile button:disabled {opacity:.5;}
-@media(max-width:620px){.profile{padding:18px;}.profile fieldset{grid-template-columns:1fr;}}
+.profile p[role=status] {margin-top:20px;padding:12px 16px;background:#eff7f1;border-radius:10px;}
+@media(max-width:620px){.profile{padding:8px 0 18px;}}

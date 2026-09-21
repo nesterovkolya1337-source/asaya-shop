@@ -11,7 +11,7 @@ const price=(minor:number)=>new Intl.NumberFormat('ru-RU',{style:'currency',curr
 const date=(value:string)=>new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date(value));
 const calendarDate=(value:string)=>new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(value+'T12:00:00Z'));
 
-export function ServerOrders({session,onSessionExpired}:{session:ServerSession;onSessionExpired:()=>void}) {
+export function ServerOrders({session,onSessionExpired,preview=false,onAll}:{session:ServerSession;onSessionExpired:()=>void;preview?:boolean;onAll?:()=>void}) {
  const {repeatOrder,checkoutEnabled}=useShop();
  const [repeatNotice,setRepeatNotice]=useState('');
  const repeatRequest=useRef<AbortController|null>(null);
@@ -81,22 +81,21 @@ export function ServerOrders({session,onSessionExpired}:{session:ServerSession;o
  }
 
  return <section className={styles.section} id="account-orders" aria-labelledby="orders-title" aria-busy={busy}>
-  <div className={styles.heading}><h2 id="orders-title">Мои заказы</h2><button disabled={busy} onClick={()=>void load()} type="button">Обновить список</button></div>
+  <div className={styles.heading}><h2 id="orders-title">{preview?'Последние заказы':'Мои заказы'}</h2>{preview&&<button onClick={onAll} type="button">Все заказы</button>}</div>
   {busy&&!loaded&&<p role="status">Загружаем заказы…</p>}
   {error&&<p className={styles.notice} role="alert">{error}</p>}
-  {loaded&&!items.length&&!error&&<div className={styles.empty}><h3>У вас пока нет заказов</h3><p>Здесь появятся заказы, оформленные на ваш подтверждённый номер телефона.</p></div>}
+  {loaded&&!items.length&&!error&&<div className={styles.empty}><h3>У вас пока нет заказов</h3><p>Покупки, оформленные на этот номер телефона, появятся здесь автоматически.</p></div>}
   <div className={styles.list}>
-   {items.map(order=><article className={styles.card} key={order.id}>
+   {(preview?items.slice(0,3):items).map(order=><article className={styles.card} key={order.id}>
     <div><h3>{order.public_number}</h3><p>{date(order.created_at)}</p></div>
-    <div><strong>{price(order.total_minor)}</strong><p>{order.customer_status?trackingLabels[order.customer_status]:orderLabels[order.status]} · {paymentLabels[order.payment_status]}</p>{!order.customer_status&&<p>{deliveryLabels[order.delivery_status]}</p>}</div>
-    <button disabled={busy} onClick={()=>void open(order.id)} type="button">Посмотреть {order.public_number}</button>
+    <div className={styles.cardSummary}><strong>{price(order.total_minor)}</strong><div className={styles.chips}><span>{order.customer_status?trackingLabels[order.customer_status]:orderLabels[order.status]}</span><span>{paymentLabels[order.payment_status]}</span>{!order.customer_status&&<span>{deliveryLabels[order.delivery_status]}</span>}</div></div>
+    <button aria-label={'Подробнее о заказе '+order.public_number} disabled={busy} onClick={()=>void open(order.id)} type="button">Подробнее</button>
    </article>)}
   </div>
-  {nextCursor&&<button disabled={busy} onClick={()=>void load(nextCursor)} type="button">Показать ещё</button>}
+  {!preview&&nextCursor&&<button disabled={busy} onClick={()=>void load(nextCursor)} type="button">Показать ещё</button>}
   {detail&&<article className={styles.detail} aria-labelledby="order-detail-title">
    <div className={styles.heading}><h3 id="order-detail-title">Заказ {detail.public_number}</h3><button disabled={busy} onClick={()=>{setDetail(null);setConfirmCancel(false);}} type="button">Закрыть</button></div>
    <p>{date(detail.created_at)} · {detail.tracking?.label??orderLabels[detail.status]}</p>
-   <button disabled={busy} onClick={()=>void open(detail.id)} type="button">Обновить статус заказа</button>
    <dl className={styles.statuses}><div><dt>Оплата</dt><dd>{paymentLabels[detail.payment_status]}</dd></div><div><dt>Доставка</dt><dd>{detail.tracking?.label??deliveryLabels[detail.delivery_status]}</dd></div></dl>
    {(detail.tracking?.pickupPoint||detail.delivery?.pickupPoint)&&<p>Пункт выдачи: {detail.tracking?.pickupPoint??detail.delivery?.pickupPoint}</p>}
    {detail.tracking?.plannedDeliveryDate?<p>Плановая дата доставки: <time dateTime={detail.tracking.plannedDeliveryDate}>{calendarDate(detail.tracking.plannedDeliveryDate)}</time></p>:detail.delivery?.plannedStart&&<p>Ожидаемая доставка по заказу: {calendarDate(detail.delivery.plannedStart)}{detail.delivery.plannedEnd&&detail.delivery.plannedEnd!==detail.delivery.plannedStart?' — '+calendarDate(detail.delivery.plannedEnd):''}</p>}

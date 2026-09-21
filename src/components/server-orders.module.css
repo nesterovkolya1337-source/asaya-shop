@@ -5,7 +5,11 @@
 .section button:disabled { opacity: .5; cursor: default; }
 .section button:focus-visible { outline: 2px solid var(--color-foreground); outline-offset: 3px; }
 .list { display: grid; gap: 12px; margin-bottom: 20px; }
-.card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; padding: 24px; border-radius: 18px; background: var(--color-light-gray); }
+.card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; padding: 24px; border-radius: 18px; background:#fff;border:1px solid #e5dfe3; }
+.cardSummary {display:grid;gap:12px;}
+.cardSummary>strong {font-size:22px;font-weight:500;}
+.chips {display:flex;flex-wrap:wrap;gap:7px;}
+.chips span {background:#f6f1f4;color:#51464d;border-radius:99px;padding:6px 10px;font-size:12px;}
 .card h3 { font-size: 20px; font-weight: 500; }
 .card p { color: #595959; margin: 8px 0 0; }
 .detail { margin-top: 24px; padding: 28px; border: 1px solid #d8d8d8; border-radius: 18px; }

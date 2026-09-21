@@ -4,12 +4,11 @@ import Link from 'next/link';
 import {useCallback,useEffect,useRef,useState,type FormEvent} from 'react';
 import {createAuthClient,type AuthChannel,type OtpChallenge,type ServerSession} from '@/lib/auth-client';
 import {assetPath} from '@/lib/asset-path';
-import {ServerOrders} from './server-orders';
 import styles from './customer-account.module.css';
 import {CustomerPhoneInput} from './customer-phone-input';
 import {displayPhone} from '@/lib/customer-phone-input';
 import {normalizeCustomerPhone} from '../../backend/src/customer-phone';
-import {CustomerProfileForm} from './customer-profile';
+import {CustomerDashboard} from './customer-dashboard';
 
 const auth=createAuthClient(assetPath('/api/store/v1'));
 type Challenge=OtpChallenge & {destination:string;channel:AuthChannel;expiresAt:number;retryAt:number};
@@ -109,7 +108,7 @@ export function ServerAccountView({smsOnly=false}:{smsOnly?:boolean}) {
  const retrySeconds=challenge?Math.max(0,Math.ceil((challenge.retryAt-now)/1000)):0;
  const expired=challenge!==null&&now>=challenge.expiresAt;
  return <main className={styles.main}>
-  <header className={styles.heading}><div><p>ASAYA / Профиль</p><h1>Личный кабинет</h1>{view==='signed-in'&&<span>Рады видеть вас в ASAYA</span>}</div>{view==='signed-in'&&<button className={styles.logoutButton} disabled={busy} onClick={()=>void logout()} type="button">{busy?'Выходим…':'Выйти'}</button>}</header>
+  <header className={styles.heading}><div><p>ASAYA / Профиль</p><h1>Личный кабинет</h1></div></header>
   {view!=='signed-in'&&<div className={styles.dashboard}>
    <section className={styles.loginCard} aria-labelledby="server-account-title" aria-busy={busy||view==='checking'}>
     <h2 id="server-account-title">{view==='checking'?'Загружаем…':challenge?'Введите код из SMS':smsOnly?'Войдите по номеру телефона':'Вход в аккаунт'}</h2>
@@ -142,6 +141,6 @@ export function ServerAccountView({smsOnly=false}:{smsOnly?:boolean}) {
     {notice && <div className={styles.notice} role="alert">{notice}</div>}
    </section>
   </div>}
-  {view==='signed-in'&&session&&<>{notice&&<div className={styles.notice} role="alert">{notice}</div>}<div id="orders"><ServerOrders key={session.user.id} session={session} onSessionExpired={refresh}/></div>{smsOnly&&<CustomerProfileForm key={'profile:'+session.user.id} session={session} onExpired={refresh}/>}</>}
+  {view==='signed-in'&&session&&<>{notice&&<div className={styles.notice} role="alert">{notice}</div>}<CustomerDashboard key={session.user.id} session={session} onExpired={refresh} onLogout={()=>void logout()} busy={busy}/></>}
  </main>;
 }

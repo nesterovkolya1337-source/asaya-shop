@@ -16,6 +16,7 @@ if(path==='/api/store/v1/auth/otp/verify'){if(q.postDataJSON().code!=='123456')r
 if(path==='/api/store/v1/auth/logout'){signed=false;assert.equal(q.headers()['x-csrf-token'],csrfToken);return json({ok:true});}
 if(path==='/api/store/v1/account/profile'){if(q.method()==='PUT'){assert.equal(q.headers()['x-csrf-token'],csrfToken);profile={...profile,...q.postDataJSON()};}return json(profile);}
 if(path==='/api/store/v1/orders')return json({items:hasOrders?[{id,public_number:'ASAYA-10001',status:'processing',payment_status:'paid',delivery_status:'shipped',customer_status:'handed_to_delivery',currency:'RUB',total_minor:50000,created_at:'2026-09-17T10:00:00Z'}]:[],nextCursor:null});
+if(path==='/api/store/v1/orders/'+id)return json({id,public_number:'ASAYA-10001',status:'processing',payment_status:'paid',delivery_status:'shipped',currency:'RUB',total_minor:50000,created_at:'2026-09-17T10:00:00Z',shipment:null,subtotal_minor:50000,delivery_minor:0,canCancel:false,items:[{sku:'TEST',name_snapshot:'Товар из заказа',quantity:1,unit_minor:50000,line_minor:50000}]});
 if(path==='/api/store/v1/products')return json({items:[]});
 if(path.startsWith('/api/'))return json({},503);
 return r.continue();});
@@ -35,17 +36,30 @@ assert.equal(await p.getByRole('button',{name:'Проверить состоян
 await p.screenshot({path:output+'/profile-otp-'+width+'.png',fullPage:true});
 await p.getByRole('button',{name:'Изменить номер'}).click();assert.equal(await phone.inputValue(),'999 123-45-67');await send.click();assert.ok(await p.getByRole('button',{name:/Новый код через/}).isDisabled());
 await p.getByLabel('Код из 6 цифр').fill('000000');await p.getByRole('button',{name:'Войти',exact:true}).click();await p.getByRole('alert').filter({hasText:'Код неверный'}).waitFor();
-await p.getByLabel('Код из 6 цифр').fill('123456');await p.getByRole('button',{name:'Войти',exact:true}).click();await p.getByLabel('Телефон подтверждён').waitFor();
-await p.reload();await p.getByLabel('Телефон подтверждён').waitFor();
+await p.getByLabel('Код из 6 цифр').fill('123456');await p.getByRole('button',{name:'Войти',exact:true}).click();
+const nav=p.getByRole('navigation',{name:'Разделы личного кабинета'});
+await nav.waitFor();await p.reload();await nav.waitFor();
 await p.getByRole('heading',{name:'У вас пока нет заказов'}).waitFor();
-const ordersBox=await p.getByRole('heading',{name:'Мои заказы',exact:true}).boundingBox(),profileBox=await p.getByRole('heading',{name:'Мой профиль',exact:true}).boundingBox();assert.ok(ordersBox.y<profileBox.y);
+assert.equal(await p.getByLabel('Имя · необязательно').count(),0);
+await p.screenshot({path:output+'/profile-overview-'+width+'.png',fullPage:true});
+await p.getByRole('button',{name:'Изменить данные',exact:true}).click();
+await p.getByLabel('Телефон подтверждён').waitFor();
+assert.equal(await p.getByLabel('Телефон подтверждён').inputValue(),'+7 999 123-45-67');
 assert.ok(await p.getByLabel('Телефон подтверждён').getAttribute('readonly')!==null);
-await p.getByLabel('Имя · необязательно').fill('Анна');await p.getByRole('button',{name:'Сохранить профиль'}).click();await p.getByText('Профиль сохранён.',{exact:true}).waitFor();assert.equal(sends,2);assert.equal(await p.getByLabel('Имя · необязательно').inputValue(),'Анна');
+assert.equal(await p.getByRole('heading',{name:'Мои заказы',exact:true}).count(),0);
+await p.getByLabel('Имя · необязательно').fill('Анна');await p.getByRole('button',{name:'Сохранить изменения'}).click();await p.getByText('Изменения сохранены',{exact:true}).waitFor();
+await p.getByText('Изменения сохранены',{exact:true}).waitFor({state:'hidden',timeout:6000});
+assert.equal(sends,2);assert.equal(await p.getByLabel('Имя · необязательно').inputValue(),'Анна');
+await p.screenshot({path:output+'/profile-data-'+width+'.png',fullPage:true});
+await nav.getByRole('button',{name:'Обзор',exact:true}).click();await p.getByRole('heading',{name:'Здравствуйте, Анна'}).waitFor();
+hasOrders=true;await p.getByRole('button',{name:'Все заказы',exact:true}).click();await p.getByRole('heading',{name:'ASAYA-10001'}).waitFor();
+assert.equal(await p.getByRole('button',{name:'Обновить список'}).count(),0);
+assert.equal(await p.getByLabel('Имя · необязательно').count(),0);
 assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
-await p.screenshot({path:output+'/profile-signed-'+width+'.png',fullPage:true});
-hasOrders=true;await p.getByRole('button',{name:'Обновить список'}).click();await p.getByRole('heading',{name:'ASAYA-10001'}).waitFor();await p.screenshot({path:output+'/profile-orders-'+width+'.png',fullPage:true});
+await p.screenshot({path:output+'/profile-orders-'+width+'.png',fullPage:true});
+await p.getByRole('button',{name:'Подробнее о заказе ASAYA-10001'}).click();await p.getByRole('heading',{name:'Заказ ASAYA-10001',exact:true}).waitFor();await p.getByText('Товар из заказа',{exact:true}).waitFor();await p.getByRole('button',{name:'Закрыть',exact:true}).click();
 await p.getByRole('button',{name:'Выйти',exact:true}).click();await phone.waitFor();
 enabled=false;await p.reload();await p.getByText('Вход по SMS пока недоступен.',{exact:false}).waitFor();await phone.fill('+79991234567');assert.ok(await send.isDisabled());
-assert.deepEqual(errors,[]);results.push({width,explanation:true,validPhone:true,cooldown:true,wrongAndCorrectCode:true,reload:true,logout:true,unavailableGuard:true,pageErrors:errors});await c.close();}
+assert.deepEqual(errors,[]);results.push({width,dashboardNavigation:true,profileSaveAndTemporaryFeedback:true,orderDetail:true,explanation:true,validPhone:true,cooldown:true,wrongAndCorrectCode:true,reload:true,logout:true,unavailableGuard:true,pageErrors:errors});await c.close();}
 fs.writeFileSync(output+'/profile-ux-browser.json',JSON.stringify(results,null,2));console.log(JSON.stringify(results));}finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1});
 
