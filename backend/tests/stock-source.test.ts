@@ -26,6 +26,8 @@ const xml=(at:Date,n:number,extra='')=>`<?xml version="1.0"?><yml_catalog date="
 const content={description:'Description',volume:'300 ml',category:'body',setKind:'none',usage:'',ingredients:'',aroma:'',features:[],image:'/images/test.webp',gallery:[],badge:'',instruction:{steps:[],amount:'',tip:''},safety:'',recommendations:[],sensory:[]};
 async function fixture(){
  const db=ctx.db,warehouse=randomUUID(),product=randomUUID(),actor=randomUUID();
+ // Stock-contract tests keep unit prices fixed; quantity discounts have their own suite.
+ await db.pool.query(`UPDATE marketing_settings SET live=live || '{"twoPercent":0,"threePercent":0}'::jsonb`);
  const at=new Date(Math.floor(Date.now()/1000)*1000-1000);
  await db.pool.query("INSERT INTO warehouses(id,code,name,active) VALUES($1,'MSK-TEST','FF stock test',true)",[warehouse]);
  await db.pool.query("INSERT INTO warehouse_external_ids(provider,account_id,external_id,warehouse_id) VALUES('cdek_ff','asaya','23401',$1)",[warehouse]);

@@ -1,0 +1,13 @@
+# Opt-in only. Do not apply until the read-only stock preflight passes.
+# Merge with the exact current production compose, preserving its image tags.
+services:
+  api:
+    environment:
+      CDEK_STOCK_SETTINGS_FILE: /run/asaya/cdek-stock-settings.json
+    volumes:
+      - type: bind
+        source: /opt/asaya-catalog/secrets/cdek-stock-settings.json
+        target: /run/asaya/cdek-stock-settings.json
+        read_only: true
+        bind:
+          create_host_path: false
