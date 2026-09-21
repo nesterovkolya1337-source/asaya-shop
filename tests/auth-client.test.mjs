@@ -46,6 +46,19 @@ test('expired sessions are guests but network failures remain visible errors',as
  await assert.rejects(network.me(),error=>error.code==='NETWORK_ERROR'&&!error.message.includes('private'));
 });
 
+test('bootstrap distinguishes a database outage from an expired cookie and recovers on retry',async()=>{
+ let state='outage';const calls=[];
+ const client=createAuthClient('/api',async(url)=>{
+  calls.push(url);
+  if(url.endsWith('/methods'))return reply({yandex:false,orders:true,sms:true});
+  return state==='outage'?reply({error:'INTERNAL_ERROR'},500):state==='expired'?reply({error:'UNAUTHENTICATED'},401):reply({id,role:'customer',csrfToken:session.csrfToken});
+ });
+ await assert.rejects(Promise.all([client.me(),client.methods()]),e=>e.code==='INTERNAL_ERROR');
+ state='expired';assert.deepEqual(await Promise.all([client.me(),client.methods()]),[null,{yandex:false,orders:true,sms:true}]);
+ state='valid';assert.deepEqual(await client.me(),session);
+ assert.ok(calls.every(url=>!url.includes('/otp/')));
+});
+
 test('malformed success and unexpected server messages never create a session or expose details',async()=>{
  for(const payload of [null,{}, {...session,user:{id,role:'admin'}},{...session,csrfToken:'short'}]) assert.throws(()=>parseSession(payload));
  const malformed=createAuthClient('/api',async()=>reply({challengeId:id,expiresInSeconds:300,retryAfterSeconds:-1}));
