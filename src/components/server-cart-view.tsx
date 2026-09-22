@@ -13,18 +13,20 @@ export const rubles=(minor:number)=>new Intl.NumberFormat('ru-RU',{style:'curren
 const purchaseSignature=(basket:ReturnType<typeof checkoutCart>)=>JSON.stringify([basket.items,basket.subtotalMinor]);
 export function ServerCartView(){
  const {cart,products,changeQuantity,addToCart,checkoutEnabled,catalogStatus,refreshCatalog,yandexCheckoutEnabled}=useShop();
+ const [promoInput,setPromoInput]=useState(''),[promoCode,setPromoCode]=useState('');
  const [notice,setNotice]=useState('');
  const [priced,setPriced]=useState<{key:string;quote:CartPricing}|null>(null),[pricingError,setPricingError]=useState('');
  const basket=checkoutCart(cart,catalogStatus==='error'?products.map(p=>({...p,stockState:'unknown' as const})):products,true);
  const {rows,valid,items}=basket;
- const pricingKey=JSON.stringify([items,basket.subtotalMinor]);
+ const pricingKey=JSON.stringify([items,basket.subtotalMinor,promoCode]);
  const quote=priced?.key===pricingKey?priced.quote:null;
- useEffect(()=>{const controller=new AbortController();setPricingError('');void requestCartPricing(items,controller.signal).then(quote=>{if(!controller.signal.aborted)setPriced({key:pricingKey,quote});}).catch(e=>{if(!controller.signal.aborted)setPricingError(e.message);});return()=>controller.abort();},[pricingKey]);
+ useEffect(()=>{const controller=new AbortController();setPricingError('');void requestCartPricing(items,controller.signal,promoCode||undefined).then(quote=>{if(!controller.signal.aborted)setPriced({key:pricingKey,quote});}).catch(e=>{if(!controller.signal.aborted)setPricingError(e.message);});return()=>controller.abort();},[pricingKey]);
  const current=useRef(basket.signature);
  useEffect(()=>{current.current=basket.signature;},[basket.signature]);
  // Client-side cart navigation must refresh the same backend stock projection.
  useEffect(()=>{void refreshCatalog().catch(()=>{});},[refreshCatalog]);
  async function prepareItems(){
+  if(promoCode)return null;
   const signature=basket.signature,previous=purchaseSignature(basket);
   const fresh=await refreshCatalog(),checked=checkoutCart(cart,fresh,true);
   if(current.current!==signature)return null;
@@ -68,12 +70,14 @@ export function ServerCartView(){
  {quote&&valid&&<div className={cartStyles.delivery} aria-live="polite"><progress aria-label="До бесплатной доставки" value={progress} max={100}/><div className={cartStyles.progressLabels}><span>{rubles(quote.subtotalMinor)}</span><span>{rubles(quote.settings.freeShippingMinor)}</span></div><p>{quote.shippingRemainingMinor===0?'Бесплатная доставка':'До бесплатной доставки осталось '+rubles(quote.shippingRemainingMinor)}</p></div>}
  {quote&&quantityProgress(quote)&&<p className={cartStyles.discountBadge} role="status">{quantityProgress(quote)}</p>}
  {quote&&(quote.loyalty?<div className={cartStyles.loyalty} aria-label="Бонусы в корзине"><span>Ваши баллы ASAYA<small>1 балл = 1 ₽</small></span><strong>{quote.loyalty.balance}</strong></div>:<Link className={cartStyles.guestLink} href="/account/">Войти, чтобы увидеть баллы</Link>)}
- <dl className={cartStyles.totals}><div><dt>Товары</dt><dd>{quote?rubles(quote.subtotalMinor+quote.discountMinor):'Рассчитываем…'}</dd></div>
+ <form className={cartStyles.promo} onSubmit={e=>{e.preventDefault();setPromoCode(promoInput.trim().toUpperCase());}}><label htmlFor="cart-promo">Промокод</label><div><input id="cart-promo" maxLength={40} required value={promoInput} onChange={e=>setPromoInput(e.target.value)}/><button type="submit">Проверить</button></div>{promoCode&&<button type="button" onClick={()=>{setPromoCode('');setPromoInput('');}}>Убрать промокод</button>}{quote?.promo&&<p role="status">{quote.promo.code}: скидка {quote.promo.percent}%. Расчёт предварительный. Оформление с промокодом пока недоступно; уберите его, чтобы продолжить.</p>}</form>
+ <dl className={cartStyles.totals}><div><dt>Товары</dt><dd>{quote?rubles(quote.subtotalMinor+quote.discountMinor+(quote.promo?.discountMinor??0)):'Рассчитываем…'}</dd></div>
  {quote&&quote.discountMinor>0&&<div><dt>Скидка за количество</dt><dd>−{rubles(quote.discountMinor)}</dd></div>}
+ {quote?.promo&&<div><dt>Промокод {quote.promo.code}</dt><dd>−{rubles(quote.promo.discountMinor)}</dd></div>}
  <div><dt>Доставка</dt><dd>{quote&&valid&&quote.shippingRemainingMinor===0?'Бесплатно':'При оформлении'}</dd></div>
  <div className={cartStyles.total}><dt>Итого за товары</dt><dd>{quote?rubles(quote.subtotalMinor):'Рассчитываем…'}</dd></div></dl>
  {!valid&&catalogStatus==='ready'&&<p role="status">Сейчас в корзине нет товаров, доступных к оформлению.</p>}
- {yandexCheckoutEnabled&&<YandexCheckoutButton key={basket.signature} items={items} disabled={catalogStatus!=='ready'||!valid||!quote||!!pricingError} prepareItems={prepareItems} onConflict={conflict} label="Оформить заказ" showNote={false} />}
+ {yandexCheckoutEnabled&&<YandexCheckoutButton key={basket.signature} items={items} disabled={catalogStatus!=='ready'||!valid||!quote||!!pricingError||!!promoCode} prepareItems={prepareItems} onConflict={conflict} label="Оформить заказ" showNote={false} />}
  {!yandexCheckoutEnabled&&<p role="status">Оформление заказов пока недоступно. Корзина сохранена.</p>}
  </section></div>:<section className={cartStyles.empty}><h2>Корзина пока пуста</h2><Link href="/catalog/">Выбрать товары</Link></section>}
  {recommendations.length>0&&<section className={cartStyles.recommendations} aria-label="Рекомендуем добавить"><h2>Рекомендуем добавить</h2><div className={cartStyles.recommendationGrid}>

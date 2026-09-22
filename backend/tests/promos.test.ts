@@ -1,0 +1,72 @@
+import {test,before,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {testDatabase} from './postgres.js';
+import {StaffAuth} from '../src/staff-auth.js';
+import {Promos,promoSchema,promoFailure,validatedPromo,promoTemplate,parsePromoCsv} from '../src/promos.js';
+import {priceCart} from '../src/cart-pricing.js';
+import {buildApp} from '../src/app.js';
+import {DisabledOtpSender} from '../src/auth.js';
+let ctx:Awaited<ReturnType<typeof testDatabase>>,actor:string;
+before(async()=>{ctx=await testDatabase();actor=await new StaffAuth(ctx.db,'promos-test-secret-at-least-32-characters').provision('promos@example.test','Promo-test-password-123','GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ');});
+after(async()=>ctx?.stop());
+test('normalization, dates, bounded percent, repeat rule and all eligibility failures',()=>{
+ assert.equal(promoSchema.parse({code:' welcome10 ',discount_percent:10}).code,'WELCOME10');
+ assert.equal(promoSchema.parse({code:'A',discount_percent:10,max_uses_per_customer:10}).max_uses_per_customer,1);
+ for(const percent of [0,101,2.5])assert.equal(promoSchema.safeParse({code:'A',discount_percent:percent}).success,false);
+ assert.equal(promoSchema.safeParse({code:'A',discount_percent:10,starts_at:'2026-10-02T00:00:00Z',ends_at:'2026-10-01T00:00:00Z'}).success,false);
+ const p={is_active:true,archived_at:null,starts_at:null,ends_at:null,max_total_uses:null,max_uses_per_customer:null};
+ assert.equal(promoFailure(p,0,0,false),null);
+ assert.equal(promoFailure({...p,is_active:false},0,0,false),'PROMO_DISABLED');
+ assert.equal(promoFailure({...p,starts_at:'2099-01-01'},0,0,false),'PROMO_NOT_STARTED');
+ assert.equal(promoFailure({...p,ends_at:'2000-01-01'},0,0,false),'PROMO_EXPIRED');
+ assert.equal(promoFailure({...p,max_total_uses:1},1,0,true),'PROMO_EXHAUSTED');
+ assert.equal(promoFailure({...p,max_uses_per_customer:1},0,0,false),'PROMO_LOGIN_REQUIRED');
+ assert.equal(promoFailure({...p,max_uses_per_customer:1},0,1,true),'PROMO_CUSTOMER_EXHAUSTED');
+});
+test('promo follows sale/quantity with whole-ruble unit rounding; no-promo flow is unchanged',()=>{
+ const settings={twoPercent:5,threePercent:10,freeShippingMinor:100000,loyalty:{cashbackPercent:3,maxRedemptionPercent:20}};
+ const lines=[{sku:'A',quantity:3,finalMinor:79900,eligible:true}];
+ const before=priceCart(lines,settings),after=priceCart(lines,settings,{id:randomUUID(),code:'TEN',percent:10});
+ assert.equal(before.items[0]!.unitMinor,71900);assert.equal(after.items[0]!.unitMinor,64700);
+ assert.equal(after.subtotalMinor,194100);assert.equal(after.promo!.discountMinor,21600);
+ assert.equal(after.discountMinor,before.discountMinor);assert.equal(after.promo!.checkoutAvailable,false);
+ assert.equal(priceCart(lines,settings).promo,undefined);
+});
+test('admin create uniqueness, search, archive, restore, import preview and atomic revalidation',async()=>{
+ const p=new Promos(ctx.db);
+ const a=await p.save(actor,{code:' public10 ',discount_percent:10,allow_repeat_use:true});
+ await assert.rejects(p.save(actor,{code:'PUBLIC10',discount_percent:20}),/PROMO_DUPLICATE/);
+ await assert.rejects(p.save(randomUUID(),{code:'NO',discount_percent:10}),/FORBIDDEN/);
+ assert.equal((await p.list(actor,{search:'public'})).items.length,1);
+ assert.equal((await validatedPromo(ctx.db.pool,'public10',null)).percent,10);
+ await p.bulk(actor,{ids:[a.id],action:'archive',confirmed:true});
+ assert.equal((await p.list(actor,{})).items.length,0);
+ assert.equal((await p.list(actor,{view:'archive'})).items.length,1);
+ await assert.rejects(validatedPromo(ctx.db.pool,'PUBLIC10',null),/PROMO_DISABLED/);
+ await p.save(actor,{code:'PUBLIC10',discount_percent:15,allow_repeat_use:true},a.id);
+ assert.equal((await validatedPromo(ctx.db.pool,' PUBLIC10 ',null)).percent,15);
+ const csv=promoTemplate+'BAD,101,,,true,false,,,bad\r\nWELCOME10,10,,,true,false,,,duplicate\r\n';
+ const rows=await p.preview(actor,csv);assert.ok(rows[0]!.data);assert.ok(rows[1]!.error);assert.ok(rows[2]!.error);
+ assert.equal((await p.import(actor,{csv,rows:[2],confirmed:true})).count,1);
+ await assert.rejects(p.import(actor,{csv,rows:[2],confirmed:true}),/PROMO_IMPORT_CHANGED/);
+ await assert.rejects(validatedPromo(ctx.db.pool,'WELCOME10',null),/PROMO_LOGIN_REQUIRED/);
+ assert.equal((await ctx.db.pool.query('SELECT count(*)::int n FROM promo_paid_uses')).rows[0].n,0);
+ assert.equal(parsePromoCsv(promoTemplate.replace('Пример: первая покупка','"hello, world"'))[0]![8],'hello, world');
+ assert.throws(()=>parsePromoCsv(promoTemplate+'"broken'),/PROMO_CSV_INVALID/);
+});
+test('HTTP preview uses canonical prices, rejects browser totals, and unauthenticated admin access',async()=>{
+ const db=ctx.db,id=randomUUID();
+ await db.pool.query("INSERT INTO products(id,sku,name,active,sale_approved) VALUES($1,'PROMO-SKU','Promo test',true,true)",[id]);
+ await db.pool.query("INSERT INTO product_prices(product_id,currency,regular_minor,final_minor,approved) VALUES($1,'RUB',100000,79900,true)",[id]);
+ await db.pool.query('INSERT INTO product_editor(product_id,revision,draft,published) VALUES($1,1,$2,$2)',[id,{content:{category:'body'}}]);
+ const app=await buildApp({db,otpSecret:'promo-test-secret-with-at-least-32-characters',otpSender:new DisabledOtpSender(),origin:'http://localhost:3200',secureCookies:false,staffSecret:'promo-test-secret-with-at-least-32-characters',deploymentMode:'catalog'});
+ try{
+ const payload={items:[{sku:'PROMO-SKU',quantity:1}],promo_code:'PUBLIC10'};
+ const res=await app.inject({method:'POST',url:'/api/store/v1/cart/pricing',headers:{origin:'http://localhost:3200'},payload});
+ assert.equal(res.statusCode,200,res.body);assert.equal(res.json().subtotalMinor,67900);assert.equal(res.json().promo.checkoutAvailable,false);
+ const bad=await app.inject({method:'POST',url:'/api/store/v1/cart/pricing',headers:{origin:'http://localhost:3200'},payload:{...payload,final_price:1}});assert.equal(bad.statusCode,400);
+ assert.equal((await app.inject({method:'GET',url:'/api/admin/v1/promos'})).statusCode,401);
+ assert.equal((await db.pool.query('SELECT count(*)::int n FROM promo_paid_uses')).rows[0].n,0);
+ }finally{await app.close();}
+});

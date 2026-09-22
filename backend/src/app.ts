@@ -1,3 +1,4 @@
+import {Promos,validatedPromo,promoTemplate} from './promos.js';
 import {Trash} from './trash.js';
 import {Engagement} from './engagement.js';
 import {Loyalty,loyaltyAmounts} from './loyalty.js';
@@ -217,6 +218,15 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   secured.get('/api/admin/v1/media',async req=>trash.assets(await actor(req.cookies[staffCookie])));
   secured.post('/api/admin/v1/media/:id/delete',async req=>trash.deleteMedia(await actor(req.cookies[staffCookie]),id(req.params)));
   secured.post('/api/admin/v1/trash/:kind/:id/restore',async req=>{const p=z.object({kind:z.enum(['product','media']),id:z.uuid()}).parse(req.params);return trash.restore(await actor(req.cookies[staffCookie]),p.kind,p.id);});
+  const promos=new Promos(options.db);
+  secured.get('/api/admin/v1/promos',async req=>promos.list(await actor(req.cookies[staffCookie]),req.query));
+  secured.get('/api/admin/v1/promos/template',async(req,reply)=>{await actor(req.cookies[staffCookie]);return reply.type('text/csv; charset=utf-8').header('Content-Disposition','attachment; filename="asaya-promocodes.csv"').send(promoTemplate);});
+  secured.post('/api/admin/v1/promos/generate',async req=>{z.object({}).strict().parse(req.body);return promos.generate(await actor(req.cookies[staffCookie]));});
+  secured.post('/api/admin/v1/promos',async req=>promos.save(await actor(req.cookies[staffCookie]),req.body));
+  secured.put('/api/admin/v1/promos/:id',async req=>promos.save(await actor(req.cookies[staffCookie]),req.body,id(req.params)));
+  secured.post('/api/admin/v1/promos/bulk',async req=>promos.bulk(await actor(req.cookies[staffCookie]),req.body));
+  secured.post('/api/admin/v1/promos/import-preview',{bodyLimit:600000},async req=>promos.preview(await actor(req.cookies[staffCookie]),z.object({csv:z.string().max(500000)}).strict().parse(req.body).csv));
+  secured.post('/api/admin/v1/promos/import',{bodyLimit:600000},async req=>promos.import(await actor(req.cookies[staffCookie]),req.body));
   const marketing=new Marketing(options.db);
   secured.get('/api/admin/v1/marketing',async()=>marketing.read());
   for(const action of ['save','publish','restore','defaults'] as const)secured.post('/api/admin/v1/marketing/'+action,async req=>marketing.change(await actor(req.cookies[staffCookie]),action,req.body));
@@ -234,7 +244,14 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
  });
  app.post('/api/store/v1/analytics/events',{bodyLimit:8192},async req=>new ProductAnalytics(options.db).ingest(req.body));
  app.post('/api/store/v1/cart/pricing',async req=>{
-  const quote=await cartPricing(options.db.pool,req.body);
+  const {promo_code,...body}=z.object({items:z.unknown(),promo_code:z.string().trim().max(40).optional()}).strict().parse(req.body);
+  let promo;
+  if(promo_code){let customerId:string|null=null;
+   try{const user=await auth.session(req.cookies[cookieName]);customerId=(await options.db.pool.query('SELECT id FROM customer_profiles WHERE user_id=$1',[user.id])).rows[0]?.id??null;}
+   catch(e){if(!(e instanceof DomainError&&e.code==='UNAUTHENTICATED'))throw e;}
+   promo=await validatedPromo(options.db.pool,promo_code,customerId);
+  }
+  const quote=await cartPricing(options.db.pool,body,promo);
   try{
    const user=await auth.session(req.cookies[cookieName]);
    const loyalty=await new Loyalty(options.db).account(user.id);
