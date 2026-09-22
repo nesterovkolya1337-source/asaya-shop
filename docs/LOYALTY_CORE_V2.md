@@ -1,5 +1,7 @@
 # Loyalty Core v2 — partial implementation, not release-ready
 
+Release reconciliation 2026-09-22: see `PREDEPLOY_20260922.md`. The ledger/cashback/history subset is independently deployable; redemption remains unavailable. The unconnected `Loyalty.refund` prototype and its tests described below were removed from release source and remain available in Git at `a6c9e7be84b35d8c643d31e4512074056d65320f`. The following is the historical implementation report, not a claim of complete production redemption/refunds.
+
 No production deployment. Migration: `035_loyalty_core.sql`.
 
 ## Implemented

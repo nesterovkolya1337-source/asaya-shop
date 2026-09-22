@@ -36,40 +36,7 @@ export async function earnLoyalty(tx:Tx,order:string){
 }
 export class Loyalty {
  constructor(private db:Database){}
- // Internal financial reconciliation only: caller must supply the confirmed product
- // part of a refund. A carrier return is never evidence of refunded money.
- async refund(refundId:string,productCashMinor:number){
-  money(productCashMinor);
-  return this.db.transaction(async tx=>{
-   const r=(await tx.query(`SELECT r.id,r.amount_minor,r.status,p.order_id,o.customer_id,o.delivery_minor,s.*
-    FROM refunds r JOIN payments p ON p.id=r.payment_id JOIN orders o ON o.id=p.order_id
-    JOIN loyalty_order_snapshots s ON s.order_id=o.id WHERE r.id=$1 FOR UPDATE OF o`,[refundId])).rows[0];
-   if(!r||r.status!=='succeeded'||!r.customer_id)throw new DomainError('REFUND_NOT_CONFIRMED',409);
-   await customerLock(tx,r.customer_id);
-   const prior=(await tx.query('SELECT detail FROM loyalty_ledger WHERE source_key=$1',['refund-cashback:'+refundId])).rows[0];
-   if(prior){if(prior.detail.productCashMinor!==productCashMinor)throw new DomainError('REFUND_ALLOCATION_CONFLICT',409);return;}
-   if(productCashMinor>money(r.amount_minor)||money(r.amount_minor)-productCashMinor>money(r.delivery_minor))throw new DomainError('INVALID_REFUND_ALLOCATION',409);
-   const previous=(await tx.query(`SELECT COALESCE(sum((detail->>'productCashMinor')::bigint),0) AS cash,
-    COALESCE(sum((detail->>'targetReversed')::bigint),0) AS reversed,
-    COALESCE(sum((detail->>'deliveryMinor')::bigint),0) AS delivery FROM loyalty_ledger
-    WHERE order_id=$1 AND source='confirmed_refund' AND type='refund_reversal'`,[r.order_id])).rows[0];
-   const cumulative=money(previous.cash)+productCashMinor,cash=money(r.cash_product_minor);
-   const deliveryMinor=money(r.amount_minor)-productCashMinor;
-   if(money(previous.delivery)+deliveryMinor>money(r.delivery_minor))throw new DomainError('REFUND_EXCEEDS_DELIVERY',409);
-   if(cumulative>cash)throw new DomainError('REFUND_EXCEEDS_PRODUCTS',409);
-   const earned=(await tx.query("SELECT id,points FROM loyalty_ledger WHERE source_key=$1",['purchase:'+r.order_id])).rows[0];
-   if(!earned)throw new DomainError('LOYALTY_EARN_NOT_RECONCILED',409);
-   const target=cash?Math.floor(Number(earned.points)*cumulative/cash):0;
-   const reverse=Math.max(0,target-Number(previous.reversed));
-   const restored=(await tx.query("SELECT COALESCE(sum(points),0) AS n FROM loyalty_ledger WHERE order_id=$1 AND type='redemption_return'",[r.order_id])).rows[0];
-   const giveBack=(cash?Math.floor(money(r.redeemed_points)*cumulative/cash):0)-Number(restored.n);
-   const actualReverse=Math.min(await balance(tx,r.customer_id)+giveBack,reverse);
-   if(giveBack)await tx.query(`INSERT INTO loyalty_ledger(id,customer_id,type,points,source,source_key,order_id,description)
-    VALUES($1,$2,'redemption_return',$3,'confirmed_refund',$4,$5,'Возврат списанных баллов')`,[randomUUID(),r.customer_id,giveBack,'refund-redemption:'+refundId,r.order_id]);
-   await tx.query(`INSERT INTO loyalty_ledger(id,customer_id,type,points,source,source_key,order_id,reversal_of,description,status,detail)
-    VALUES($1,$2,'refund_reversal',$3,'confirmed_refund',$4,$5,$6,'Корректировка баллов при возврате',$7,$8)`,[randomUUID(),r.customer_id,-actualReverse,'refund-cashback:'+refundId,r.order_id,earned.id,actualReverse<reverse?'review':'posted',{productCashMinor,deliveryMinor,targetReversed:reverse,unrecoveredPoints:reverse-actualReverse}]);
-  });
- }
+ // Provider refund ingestion is excluded from this release; see a6c9e7b prototype.
  async account(user:string){
   return this.db.transaction(async tx=>{
    const profile=(await tx.query(`SELECT p.id FROM customer_profiles p JOIN users u ON u.id=p.user_id
