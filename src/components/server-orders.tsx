@@ -81,12 +81,12 @@ export function ServerOrders({session,onSessionExpired,preview=false,onAll}:{ses
  }
 
  return <section className={styles.section} id="account-orders" aria-labelledby="orders-title" aria-busy={busy}>
-  <div className={styles.heading}><h2 id="orders-title">{preview?'Последние заказы':'Мои заказы'}</h2>{preview&&<button onClick={onAll} type="button">Все заказы</button>}</div>
+  <div className={styles.heading}><h2 id="orders-title">{preview?'Последний заказ':'Мои заказы'}</h2>{preview&&<button onClick={onAll} type="button">Все заказы</button>}</div>
   {busy&&!loaded&&<p role="status">Загружаем заказы…</p>}
   {error&&<p className={styles.notice} role="alert">{error}</p>}
   {loaded&&!items.length&&!error&&<div className={styles.empty}><h3>У вас пока нет заказов</h3><p>Покупки, оформленные на этот номер телефона, появятся здесь автоматически.</p></div>}
   <div className={styles.list}>
-   {(preview?items.slice(0,3):items).map(order=><article className={styles.card} key={order.id}>
+   {(preview?items.slice(0,1):items).map(order=><article className={styles.card} key={order.id}>
     <div><h3>{order.public_number}</h3><p>{date(order.created_at)}</p></div>
     <div className={styles.cardSummary}><strong>{price(order.total_minor)}</strong><div className={styles.chips}><span>{order.customer_status?trackingLabels[order.customer_status]:orderLabels[order.status]}</span><span>{paymentLabels[order.payment_status]}</span>{!order.customer_status&&<span>{deliveryLabels[order.delivery_status]}</span>}</div></div>
     <button aria-label={'Подробнее о заказе '+order.public_number} disabled={busy} onClick={()=>void open(order.id)} type="button">Подробнее</button>
