@@ -80,23 +80,39 @@ test('admin stock report reads shared quantities and canonical metadata; never s
  assert.deepEqual(await new AdminStocks(f.db).read(f.actor,{}),{configured:false,source:null,items:[]});
 });
 
-for(const problem of ['unknown','draft','unpublished','deleted','sku_mismatch','no_storefront_mapping'])test('API coverage fails closed atomically for '+problem,async()=>{
- const f=await fixture();let items=[{sku:'SKU-1',quantity:24}];
+for(const problem of ['unknown','draft','unpublished','deleted','sku_mismatch','no_storefront_mapping'])test('API coverage warns without blocking valid stock for '+problem,async()=>{
+ const f=await fixture(),valid=randomUUID();let now=new Date();let items=[{sku:'SKU-1',quantity:24},{sku:'VALID',quantity:10}];
+ await f.db.pool.query("INSERT INTO products(id,sku,name,active,sale_approved) VALUES($1,'VALID','Valid product',true,true)",[valid]);
+ await f.db.pool.query("INSERT INTO product_prices(product_id,currency,regular_minor,final_minor,approved) VALUES($1,'RUB',50000,50000,true)",[valid]);
+ await f.db.pool.query("INSERT INTO product_editor(product_id,revision,draft,published,updated_by) VALUES($1,1,$2,$2,$3)",[valid,{sku:'VALID',content},f.actor]);
+ await f.db.pool.query("INSERT INTO storefront_mappings(slug,product_id,approved,confidence,reason) VALUES('valid',$1,true,'high','test')",[valid]);
  const source=new CdekStockApi({kind:'cdek_ff_api',warehouseId:f.warehouse,accountId:'asaya',externalWarehouseId:'23401',shopId:220216,environment:'production',login:'fixture',password:'secret'});
- const sync=new StockSync(f.db,{settings:source.settings,read:async()=>({generatedAt:new Date(),items,digest:JSON.stringify(items)})});
+ const sync=new StockSync(f.db,{settings:source.settings,read:async()=>({generatedAt:now,items,digest:JSON.stringify(items)})},()=>now);
  await sync.refresh();assert.equal(await f.available(),24);
- if(problem==='unknown')items=[{sku:'SKU-1',quantity:99},{sku:'UNKNOWN',quantity:5}];
+ items=[{sku:'SKU-1',quantity:99},{sku:'VALID',quantity:40}];
+ if(problem==='unknown')items.push({sku:'UNKNOWN',quantity:5});
  if(problem==='draft')await f.db.pool.query('UPDATE product_editor SET published=NULL WHERE product_id=$1',[f.product]);
  if(problem==='unpublished')await f.db.pool.query('UPDATE products SET active=false WHERE id=$1',[f.product]);
  if(problem==='deleted')await f.db.pool.query('UPDATE products SET archived_at=now() WHERE id=$1',[f.product]);
  if(problem==='sku_mismatch')await f.db.pool.query(`UPDATE product_editor SET published=jsonb_set(published,'{sku}','"WRONG"') WHERE product_id=$1`,[f.product]);
  if(problem==='no_storefront_mapping')await f.db.pool.query('UPDATE storefront_mappings SET approved=false WHERE product_id=$1',[f.product]);
  await f.db.pool.query("UPDATE stock_sources SET next_attempt_at=now()-interval '1 second'");
- await assert.rejects(sync.refresh(),/STOCK_PUBLISHED_MAPPING_ERROR/);
- const state=await new StockState(f.db,source.settings).read();assert.equal(state.source.syncStatus,'error');assert.equal(state.source.lastError,'STOCK_PUBLISHED_MAPPING_ERROR');
- assert.deepEqual(state.source.mappingErrors,[problem==='unknown'?'UNKNOWN':'SKU-1']);
- assert.equal((await f.db.pool.query('SELECT provider_quantity FROM stock_source_items WHERE product_id=$1',[f.product])).rows[0].provider_quantity,24);
- assert.equal((await f.db.pool.query('SELECT asaya_stock_limit($1,$2,true) AS n',[f.product,f.warehouse])).rows[0].n,0);
+ now=new Date(+now+1000);
+ const result=await sync.refresh();assert.ok('matched' in result);assert.equal(result.matched,problem==='unknown'?2:1);
+ const state=await new StockState(f.db,source.settings,()=>now).read();assert.equal(state.source.syncStatus,'fresh');assert.equal(state.source.lastError,null);
+ assert.deepEqual(state.source.mappingWarnings,[problem==='unknown'?'UNKNOWN':'SKU-1']);
+ assert.equal((await f.db.pool.query('SELECT asaya_stock_limit($1,$2,true) AS n',[valid,f.warehouse])).rows[0].n,40);
+ assert.equal((await f.db.pool.query('SELECT provider_quantity FROM stock_source_items WHERE product_id=$1',[f.product])).rows[0].provider_quantity,problem==='unknown'?99:0);
+ assert.equal((await f.db.pool.query("SELECT count(*)::integer n FROM products WHERE sku='UNKNOWN'")).rows[0].n,0);
+ if(problem!=='unknown'){
+  await f.db.pool.query('UPDATE products SET active=true,archived_at=NULL WHERE id=$1',[f.product]);
+  await f.db.pool.query('UPDATE product_editor SET published=$2 WHERE product_id=$1',[f.product,{sku:'SKU-1',content}]);
+  await f.db.pool.query('UPDATE storefront_mappings SET approved=true WHERE product_id=$1',[f.product]);
+  await f.db.pool.query("UPDATE stock_sources SET next_attempt_at=now()-interval '1 second'");
+  now=new Date(+now+1000);await sync.refresh();
+  assert.equal(await f.available(),99);
+  assert.deepEqual((await new StockState(f.db,source.settings,()=>now).read()).source.mappingWarnings,[]);
+ }
 });
 
 test('published ASAYA SKU absent from CDEK is not a coverage error and stays published',async()=>{
@@ -108,7 +124,7 @@ test('published ASAYA SKU absent from CDEK is not a coverage error and stays pub
  await checkPublishedStockCoverage(f.db.pool,['SKU-1']);
  const source=new CdekStockApi({kind:'cdek_ff_api',warehouseId:f.warehouse,accountId:'asaya',externalWarehouseId:'23401',shopId:220216,environment:'production',login:'fixture',password:'secret'});
  await new StockSync(f.db,source).apply({generatedAt:new Date(),items:[{sku:'SKU-1',quantity:24}],digest:'fixture'});
- const state=await new StockState(f.db,source.settings).read();assert.equal(state.source.syncStatus,'fresh');assert.deepEqual(state.source.mappingErrors,[]);
+ const state=await new StockState(f.db,source.settings).read();assert.equal(state.source.syncStatus,'fresh');assert.deepEqual(state.source.mappingWarnings,[]);
  assert.equal(state.items.find(i=>i.sku==='NOT-SHIPPED')!.quantityState,'missing');
  assert.equal((await f.db.pool.query('SELECT active FROM products WHERE id=$1',[other])).rows[0].active,true);
  assert.equal((await f.db.pool.query('SELECT asaya_stock_limit($1,$2,true) AS n',[other,f.warehouse])).rows[0].n,0);

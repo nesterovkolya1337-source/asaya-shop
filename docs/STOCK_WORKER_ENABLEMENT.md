@@ -64,13 +64,14 @@ The existing compose restart=unless-stopped restarts the API/worker after failur
 For each physical article returned by FF, exact canonical SKU must resolve to an
 active, non-deleted product with a Published snapshot containing the same SKU,
 a price row and an approved storefront mapping. Draft/unpublished/deleted or
-unknown articles fail the WHOLE snapshot before any quantities are written.
+unknown articles are skipped with a mapping warning; valid Published SKUs continue syncing.
 This also applies to physical articles with zero stock.
 
-Failure records STOCK_PUBLISHED_MAPPING_ERROR and offending articles in existing
-stock_sources diagnostics; Admin shows the explicit list. Previous quantities are
-retained for diagnosis but source healthy=false means they do not authorize sales.
-No product is auto-created, published or relabelled. Successful retry clears errors.
+The existing stock_sources.unknown_skus diagnostics expose mappingWarnings in Admin.
+The source stays healthy. Skipped canonical products are marked unlisted with zero
+REAL availability; unknown articles never create products. No product is published
+or relabelled. Once the card is Published, the next fresh snapshot imports its stock
+and clears its warning. Preflight reports the same warnings without blocking enablement.
 
 Published ASAYA SKU absent in CDEK is NOT a mapping error. It stays Published,
 stock_source_items.listed=false, Admin shows missing/unknown and REAL purchase

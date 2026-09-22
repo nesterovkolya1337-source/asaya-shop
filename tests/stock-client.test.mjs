@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {parseStockReport,createStockClient} from '../src/lib/stock-client.ts';
-const data={configured:true,source:{mappingErrors:[],externalWarehouseId:'23401',environment:'production',syncedAt:'2026-09-17T12:00:00Z',sourceUpdatedAt:'2026-09-17T11:50:00Z',expiresAt:'2026-09-17T12:15:00Z',nextAttemptAt:'2026-09-17T12:05:00Z',syncStatus:'fresh',lastError:null},items:[{productId:'id',sku:'A',name:'Canonical',category:'body',image:null,quantity:0,quantityState:'known'},{productId:'missing',sku:'B',name:'Missing',category:null,image:null,quantity:null,quantityState:'missing'}]};
+const data={configured:true,source:{mappingWarnings:[],externalWarehouseId:'23401',environment:'production',syncedAt:'2026-09-17T12:00:00Z',sourceUpdatedAt:'2026-09-17T11:50:00Z',expiresAt:'2026-09-17T12:15:00Z',nextAttemptAt:'2026-09-17T12:05:00Z',syncStatus:'fresh',lastError:null},items:[{productId:'id',sku:'A',name:'Canonical',category:'body',image:null,quantity:0,quantityState:'known'},{productId:'missing',sku:'B',name:'Missing',category:null,image:null,quantity:null,quantityState:'missing'}]};
 test('stock UI preserves missing vs zero and strips unlisted fields',()=>{
  assert.deepEqual(parseStockReport({...data,password:'secret'}),data);
  for(const item of [{...data.items[0],quantity:-1},{...data.items[0],quantity:null},{...data.items[1],quantity:0}])assert.throws(()=>parseStockReport({...data,items:[item]}));
@@ -14,9 +14,9 @@ test('stock refresh sends only empty body with staff CSRF and respects server ou
  await assert.rejects(createStockClient('/api',async()=>Response.json({outcome:'invented'})).refresh('csrf'));
 });
 
-test('explicit mapping error preserves offending articles and supports older source responses',()=>{
- const source={...data.source,lastError:'STOCK_PUBLISHED_MAPPING_ERROR',syncStatus:'error',mappingErrors:['UNKNOWN']};
- assert.deepEqual(parseStockReport({...data,source}).source.mappingErrors,['UNKNOWN']);
- assert.throws(()=>parseStockReport({...data,source:{...source,mappingErrors:[123]}}));
- const {mappingErrors,...older}=data.source;assert.deepEqual(parseStockReport({...data,source:older}).source.mappingErrors,[]);
+test('non-blocking mapping warning preserves offending articles and supports older source responses',()=>{
+ const source={...data.source,lastError:null,syncStatus:'fresh',mappingWarnings:['UNKNOWN']};
+ assert.deepEqual(parseStockReport({...data,source}).source.mappingWarnings,['UNKNOWN']);
+ assert.throws(()=>parseStockReport({...data,source:{...source,mappingWarnings:[123]}}));
+ const {mappingWarnings,...older}=data.source;assert.deepEqual(parseStockReport({...data,source:older}).source.mappingWarnings,[]);
 });

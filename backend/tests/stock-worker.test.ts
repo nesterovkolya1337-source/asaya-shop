@@ -7,14 +7,14 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {runStockWorker} from '../src/stock-sync.js';
 import {CdekStockApi} from '../src/cdek-stock-source.js';
-import {StockMappingError} from '../src/stock-coverage.js';
+import {DomainError} from '../src/core.js';
 test('production profile uses live FF warehouse 23401 and 300-second worker without overlap, recovers after failure and stops',async()=>{
  const profile=JSON.parse(await readFile('../deploy/catalog/stock-api.production.json','utf8'));
  assert.equal(profile.pollSeconds,300);assert.equal(profile.maxAgeSeconds,900);assert.equal(profile.externalWarehouseId,'23401');assert.equal(profile.kind,'cdek_ff_api');assert.equal(profile.login,undefined);assert.equal(profile.password,undefined);
  const source=new CdekStockApi({...profile,login:'fixture',password:'secret'}),controller=new AbortController();
  let calls=0,active=false;const waits:number[]=[],reports:unknown[]=[];
- await runStockWorker({source,refresh:async()=>{assert.equal(active,false);active=true;calls++;await Promise.resolve();active=false;if(calls===1)throw new StockMappingError(['UNKNOWN']);return {skipped:true,reason:'not_due'} as const;}},controller.signal,e=>reports.push(e),async(ms)=>{assert.equal(active,false);waits.push(ms);if(calls===3)controller.abort();});
- assert.equal(calls,3);assert.deepEqual(waits,[300000,300000,300000]);assert.deepEqual(reports,[{event:'stock.refresh_failed',code:'STOCK_PUBLISHED_MAPPING_ERROR'}]);
+ await runStockWorker({source,refresh:async()=>{assert.equal(active,false);active=true;calls++;await Promise.resolve();active=false;if(calls===1)throw new DomainError('STOCK_SOURCE_UNAVAILABLE');return {skipped:true,reason:'not_due'} as const;}},controller.signal,e=>reports.push(e),async(ms)=>{assert.equal(active,false);waits.push(ms);if(calls===3)controller.abort();});
+ assert.equal(calls,3);assert.deepEqual(waits,[300000,300000,300000]);assert.deepEqual(reports,[{event:'stock.refresh_failed',code:'STOCK_SOURCE_UNAVAILABLE'}]);
 });
 test('offline config preparation uses secret environment, refuses overwrite and never prints credentials',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'asaya-stock-config-')),file=join(dir,'stock.json');

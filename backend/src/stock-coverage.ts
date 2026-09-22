@@ -1,9 +1,5 @@
 import type {Tx} from './db.js';
-import {DomainError} from './core.js';
-export class StockMappingError extends DomainError {
- constructor(readonly articles:string[]){super('STOCK_PUBLISHED_MAPPING_ERROR',503);}
-}
-// One-way coverage: every provider article must be an exact storefront-published SKU.
+// One-way coverage: unmatched provider articles are diagnostics, not a sync failure.
 // Published ASAYA products absent from the provider are intentionally not errors.
 export async function checkPublishedStockCoverage(db:Pick<Tx,'query'>,articles:string[]){
  const {rows}=await db.query(`SELECT p.sku FROM products p JOIN product_editor e ON e.product_id=p.id
@@ -13,5 +9,5 @@ export async function checkPublishedStockCoverage(db:Pick<Tx,'query'>,articles:s
   AND EXISTS(SELECT 1 FROM storefront_mappings m WHERE m.product_id=p.id AND m.approved)`,[articles]);
  const published=new Set(rows.map(r=>r.sku));
  const invalid=articles.filter(sku=>!published.has(sku));
- if(invalid.length)throw new StockMappingError(invalid);
+ return invalid;
 }

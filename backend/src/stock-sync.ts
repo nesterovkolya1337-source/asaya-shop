@@ -5,7 +5,7 @@ import {DomainError} from './core.js';
 import {StockRateLimitError,type StockSnapshot} from './cdek-stock-feed.js';
 import {sourceKind,type StockSource} from './cdek-stock-source.js';
 import {safeStockError,stockSourceHash} from './stock-state.js';
-import {checkPublishedStockCoverage,StockMappingError} from './stock-coverage.js';
+import {checkPublishedStockCoverage} from './stock-coverage.js';
 
 export class StockSync {
  constructor(private db:Database,readonly source:StockSource,private clock=()=>new Date()){}
@@ -33,10 +33,8 @@ export class StockSync {
       VALUES($1,$2,$3,false,$4,$5,$6,$7,$8) ON CONFLICT(warehouse_id) DO UPDATE SET healthy=false,last_error=excluded.last_error,
       last_attempt_at=excluded.last_attempt_at,next_attempt_at=excluded.next_attempt_at,consecutive_failures=excluded.consecutive_failures
       WHERE stock_sources.source_hash=excluded.source_hash`,[s.warehouseId,stockSourceHash(s),s.environment,safe,at,new Date(+at+seconds*1000),failures,sourceKind(s)]);
-     if(error instanceof StockMappingError)await tx.query('UPDATE stock_sources SET unknown_skus=$2 WHERE warehouse_id=$1 AND source_hash=$3',[s.warehouseId,error.articles,stockSourceHash(s)]);
      await tx.query("UPDATE warehouse_external_ids SET sync_status='error' WHERE provider='cdek_ff' AND warehouse_id=$1 AND account_id=$2 AND external_id=$3",[s.warehouseId,s.accountId,s.externalWarehouseId]);
     });
-    if(error instanceof StockMappingError)throw error;
     throw new DomainError('STOCK_REFRESH_FAILED',503);
    }
   }finally{
@@ -58,8 +56,11 @@ export class StockSync {
    if(previous?.generated_at&&+previous.generated_at>+snapshot.generatedAt)throw new DomainError('STOCK_SOURCE_REGRESSED');
    if(previous?.generated_at&&+previous.generated_at===+snapshot.generatedAt&&previous.payload_hash!==snapshot.digest)throw new DomainError('STOCK_SOURCE_VERSION_CONFLICT');
    const products=(await tx.query('SELECT id,sku FROM products ORDER BY sku FOR UPDATE')).rows;
-   if(sourceKind(s)==='cdek_ff_api')await checkPublishedStockCoverage(tx,snapshot.items.map(i=>i.sku));
-   const known=new Set(products.map(p=>p.sku)),unknown=snapshot.items.filter(i=>!known.has(i.sku)).map(i=>i.sku);
+   const known=new Set(products.map(p=>p.sku));
+   const unknown=sourceKind(s)==='cdek_ff_api'
+    ?await checkPublishedStockCoverage(tx,snapshot.items.map(i=>i.sku))
+    :snapshot.items.filter(i=>!known.has(i.sku)).map(i=>i.sku);
+   const warnings=new Set(unknown),acceptedItems=snapshot.items.filter(i=>!warnings.has(i.sku));
    const expires=new Date(Math.min(+snapshot.generatedAt+s.maxAgeSeconds*1000,+now+s.pollSeconds*3*1000));
    const changed=!previous?.generated_at||+previous.generated_at<+snapshot.generatedAt;
    await tx.query(`INSERT INTO stock_sources(warehouse_id,source_hash,environment,generated_at,fetched_at,expires_at,payload_hash,unknown_skus,source_kind)
@@ -69,7 +70,7 @@ export class StockSync {
    await tx.query('UPDATE stock_sources SET last_attempt_at=$2,next_attempt_at=$3,consecutive_failures=0 WHERE warehouse_id=$1',
     [s.warehouseId,now,new Date(+now+s.pollSeconds*1000)]);
    for(const p of products){
-    const item=snapshot.items.find(i=>i.sku===p.sku),quantity=item?.quantity??0;
+    const item=acceptedItems.find(i=>i.sku===p.sku),quantity=item?.quantity??0;
     const already=(await tx.query('SELECT 1 FROM stock_source_items WHERE warehouse_id=$1 AND product_id=$2',[s.warehouseId,p.id])).rowCount;
     if(!changed&&already)continue; // A repeated feed must never replenish a consumed balance.
     await tx.query(`INSERT INTO inventory_balances(product_id,warehouse_id,on_hand) VALUES($1,$2,0) ON CONFLICT DO NOTHING`,[p.id,s.warehouseId]);
