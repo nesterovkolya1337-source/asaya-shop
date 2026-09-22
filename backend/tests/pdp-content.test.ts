@@ -15,3 +15,13 @@ test('PDP content preserves ordered data, canonical SKUs and independent non-des
 test('PDP rejects unapproved nodes, duplicate sections, unsafe media, malformed crops and unbounded content',()=>{
  for(const bad of [{...pdp,node:'150:1609'},{...pdp,sections:[section,section]},{...pdp,sections:[{...section,media:[{src:'javascript:alert(1)'}]}]},{...pdp,sections:[{...section,media:[{src:'/images/x.png',crop:'{}'}]}]},{...pdp,sections:[{...section,body:'x'.repeat(10001)}]}])assert.throws(()=>parsePdpContent(bad));
 });
+
+test('Rich Content is explicit opt-in and preserves disabled data without changing canonical fields',()=>{
+ const rich={...pdp,node:'418:2286',enabled:true};
+ assert.equal(parsePdpContent(rich).enabled,true);
+ assert.deepEqual(parsePdpContent({...rich,enabled:false}).sections,pdp.sections);
+ assert.equal(parsePdpContent(pdp).enabled,undefined);
+ assert.throws(()=>parsePdpContent({...rich,enabled:'true'}));
+ const c=contentSchema.parse({...emptyContent,description:'Canonical description',ingredients:'Canonical ingredients',pdp:rich});
+ assert.equal(c.description,'Canonical description');assert.equal(c.ingredients,'Canonical ingredients');
+});

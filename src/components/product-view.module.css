@@ -1124,3 +1124,15 @@
     font-size: 15px;
   }
 }
+
+/* Figma 418:2286: two independent 890 × 920 panels. */
+@media(min-width:901px){
+ .product{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;container-type:inline-size}
+ .galleryColumn,.details{height:calc((100cqw - 20px) / 2 * 920 / 890);min-height:0;max-height:none}
+ .galleryColumn{overflow:hidden}.gallery{min-height:0;height:100%}
+ .details{overflow-y:auto;scrollbar-width:thin;scrollbar-color:#9c9c9b transparent;scrollbar-gutter:stable}
+ .details:focus-visible{outline:2px solid var(--color-foreground);outline-offset:3px}
+}
+@media(max-width:900px){.product{grid-template-columns:1fr;align-items:start}.galleryColumn{height:auto;min-height:0}.gallery{min-height:0;aspect-ratio:890/920}.details{height:auto;max-height:none;overflow:visible}}
+
+@media(min-width:901px){.recommendationGrid{grid-auto-columns:calc((100% - 3 * var(--product-gap)) / 4)}}

@@ -36,3 +36,19 @@ test('legacy restoration is SKU-bound, idempotent, preserves source data and sto
  await ctx.db.pool.query('ALTER TABLE products DROP COLUMN archived_at');await ctx.db.pool.query(sql);
  assert.deepEqual(await catalog.detail(id),before);
 });
+
+test('Rich Content save is draft-only; publish and disable preserve canonical price and stock',async()=>{
+ const actor=randomUUID(),id=randomUUID(),catalog=new AdminCatalog(ctx.db);
+ await ctx.db.pool.query("INSERT INTO users(id,role) VALUES($1,'admin')",[actor]);
+ const draft={revision:0,sku:'RICH',slug:'rich-product',name:'Rich product',regularMinor:79900,finalMinor:79900,weightG:null,widthMm:null,heightMm:null,depthMm:null,content:{...emptyContent,description:'Canonical',ingredients:'Ingredients',image:'/images/existing.webp'}};
+ await catalog.save(actor,id,draft);await catalog.publish(actor,id,{revision:1});
+ const liveBefore=(await ctx.db.pool.query('SELECT published FROM product_editor WHERE product_id=$1',[id])).rows[0].published;
+ const pdp={version:1,node:'418:2286',enabled:true,sections:[{kind:'faq',title:'Questions',body:'',additionalBody:'',media:[],items:[{title:'Question',body:'Answer'}]}],recommendations:[]};
+ await catalog.save(actor,id,{...draft,revision:2,content:{...draft.content,pdp}});
+ assert.deepEqual((await ctx.db.pool.query('SELECT published FROM product_editor WHERE product_id=$1',[id])).rows[0].published,liveBefore);
+ await catalog.publish(actor,id,{revision:3});
+ assert.equal((await ctx.db.pool.query('SELECT published FROM product_editor WHERE product_id=$1',[id])).rows[0].published.content.pdp.enabled,true);
+ await catalog.save(actor,id,{...draft,revision:4,content:{...draft.content,pdp:{...pdp,enabled:false}}});await catalog.publish(actor,id,{revision:5});
+ const after=(await catalog.detail(id));assert.equal(after.active,true);assert.equal(after.draft.finalMinor,79900);assert.equal(after.draft.content.description,'Canonical');assert.equal(after.draft.content.pdp!.sections[0]!.items[0]!.body,'Answer');assert.equal(after.draft.content.pdp!.enabled,false);
+ assert.equal((await ctx.db.pool.query('SELECT count(*)::int n FROM inventory_balances WHERE product_id=$1',[id])).rows[0].n,0);
+});

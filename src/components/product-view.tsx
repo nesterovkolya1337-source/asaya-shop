@@ -1,4 +1,6 @@
 "use client";
+import {ProductRichContent} from './product-rich-content';
+import {pdpRecommendations} from '@/lib/pdp-presentation';
 import {ProductReviews} from './customer-engagement';
 import { CarouselArrow } from "@/components/carousel-arrow";
 
@@ -35,7 +37,7 @@ export function ProductView({ productId }: { productId: string }) {
 
   const quantity = cart[product.id] ?? 0;
   const isFavorite = favorites.includes(product.id);
-  const recommendations = product.recommendations.map((id) => products.find((item) => item.id === id)).filter((item) => item?.active && item.id !== product.id).filter((item): item is NonNullable<typeof item> => Boolean(item));
+  const recommendations = pdpRecommendations(products,product);
   const gallery = [...new Set([product.image, ...product.gallery].filter(Boolean))];
   const buyNow = () => {
     if (!quantity && product.stock) addToCart(product.id);
@@ -118,7 +120,7 @@ export function ProductView({ productId }: { productId: string }) {
           </div>
         </div>
 
-        <div className={styles.details}>
+        <div className={styles.details} tabIndex={0} role="region" aria-label="Информация о товаре">
 
           <div className={styles.titleRow}>
             <h1 id="product-title">{product.name}</h1>
@@ -182,23 +184,9 @@ export function ProductView({ productId }: { productId: string }) {
         </div>
       </section>
 
+      <ProductRichContent content={product.pdp}/>
       {product.sku&&<ProductReviews sku={product.sku}/>}
 
-      {product.features.length>0&&<section className={styles.sensory} aria-labelledby="sensory-title">
-        <div className={styles.sensoryCopy}>
-          <p>Ощущения и результат</p>
-          <h2 id="sensory-title">Комфорт на уровне ощущений</h2>
-          <span>Коротко о свойствах и ощущениях именно этого средства.</span>
-          <ul className={styles.sensoryBenefits}>
-            {product.features.slice(0, 4).map((feature) => <li key={feature}>{feature}</li>)}
-          </ul>
-        </div>
-        <div className={styles.sensoryVisual}>
-          <CroppedImage crop={product.imageCrops?.[gallery[2] ?? gallery[1] ?? gallery[0]]} alt={`${product.name} — настроение и текстура`} fill sizes="(max-width: 900px) 100vw, 50vw" src={gallery[2] ?? gallery[1] ?? gallery[0]} />
-        </div>
-      </section>
-
-      }
       {recommendations.length>0&&<section className={styles.recommendations} aria-labelledby="recommendations-title">
         <div className={styles.sectionHeading}>
           <h2 id="recommendations-title">Рекомендуем</h2>
