@@ -10,7 +10,10 @@ Source: 2026-09-22_ASAYA_TZ_Cart_Account_UI_Redesign_v2 (1).docx, read in full.
 - Loyalty history and the single ledger are unchanged; no redemption control was introduced.
 - SMS, backend, Admin, pricing, stock, YCP and lifecycle code unchanged.
 
-## Pending: cart
+## Cart follow-up
+User supplied accessible replacement nodes 457:2842 / 457:3226 in file 9FHGMEfYWtTfWq9Ny2jxMg. See CART_UI_V2_20260922.md for the completed cart UI and PROMOCODES_CONTEXT_BLOCKER_20260922.md for the separate promo blocker.
+
+### Historical access blocker
 Approved visual source: Figma 4w8Dr2nHxdoxu6uOGmAtYR, Page 2, Frame 88, node 97:1997 (confirmed in docs/figma.md).
 get_design_context returned "Looks like you don't have edit access to this file" (debug UUID 8d533e51-79c6-4117-9bb8-a6f72f7e7535). Access requested. Cart implementation and its acceptance checks are not complete. No substitute layout was invented.
 

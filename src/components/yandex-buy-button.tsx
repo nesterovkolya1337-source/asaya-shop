@@ -13,7 +13,7 @@ export function YandexBuyButton({sku,stock,quantity=1}:{sku?:string;stock:number
  return <YandexCheckoutButton key={JSON.stringify([sku,quantity,stock])} items={[{sku,quantity}]} disabled={stock<quantity} />;
 }
 
-export function YandexCheckoutButton({items,disabled=false,label='Купить в 1 клик',compact=false,prepareItems,onConflict}:{items:Array<{sku:string;quantity:number}>;disabled?:boolean;label?:string;compact?:boolean;prepareItems?:()=>Promise<Array<{sku:string;quantity:number}>|null>;onConflict?:()=>Promise<void>}){
+export function YandexCheckoutButton({items,disabled=false,label='Купить в 1 клик',compact=false,showNote=true,prepareItems,onConflict}:{items:Array<{sku:string;quantity:number}>;disabled?:boolean;label?:string;compact?:boolean;showNote?:boolean;prepareItems?:()=>Promise<Array<{sku:string;quantity:number}>|null>;onConflict?:()=>Promise<void>}){
  const {yandexCheckoutEnabled}=useShop();
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const pending=useRef(false);
@@ -34,9 +34,9 @@ export function YandexCheckoutButton({items,disabled=false,label='Купить �
  };
  return <div className={compact?styles.compact:styles.wrap}>
   <button type="button" className={styles.button} disabled={busy||disabled||!items.length} onClick={buy} aria-busy={busy}>
-   {busy?'Переходим в Яндекс…':label}
+   {busy?'Открываем оформление…':label}
   </button>
-  {!compact&&<p className={styles.note}>Оформление и оплата — в Яндексе. Регистрация на ASAYA не нужна.</p>}
+  {!compact&&showNote&&<p className={styles.note}>Оформление и оплата — в Яндексе. Регистрация на ASAYA не нужна.</p>}
   {error&&<p className={styles.error} role="alert">{error}</p>}
  </div>;
 }

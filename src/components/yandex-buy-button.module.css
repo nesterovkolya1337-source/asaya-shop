@@ -2,8 +2,8 @@
 .compact { min-width: 0; position: relative; }
 .compact .button { padding: 8px 12px; border-radius: 24px; }
 .compact .error { position: absolute; bottom: 100%; right: 0; width: min(280px, 70vw); padding: 12px; background: white; border: 1px solid #ddd; border-radius: 8px; }
-.button { width: 100%; min-height: 44px; padding: 12px 18px; border: 0; border-radius: 8px; background: #ff6329; color: #fff; font: inherit; cursor: pointer; }
-.button:hover:not(:disabled) { background: #e9531d; }
+.button { width: 100%; min-height: 44px; padding: 12px 18px; border: 0; border-radius: 50px; background: #202020; color: #fff; font: inherit; cursor: pointer; }
+.button:hover:not(:disabled) { background: #404040; }
 .button:focus-visible { outline: 3px solid #222; outline-offset: 3px; }
 .button:disabled { opacity: .55; cursor: default; }
 .note { margin: 8px 0 0; font-size: 12px; color: #666; text-align: center; }
