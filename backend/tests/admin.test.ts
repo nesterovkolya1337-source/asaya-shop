@@ -1,3 +1,4 @@
+import {Trash} from '../src/trash.js';
 import {before,after,beforeEach,test} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -92,7 +93,8 @@ test('stock changes respect reservations, stale quantities and immutable order s
  await catalog.save(actor,id,{...d,revision:2,name:'Changed',finalMinor:10000});await catalog.publish(actor,id,{revision:3});
  const old=await commerce.order(buyer,order.orderId);assert.equal(old.items[0]!.name_snapshot,d.name);assert.equal(old.total_minor,50000);
  const snapshot=await commerce.order(buyer,order.orderId);
- assert.deepEqual(await catalog.remove(actor,id,{revision:4,sku:d.sku,confirmed:true}),{outcome:'archived'});
+ await catalog.unpublish(actor,id,{revision:4});
+ assert.deepEqual(await catalog.remove(actor,id,{revision:5,sku:d.sku,confirmed:true}),{outcome:'archived'});
  assert.deepEqual(await commerce.order(buyer,order.orderId),snapshot);
 });
 test('HTTP staff API rejects customer cookies, requires origin/CSRF and supports saved product flow',async()=>{
@@ -155,14 +157,15 @@ test('product list filters draft categories, exposes thumbnails and typed size p
  await catalog.publish(actor,id,{revision:1});assert.equal((await new CommerceService(ctx.db).catalog())[0]!.content.volume,'30.5 г');
  for(const size of [{value:0,unit:'ml'},{value:-1,unit:'g'},{value:2,unit:'unknown'}])await assert.rejects(catalog.save(actor,id,{...d,revision:2,content:{...d.content,size}}));
 });
-test('physical deletion requires confirmed unused draft and revision; ever-published and referenced products are archived',async()=>{
+test('soft deletion requires confirmation and revision; purge of unused draft is separate',async()=>{
  const actor=await staff(),catalog=new AdminCatalog(ctx.db),id=randomUUID(),d=draft();await catalog.save(actor,id,d);
  await assert.rejects(catalog.remove(actor,id,{revision:1,sku:d.sku,confirmed:false}));
  await assert.rejects(catalog.remove(actor,id,{revision:0,sku:d.sku,confirmed:true}),/EDIT_CONFLICT/);
  await assert.rejects(catalog.remove(actor,id,{revision:1,sku:'wrong',confirmed:true}),/EDIT_CONFLICT/);
- assert.deepEqual(await catalog.remove(actor,id,{revision:1,sku:d.sku,confirmed:true}),{outcome:'deleted'});
- assert.equal((await ctx.db.pool.query('SELECT 1 FROM products WHERE id=$1',[id])).rowCount,0);
- assert.equal((await ctx.db.pool.query("SELECT 1 FROM audit_log WHERE entity_id=$1 AND action='product.deleted'",[id])).rowCount,1);
+ assert.deepEqual(await catalog.remove(actor,id,{revision:1,sku:d.sku,confirmed:true}),{outcome:'archived'});
+ assert.equal((await ctx.db.pool.query('SELECT 1 FROM products WHERE id=$1 AND archived_at IS NOT NULL',[id])).rowCount,1);
+ await new Trash(ctx.db).purge(actor,'product',id,{confirmed:true});
+ assert.equal((await ctx.db.pool.query("SELECT 1 FROM audit_log WHERE entity_id=$1 AND action='product.archived'",[id])).rowCount,1);
  const used=randomUUID();await catalog.save(actor,used,d);await catalog.publish(actor,used,{revision:1});await catalog.unpublish(actor,used,{revision:2});
  assert.deepEqual(await catalog.remove(actor,used,{revision:3,sku:d.sku,confirmed:true}),{outcome:'archived'});assert.equal((await catalog.detail(used)).active,false);
  const linked=randomUUID();await catalog.save(actor,linked,{...d,sku:'LINKED'});await ctx.db.pool.query("INSERT INTO product_external_ids(provider,environment,account_id,external_id,product_id) VALUES('ycp','test','test','offer-linked',$1)",[linked]);

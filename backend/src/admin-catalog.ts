@@ -34,7 +34,7 @@ async function admin(tx:Tx,actor:string){
 }
 async function checkMedia(tx:Tx,content:z.infer<typeof contentSchema>){
  const ids=[...new Set([content.image,...content.gallery,...(content.pdp?pdpMediaSources(content.pdp):[])].flatMap(v=>{const m=v.match(mediaPath);return m?[m[1]!]:[];}))];
- if(ids.length&&(await tx.query('SELECT id FROM product_media WHERE id=ANY($1::uuid[])',[ids])).rowCount!==ids.length)throw new DomainError('MEDIA_REFERENCE_MISSING',400);
+ if(ids.length&&(await tx.query('SELECT id FROM product_media WHERE id=ANY($1::uuid[]) AND deleted_at IS NULL',[ids])).rowCount!==ids.length)throw new DomainError('MEDIA_REFERENCE_MISSING',400);
 }
 async function audit(tx:Tx,actor:string,action:string,id:string,detail:unknown){
  await tx.query('INSERT INTO audit_log(id,actor_id,action,entity_id,detail) VALUES($1,$2,$3,$4,$5)',[randomUUID(),actor,action,id,JSON.stringify(detail)]);
@@ -55,9 +55,9 @@ export class AdminCatalog{
  async list(raw:unknown){
   const {search,offset,category}=z.object({search:text(100).default(''),category:z.enum(['','hair','body','face','sets']).default(''),offset:z.coerce.number().int().min(0).max(1000000).default(0)}).strict().parse(raw);
   const r=await this.db.pool.query(`SELECT p.id,p.sku,COALESCE(e.draft->>'name',p.name) AS name,p.active,
-   CASE WHEN p.archived_at IS NOT NULL THEN 'deleted' WHEN p.active THEN 'published' WHEN e.published_at IS NOT NULL THEN 'unpublished' ELSE 'draft' END AS lifecycle,
+   CASE WHEN p.archived_at IS NOT NULL THEN CASE WHEN p.ever_published THEN 'archived' ELSE 'deleted' END WHEN p.active THEN 'published' WHEN p.ever_published THEN 'unpublished' ELSE 'draft' END AS lifecycle,
    COALESCE(e.revision,0) AS revision,COALESCE(e.draft->'content'->>'category','') AS category,COALESCE(e.draft->'content'->>'image','') AS image FROM products p LEFT JOIN product_editor e ON e.product_id=p.id
-   WHERE (p.sku ILIKE $1 OR p.name ILIKE $1 OR e.draft->>'name' ILIKE $1) AND ($3='' OR e.draft->'content'->>'category'=$3) ORDER BY p.sku,p.id LIMIT 51 OFFSET $2`,['%'+search.replace(/[\\%_]/g,'\\$&')+'%',offset,category]);
+   WHERE p.archived_at IS NULL AND (p.sku ILIKE $1 OR p.name ILIKE $1 OR e.draft->>'name' ILIKE $1) AND ($3='' OR e.draft->'content'->>'category'=$3) ORDER BY p.sku,p.id LIMIT 51 OFFSET $2`,['%'+search.replace(/[\\%_]/g,'\\$&')+'%',offset,category]);
   return {items:r.rows.slice(0,50),nextOffset:r.rows.length>50?offset+50:null};
  }
  async detail(id:string){
@@ -75,7 +75,7 @@ export class AdminCatalog{
     source:r.managed?{kind:r.source_kind,generatedAt:r.generated_at,fetchedAt:r.fetched_at,expiresAt:r.expires_at,healthy:r.healthy,available:r.available,reportedQuantity:r.provider_quantity}:null}));
   const draft=r.draft??{sku:r.sku,name:r.name,slug:r.slug??'',content:emptyContent,regularMinor:r.regular_minor===null?null:money(r.regular_minor),finalMinor:r.final_minor===null?null:money(r.final_minor),
    weightG:r.weight_g,widthMm:r.width_mm,heightMm:r.height_mm,depthMm:r.depth_mm};
-  return {id,revision:r.revision??0,lifecycle:r.archived_at?'deleted':r.active?'published':r.published_at?'unpublished':'draft',active:r.active,hasDraft:!!r.draft,hasUnpublishedChanges:JSON.stringify(r.draft)!==JSON.stringify(r.published),publishedAt:r.published_at,draft,stocks};
+  return {id,revision:r.revision??0,everPublished:r.ever_published,lifecycle:r.archived_at?(r.ever_published?'archived':'deleted'):r.active?'published':r.ever_published?'unpublished':'draft',active:r.active,hasDraft:!!r.draft,hasUnpublishedChanges:JSON.stringify(r.draft)!==JSON.stringify(r.published),publishedAt:r.published_at,draft,stocks};
  }
  async save(actor:string,id:string,raw:unknown){
   z.uuid().parse(id);const input=draftSchema.parse(raw);const {revision,...draft}=input;
@@ -142,14 +142,11 @@ export class AdminCatalog{
    const p=(await tx.query('SELECT * FROM products WHERE id=$1 FOR UPDATE',[id])).rows[0],e=(await tx.query('SELECT * FROM product_editor WHERE product_id=$1 FOR UPDATE',[id])).rows[0];
    if(!p)throw new DomainError('PRODUCT_NOT_FOUND',404);
    if((e?.revision??0)!==input.revision||p.sku!==input.sku)throw new DomainError('EDIT_CONFLICT');
-   const used=!e||p.active||p.source_uuid||e.published_at||(await tx.query(`SELECT 1 FROM order_items WHERE product_id=$1 UNION ALL SELECT 1 FROM inventory_movements WHERE product_id=$1
-    UNION ALL SELECT 1 FROM inventory_reservations WHERE product_id=$1 UNION ALL SELECT 1 FROM inventory_balances WHERE product_id=$1
-    UNION ALL SELECT 1 FROM product_external_ids WHERE product_id=$1 UNION ALL SELECT 1 FROM product_barcodes WHERE product_id=$1
-    UNION ALL SELECT 1 FROM storefront_mappings WHERE product_id=$1 UNION ALL SELECT 1 FROM stock_source_items WHERE product_id=$1
-    UNION ALL SELECT 1 FROM product_components WHERE product_id=$1 OR component_id=$1 LIMIT 1`,[id])).rowCount;
-   if(used){await tx.query('UPDATE products SET active=false,sale_approved=false,archived_at=now(),updated_at=now() WHERE id=$1',[id]);await tx.query('UPDATE product_editor SET revision=revision+1,updated_by=$2,updated_at=now() WHERE product_id=$1',[id,actor]);}
-   else {await tx.query('DELETE FROM product_editor WHERE product_id=$1',[id]);await tx.query('DELETE FROM product_prices WHERE product_id=$1',[id]);await tx.query('DELETE FROM products WHERE id=$1',[id]);}
-   const outcome=used?'archived':'deleted';await audit(tx,actor,'product.'+outcome,id,{});return {outcome};
+   if(p.active)throw new DomainError('UNPUBLISH_BEFORE_DELETE',409);
+   if(p.archived_at)return {outcome:'archived'};
+   await tx.query('UPDATE products SET archived_at=now(),deleted_by=$2,deleted_from=$3,updated_at=now() WHERE id=$1',[id,actor,p.ever_published?'unpublished':'draft']);
+   await tx.query('UPDATE product_editor SET revision=revision+1,updated_by=$2,updated_at=now() WHERE product_id=$1',[id,actor]);
+   await audit(tx,actor,'product.archived',id,{});return {outcome:'archived'};
   });
  }
  async stock(actor:string,id:string,raw:unknown){

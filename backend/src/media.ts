@@ -66,6 +66,7 @@ export class MediaService{
  }
  async get(id:string,raw:unknown={}){
   z.uuid().parse(id);
+  if(!(await this.db.pool.query('SELECT 1 FROM product_media WHERE id=$1 AND deleted_at IS NULL',[id])).rowCount)throw new DomainError('MEDIA_NOT_FOUND',404);
   const query=z.object({w:z.coerce.number().int().optional(),crop:z.string().max(500).optional()}).strict().parse(raw);
   let variant:ReturnType<typeof variantSettings>|undefined;
   try{if(query.w!==undefined)variant=variantSettings(query.w,query.crop);else if(query.crop)throw Error();}catch{throw new DomainError('INVALID_IMAGE_VARIANT',400);}

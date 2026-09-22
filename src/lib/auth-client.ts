@@ -8,6 +8,11 @@ export function parseCustomerProfile(raw:unknown):CustomerProfile{
 }
 
 const messages:Record<string,string>={
+ VERIFIED_PURCHASE_REQUIRED:'Отзыв доступен после подтверждённой покупки товара.',
+ REFERRAL_NEW_CUSTOMER_ONLY:'Приглашение действует только для нового покупателя до первого заказа.',
+ SELF_REFERRAL:'Нельзя использовать собственное приглашение.',
+ REFERRAL_ALREADY_SET:'Приглашение уже связано с другим покупателем.',
+
  YANDEX_LOGIN_UNAVAILABLE:'Вход через Яндекс пока недоступен. Попробуйте позже.',
  ORDER_NOT_READY_FOR_COMPLETION:'Завершить можно только оплаченный и отгруженный заказ. Обновите список.',
  COMPLETION_CONFLICT:'Заказ уже завершён с другим основанием. Обновите карточку для проверки.',

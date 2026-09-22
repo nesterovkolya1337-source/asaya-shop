@@ -1,3 +1,4 @@
+import {Trash} from './trash.js';
 import { config } from './config.js';
 import { Database } from './db.js';
 import { buildApp } from './app.js';
@@ -30,12 +31,14 @@ const fulfillment=ffBinding?new FulfillmentDispatch(db,new CdekFulfillmentClient
 const otpSender=c.customerSms.enabled&&c.customerSms.settings?new SmsAeroSender(c.customerSms.settings):new DisabledOtpSender();
 const app=await buildApp({stock,deploymentMode:c.DEPLOYMENT_MODE,db,otpSecret:c.OTP_SECRET,staffSecret:c.STAFF_SECRET,otpSender,customerSmsEnabled:c.customerSms.enabled,otpPolicy:c.otpPolicy,origin:new URL(c.PUBLIC_ORIGIN).origin,secureCookies:c.COOKIE_SECURE==='true',logger:true,ycp,yandexIdClientId:c.YANDEX_ID_CLIENT_ID,fulfillment,...(tracking?{cdekTracking:{service:tracking,secret:c.cdekTracking!.secret}}:{})});
 const sweepController=new AbortController();let sweep:Promise<void>|undefined;
+let trashWorker:Promise<void>|undefined;
 let fulfillmentWorker:Promise<void>|undefined,stockWorker:Promise<void>|undefined;
-app.addHook('onClose',async()=>{sweepController.abort();await Promise.allSettled([sweep,fulfillmentWorker,stockWorker]);await db.close();});
+app.addHook('onClose',async()=>{sweepController.abort();await Promise.allSettled([sweep,fulfillmentWorker,stockWorker,trashWorker]);await db.close();});
 let closing=false;
 const stop=async()=>{if(closing)return;closing=true;await app.close();};
 process.on('SIGINT',()=>void stop());process.on('SIGTERM',()=>void stop());
 try {await app.listen({host:c.HOST,port:c.PORT});} catch(e) {await app.close();throw e;}
+trashWorker=runReservationWorker({expire:()=>new Trash(db).cleanup(),signal:sweepController.signal,intervalMs:300000,report:r=>{if(r.event==='reservations.expiry_failed')app.log.error({event:'trash.cleanup_failed'});}});
 if(stock)stockWorker=runStockWorker(stock,sweepController.signal,report=>app.log.error(report));
 if(fulfillment&&ffBinding)fulfillmentWorker=runFulfillmentWorker(db,fulfillment,ffBinding,sweepController.signal,report=>app.log.error(report));
 if(c.DEPLOYMENT_MODE==='ycp'&&ycp){

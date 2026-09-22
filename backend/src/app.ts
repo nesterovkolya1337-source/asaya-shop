@@ -1,3 +1,5 @@
+import {Trash} from './trash.js';
+import {Engagement} from './engagement.js';
 import {Loyalty,loyaltyAmounts} from './loyalty.js';
 import {Marketing} from './marketing.js';
 import {cartPricing} from './cart-pricing.js';
@@ -73,6 +75,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
  const adminCatalog=new AdminCatalog(options.db);
  const siteContent=new SiteContent(options.db);
  const media=new MediaService(options.db);
+ const engagement=new Engagement(options.db);
  const adminOrders=new AdminOrders(options.db,options.cdekTracking?.service);
  const staffCookie=options.secureCookies?'__Host-asaya_staff':'asaya_dev_staff';
  const setupCookie=options.secureCookies?'__Host-asaya_staff_setup':'asaya_dev_staff_setup';
@@ -91,6 +94,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   const stockRefresh=req.method==='POST'&&req.routeOptions.url==='/api/admin/v1/analytics/stocks/refresh';
   const cartQuote=req.method==='POST'&&req.routeOptions.url==='/api/store/v1/cart/pricing';
   const analyticsEvent=req.method==='POST'&&req.routeOptions.url==='/api/store/v1/analytics/events';
+  const engagementEdit=smsEnabled&&req.method==='POST'&&['/api/store/v1/account/reviews','/api/store/v1/account/referral'].includes(req.routeOptions.url??'');
   const accountEdit=smsEnabled&&req.method==='PUT'&&req.routeOptions.url==='/api/store/v1/account/profile';
   const privacyEdit=req.method==='POST'&&req.routeOptions.url==='/api/admin/v1/orders/:id/privacy';
   const cdekRefresh=req.method==='POST'&&req.routeOptions.url==='/api/admin/v1/orders/:id/cdek/refresh';
@@ -98,16 +102,16 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   if(options.deploymentMode==='catalog'&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!cartQuote&&!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|employees(?:\/.*)?|marketing(?:\/.*)?|media|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
+   if(!cartQuote&&!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!engagementEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
   }
   if(liveYcp&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
-   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|employees(?:\/.*)?|marketing(?:\/.*)?|media|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
+   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
    const checkoutLink=req.method==='POST'&&route==='/api/store/v1/yandex/checkout-link';
    // Yandex owns checkout/payments; CDEK callbacks have their own boundary. Do not enable the
    // local checkout or local-only order changes with customer SMS sign-in.
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!cartQuote&&!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!ffRecheck&&!accountEdit&&!adminEdit&&!checkoutLink&&!customerLogin&&!req.routeOptions.config.ycp)throw new DomainError('YANDEX_CHECKOUT_ONLY',503);
+   if(!cartQuote&&!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!ffRecheck&&!accountEdit&&!engagementEdit&&!adminEdit&&!checkoutLink&&!customerLogin&&!req.routeOptions.config.ycp)throw new DomainError('YANDEX_CHECKOUT_ONLY',503);
   }
   if(req.routeOptions.config.ycp){
    if(!ycp)throw new DomainError('YCP_UNAVAILABLE',503);
@@ -164,7 +168,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
    const session=await staff.session(req.cookies[staffCookie]);
    reply.setCookie(staffCookie,req.cookies[staffCookie]!,staffCookieOptions);
    const route=req.routeOptions.url??'';
-   if(session.user.staffRole==='manager'&&(!/^\/api\/admin\/v1\/(auth\/(me|logout)|products(?:\/.*)?|orders(?:\/.*)?|analytics(?:\/.*)?|statistics|marketing(?:\/.*)?|site-pages(?:\/.*)?|banner|media)$/.test(route)||route.endsWith('/privacy')))throw new DomainError('FORBIDDEN',403);
+   if(session.user.staffRole==='manager'&&(!/^\/api\/admin\/v1\/(auth\/(me|logout)|products(?:\/.*)?|orders(?:\/.*)?|analytics(?:\/.*)?|statistics|marketing(?:\/.*)?|site-pages(?:\/.*)?|banner|media(?:\/.*)?|trash(?:\/.*)?)$/.test(route)||route.endsWith('/privacy')))throw new DomainError('FORBIDDEN',403);
    if(req.method!=='GET'&&(typeof req.headers['x-csrf-token']!=='string'||!equal(req.headers['x-csrf-token'],session.csrfToken)))throw new DomainError('CSRF_REJECTED',403);
   });
   const actor=async(token:string|undefined)=>(await staff!.session(token)).user.id;
@@ -205,6 +209,14 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   secured.post('/api/admin/v1/orders/:id/complete-packing',async req=>{await commerce.adminCompletePacking(await actor(req.cookies[staffCookie]),id(req.params),req.body);return {ok:true};});
   secured.post('/api/admin/v1/orders/:id/dispatch',async req=>{await commerce.adminDispatch(await actor(req.cookies[staffCookie]),id(req.params),req.body);return {ok:true};});
   secured.post('/api/admin/v1/orders/:id/complete',async req=>{await commerce.adminCompleteOrder(await actor(req.cookies[staffCookie]),id(req.params),req.body);return {ok:true};});
+  secured.get('/api/admin/v1/marketing/reviews',async req=>engagement.reviews(await actor(req.cookies[staffCookie])));
+  secured.post('/api/admin/v1/marketing/reviews/:id',async req=>engagement.moderate(await actor(req.cookies[staffCookie]),id(req.params),req.body));
+  const trash=new Trash(options.db);
+  secured.post('/api/admin/v1/trash/:kind/:id/purge',async req=>{const p=z.object({kind:z.enum(['product','media']),id:z.uuid()}).parse(req.params);return trash.purge(await actor(req.cookies[staffCookie]),p.kind,p.id,req.body);});
+  secured.get('/api/admin/v1/trash',async req=>trash.list(await actor(req.cookies[staffCookie])));
+  secured.get('/api/admin/v1/media',async req=>trash.assets(await actor(req.cookies[staffCookie])));
+  secured.post('/api/admin/v1/media/:id/delete',async req=>trash.deleteMedia(await actor(req.cookies[staffCookie]),id(req.params)));
+  secured.post('/api/admin/v1/trash/:kind/:id/restore',async req=>{const p=z.object({kind:z.enum(['product','media']),id:z.uuid()}).parse(req.params);return trash.restore(await actor(req.cookies[staffCookie]),p.kind,p.id);});
   const marketing=new Marketing(options.db);
   secured.get('/api/admin/v1/marketing',async()=>marketing.read());
   for(const action of ['save','publish','restore','defaults'] as const)secured.post('/api/admin/v1/marketing/'+action,async req=>marketing.change(await actor(req.cookies[staffCookie]),action,req.body));
@@ -255,6 +267,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
  app.get('/health/ready',async()=>{await options.db.pool.query('SELECT 1');return {status:'ok',stage:'foundation'};});
  app.get('/api/store/v1/products',async()=>({items:await commerce.catalog(true)}));
  app.get('/api/store/v1/content/:page',async req=>siteContent.publicPage(z.object({page:z.string().max(50)}).parse(req.params).page));
+ app.get('/api/store/v1/reviews/:sku',async req=>engagement.publicReviews(z.object({sku:z.string()}).parse(req.params).sku));
  app.get('/api/store/v1/media/:id',async(req,reply)=>{
   const {id}=z.object({id:z.uuid()}).parse(req.params);const image=await media.get(id,req.query);
   return reply.type('image/webp').header('Cache-Control','public, max-age=31536000, immutable')
@@ -312,6 +325,9 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   protectedApp.post('/api/store/v1/auth/logout',async(req,reply)=>{
    await auth.logout(req.cookies[cookieName]!);reply.clearCookie(cookieName,cookieOptions);return {ok:true};
   });
+  protectedApp.get('/api/store/v1/account/engagement',async req=>engagement.account((await auth.session(req.cookies[cookieName])).id));
+  protectedApp.post('/api/store/v1/account/reviews',async req=>engagement.submit((await auth.session(req.cookies[cookieName])).id,req.body));
+  protectedApp.post('/api/store/v1/account/referral',async req=>engagement.attach((await auth.session(req.cookies[cookieName])).id,req.body));
   protectedApp.get('/api/store/v1/account/loyalty',async req=>{const user=await auth.session(req.cookies[cookieName]);await account.claim(user.id);return new Loyalty(options.db).account(user.id);});
   protectedApp.get('/api/store/v1/account/profile',async req=>{const user=await auth.session(req.cookies[cookieName]);return account.profile(user.id);});
   protectedApp.put('/api/store/v1/account/profile',async req=>{const user=await auth.session(req.cookies[cookieName]);return account.save(user.id,req.body);});

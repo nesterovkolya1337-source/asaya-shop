@@ -1,3 +1,4 @@
+import {earnReferral} from './engagement.js';
 import {randomUUID} from 'node:crypto';
 import {Database,type Tx} from './db.js';
 import {DomainError,money} from './core.js';
@@ -23,6 +24,7 @@ export async function snapshotLoyalty(tx:Tx,order:string,productMinor:number){
   VALUES($1,$2,$2,$3,$4)`,[order,productMinor,settings.cashbackPercent,settings.maxRedemptionPercent]);
 }
 export async function earnLoyalty(tx:Tx,order:string){
+ await earnReferral(tx,order);
  const row=(await tx.query(`SELECT o.customer_id,o.payment_status,o.status,s.* FROM orders o JOIN loyalty_order_snapshots s ON s.order_id=o.id
   WHERE o.id=$1`,[order])).rows[0];
  if(!row?.customer_id||row.payment_status!=='paid'||row.status==='cancelled')return;

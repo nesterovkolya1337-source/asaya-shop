@@ -13,13 +13,14 @@ import {AdminPdpEditor} from './admin-pdp-editor';
 import {AdminMediaEditor} from './admin-media-editor';
 import {AdminOrders} from './admin-orders';
 import {AdminEmployees,StaffActivation} from './admin-employees';
+import {AdminTrash} from './admin-trash';
 import {AdminMarketing} from './admin-marketing';
 import {AdminIntegration} from './admin-integration';
 import {AdminStatistics} from './admin-analytics';
 import styles from './server-admin.module.css';
 import shell from './admin-shell.module.css';
 import {publicationIssues,publicationLabels} from '../../backend/src/publication-issues';
-const lifecycleLabels={draft:'Черновик',published:'Опубликован',unpublished:'Снят с публикации',deleted:'Удалён'};
+const lifecycleLabels={draft:'Черновик',published:'Опубликован',unpublished:'Снят с публикации',archived:'Архив',deleted:'Удалён'};
 import {AdminSiteEditor} from './admin-site-editor';
 const api=createAdminClient(assetPath('/api/admin/v1'));
 const blankContent:ProductContent={description:'',volume:'',category:'hair',setKind:'none',usage:'',ingredients:'',aroma:'',features:[],image:'',gallery:[],badge:'',instruction:{steps:[],amount:'',tip:''},safety:'',recommendations:[],sensory:[]};
@@ -37,7 +38,7 @@ function PriceField({label,value,onChange}:{label:string;value:number|null;onCha
  return <label>{label}<input inputMode="decimal" value={raw} onChange={e=>{const v=e.target.value;if(/^\d*(?:[.,]\d{0,2})?$/.test(v)){setRaw(v);onChange(v===''||v==='.'||v===','?null:Math.round(Number(v.replace(',','.'))*100));}}}/></label>;
 }
 export function ServerAdmin(){
- const [section,setSection]=useState<'content'|'catalog'|'orders'|'statistics'|'integration'|'employees'|'marketing'>('content');
+ const [section,setSection]=useState<'content'|'catalog'|'orders'|'statistics'|'integration'|'employees'|'marketing'|'trash'>('content');
  const [contentDirty,setContentDirty]=useState(false),[logoutConfirm,setLogoutConfirm]=useState(false);
  const [selectedOrder,setSelectedOrder]=useState<string|undefined>();
  const [session,setSession]=useState<StaffSession|null>(null),[checking,setChecking]=useState(true),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
@@ -57,7 +58,7 @@ export function ServerAdmin(){
   try{await api.logout(session.csrfToken);setSession(null);setNotice('');}catch(e){setNotice(adminError(e));}finally{pending.current=false;setBusy(false);}}
  return <div className={shell.shell}>
  <header className={shell.header}><div className={shell.brand}><strong>ASAYA</strong><small>Управление магазином</small></div>
- {session&&<nav className={shell.nav} aria-label="Разделы админки">{([['content','Редактор сайта'],['catalog','Товары'],['orders','Заказы'],['statistics','Аналитика'],['marketing','Маркетинг'],['integration','Настройки'],['employees','Сотрудники']] as const).filter(([key])=>session.user.staffRole!=='manager'||!['employees','integration'].includes(key)).map(([key,label])=><button key={key} aria-current={section===key?'page':undefined} onClick={()=>setSection(key)}>{label}{key==='content'&&contentDirty?' •':''}</button>)}</nav>}
+ {session&&<nav className={shell.nav} aria-label="Разделы админки">{([['content','Редактор сайта'],['catalog','Товары'],['orders','Заказы'],['statistics','Аналитика'],['marketing','Маркетинг'],['trash','Корзина и архив'],['integration','Настройки'],['employees','Сотрудники']] as const).filter(([key])=>session.user.staffRole!=='manager'||!['employees','integration'].includes(key)).map(([key,label])=><button key={key} aria-current={section===key?'page':undefined} onClick={()=>setSection(key)}>{label}{key==='content'&&contentDirty?' •':''}</button>)}</nav>}
  <div className={shell.headerActions}><Link href="/">Открыть сайт ↗</Link>{session&&<button disabled={busy} onClick={()=>contentDirty?setLogoutConfirm(true):void logout()}>Выйти</button>}</div></header>
  {process.env.NEXT_PUBLIC_EDITOR_PREVIEW==='true'&&<p className={shell.notice}>Предпросмотр редактора · тестовые данные на этом компьютере. Изменения не затрагивают сайт ASAYA.</p>}
  {notice&&<p role="alert" className={shell.notice}>{notice}</p>}
@@ -68,6 +69,7 @@ export function ServerAdmin(){
  <div hidden={section!=='catalog'}><h1>Товары</h1><CatalogEditor key={session.user.id} session={session} onExpired={onExpired}/></div>
  {section==='integration'&&session.user.staffRole!=='manager'&&<AdminBanner csrf={session.csrfToken} onExpired={onExpired}/>}
  {section==='integration'&&session.user.staffRole!=='manager'&&<AdminIntegration onExpired={onExpired} onOrder={id=>{setSelectedOrder(id);setSection('orders');}}/>}
+ <div hidden={section!=='trash'}><AdminTrash session={session}/></div>
  <div hidden={section!=='marketing'}><AdminMarketing session={session} onExpired={onExpired}/></div>
  {section==='statistics'&&<AdminStatistics onExpired={onExpired} csrf={session.csrfToken}/>}
  {section==='orders'&&<AdminOrders key={selectedOrder} initialOrderId={selectedOrder} session={session} onExpired={onExpired}/>}
@@ -89,7 +91,7 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  const [product,setProduct]=useState<AdminProduct|null>(null),[draft,setDraft]=useState<AdminDraft>(blankDraft),[dirty,setDirty]=useState(false);
  const [operationBusy,setBusy]=useState(false),[mediaBusy,setMediaBusy]=useState(false),[notice,setNotice]=useState(''),[confirm,setConfirm]=useState<'publish'|'unpublish'|'discard'|'remove'|null>(null);
  const busy=operationBusy||mediaBusy;
- const issues=publicationIssues(draft),deleted=product?.lifecycle==='deleted';
+ const issues=publicationIssues(draft),deleted=product?.lifecycle==='deleted'||product?.lifecycle==='archived';
  const [history,setHistory]=useState<Array<{action:string;createdAt:string;actorId:string}>>([]);
  const lock=useRef(false),nextAction=useRef<(()=>Promise<void>)|null>(null);
  useEffect(()=>{if(!dirty)return;const warn=(e:BeforeUnloadEvent)=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
@@ -129,7 +131,7 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
   await run(async()=>{if(operation==='publish')await api.publish(product.id,product.revision,session.csrfToken);else await api.unpublish(product.id,product.revision,session.csrfToken);
    await open(product.id);await list();reloadCatalog();setNotice(operation==='publish'?'Товар опубликован.':'Товар скрыт с витрины. Заказы и история сохранены.');});
  }
- async function remove(){if(!product||confirm!=='remove')return;await run(async()=>{const outcome=await api.remove(product.id,product.revision,product.draft.sku,session.csrfToken);if(outcome==='archived')await open(product.id);else{setProduct(null);setDirty(false);setConfirm(null);}await list();reloadCatalog();setNotice(outcome==='archived'?'Товар архивирован. История и существующие заказы сохранены.':'Неиспользованный черновик удалён.');});}
+ async function remove(){if(!product||confirm!=='remove')return;await run(async()=>{await api.remove(product.id,product.revision,product.draft.sku,session.csrfToken);setProduct(null);setDirty(false);setConfirm(null);await list();reloadCatalog();setNotice(product.everPublished?'Товар перемещён в архив. История сохранена.':'Черновик перемещён в Корзину на 30 дней.');});}
  const labels:Record<string,string>={'product.archived':'Товар архивирован','product.deleted':'Удалён неиспользованный черновик','product.draft_saved':'Сохранён черновик','product.published':'Опубликован товар','product.unpublished':'Товар скрыт','inventory.adjusted':'Изменён остаток'};
  const textField=(label:string,key:'name'|'slug')=><label>{label}<input value={draft[key]} maxLength={key==='slug'?80:300} onChange={e=>change({[key]:e.target.value})}/></label>;
  const contentField=(label:string,key:'description'|'volume'|'usage'|'ingredients'|'aroma'|'image'|'safety',large=false)=><label>{label}{large?<textarea aria-label={label} rows={4} value={draft.content[key]} onChange={e=>content({[key]:e.target.value})}/>:<input aria-label={label} value={draft.content[key]} onChange={e=>content({[key]:e.target.value})}/>}</label>;
@@ -147,7 +149,7 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  {product.revision>0&&<button disabled={busy} onClick={()=>choose(()=>open(product.id))}>Загрузить с сервера</button>}
  {product.active&&<Link href={'/product/'+product.draft.slug}>Посмотреть товар</Link>}</div></header>
  {(confirm==='publish'||confirm==='unpublish')&&<div className={styles.notice}><p>{confirm==='publish'?'Опубликовать сохранённые данные и цены?':'Скрыть товар с витрины? Существующие заказы сохранятся.'}</p><button disabled={busy} onClick={()=>void publication()}>Подтвердить</button><button disabled={busy} onClick={()=>setConfirm(null)}>Назад</button></div>}
- {confirm==='remove'&&<div className={styles.confirmModal} role="dialog" aria-modal="true" aria-label="Удаление товара"><p>Убрать товар «{product.draft.name}» ({product.draft.sku})? Опубликованный или использованный товар будет архивирован. Только неиспользованный черновик удалится безвозвратно.</p><button disabled={busy} onClick={()=>void remove()}>Подтвердить удаление или архивирование</button><button disabled={busy} onClick={()=>setConfirm(null)}>Назад</button></div>}
+ {confirm==='remove'&&<div className={styles.confirmModal} role="dialog" aria-modal="true" aria-label="Удаление товара"><p>Убрать товар «{product.draft.name}» ({product.draft.sku})? {product.everPublished?'Товар будет перемещён в архив без удаления истории.':'Черновик будет храниться в Корзине 30 дней.'}</p><button disabled={busy} onClick={()=>void remove()}>{product.everPublished?'В архив':'Переместить в Корзину'}</button><button disabled={busy} onClick={()=>setConfirm(null)}>Назад</button></div>}
  {issues.length>0&&<p role="status">Обязательные поля: {issues.map(key=>publicationLabels[key]).join('; ')}.</p>}
  <nav className={styles.productTabs} aria-label="Разделы карточки">{([['main','Основное'],['pdp','Контент страницы'],['placement','Размещение'],['technical','Технические данные'],['stock','Остатки']] as const).map(([key,label])=><button key={key} type="button" aria-pressed={tab===key} onClick={()=>setTab(key)}>{label}</button>)}</nav><form id="product-edit" onSubmit={save} key={product.id+':'+product.revision}><fieldset disabled={busy||deleted}>
  <div hidden={tab!=='main'}><h3>Основное</h3>{textField('Название','name')}
@@ -178,5 +180,5 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  {product.hasDraft&&<AdminTestStock key={product.id} id={product.id} csrf={session.csrfToken} onExpired={onExpired} onSaved={reloadCatalog} disabled={busy||deleted}/>}
  {product.hasDraft&&<section><h3>Остатки по складам</h3><p>Для подключённого склада остаток обновляется из СДЭК Фулфилмента. Ручная корректировка доступна только для складов без синхронизации.</p>{!product.stocks.length&&<p>Склады ещё не заведены на сервере.</p>}
  {product.stocks.map(s=>s.source?<div className={styles.stock} key={s.warehouseId}><p>{s.name} · доступно {s.source.available} · в резерве {s.reserved}<br/>Источник: СДЭК Фулфилмент · остаток в выгрузке {s.source.reportedQuantity}<br/>Выгрузка: {new Date(s.source.generatedAt).toLocaleString("ru-RU")}<br/>{s.source.healthy&&Date.parse(s.source.expiresAt)>checkedAt?"Синхронизация работает":"Данные устарели или обновление не удалось. Продажа недоступна."}</p></div>:<form className={styles.stock} key={s.warehouseId+':'+s.onHand+':'+s.reserved} onSubmit={e=>{e.preventDefault();const onHand=Number(new FormData(e.currentTarget).get('onHand'));void run(async()=>{await api.stock(product.id,{warehouseId:s.warehouseId,expectedOnHand:s.onHand,onHand},session.csrfToken);const updated=await api.detail(product.id);setProduct(p=>p?{...p,stocks:updated.stocks}:p);setHistory(await api.history(product.id));reloadCatalog();setNotice('Остаток обновлён.');});}}><label>{s.name} · в резерве {s.reserved}<input type="number" name="onHand" required min={s.reserved} max={1000000} defaultValue={s.onHand}/></label><button disabled={busy||!s.active}>Обновить остаток</button></form>)}</section>}
- </div><details><summary>Последние действия</summary><ul className={styles.history}>{history.map((h,i)=><li key={i}>{new Date(h.createdAt).toLocaleString('ru-RU')} — {labels[h.action]??h.action}<small>Сотрудник: {h.actorId}</small></li>)}</ul></details>{product.hasDraft&&!deleted&&<section className={styles.dangerZone}><h3>Опасная зона</h3><p>Удаление опубликованного или использованного товара сохраняет историю заказов.</p><button disabled={busy||dirty} onClick={()=>setConfirm('remove')}>{!product.active&&!product.publishedAt?'Удалить черновик':'Удалить товар'}</button></section>}</>}</section></div></>;
+ </div><details><summary>Последние действия</summary><ul className={styles.history}>{history.map((h,i)=><li key={i}>{new Date(h.createdAt).toLocaleString('ru-RU')} — {labels[h.action]??h.action}<small>Сотрудник: {h.actorId}</small></li>)}</ul></details>{product.hasDraft&&!deleted&&<section className={styles.dangerZone}><h3>Опасная зона</h3><p>Перед удалением опубликованного товара снимите его с публикации.</p><button disabled={busy||dirty||product.active} onClick={()=>setConfirm('remove')}>{!product.everPublished?'Удалить черновик':'В архив'}</button></section>}</>}</section></div></>;
 }
