@@ -4,7 +4,7 @@ import {before,after,beforeEach,test} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {testDatabase} from './postgres.js';
-import {YcpCheckout} from '../src/ycp-checkout.js';
+import {YcpCheckout,YcpConflict} from '../src/ycp-checkout.js';
 import {YcpOrders} from '../src/ycp-orders.js';
 import {CommerceService} from '../src/commerce.js';
 import {buildApp} from '../src/app.js';
@@ -15,7 +15,7 @@ let ctx:Awaited<ReturnType<typeof testDatabase>>;
 const token='ycp-order-test-token-with-more-than-32-characters';
 before(async()=>{ctx=await testDatabase();});after(async()=>{await ctx?.stop();});
 beforeEach(async()=>{await ctx.db.pool.query('TRUNCATE products,warehouses,users,checkout_sessions,integration_inbox,integration_outbox CASCADE');});
-async function fixture(cod=false){
+async function fixture(cod=false,finalPrice=90){
  const db=ctx.db,warehouse=randomUUID();await db.pool.query("INSERT INTO warehouses(id,code,name,active) VALUES($1,'YCP','Test warehouse',true)",[warehouse]);
  for(const sku of ['YCP-A','YCP-B']){const product=randomUUID();
   await db.pool.query('INSERT INTO products(id,sku,name,active,sale_approved,weight_g,width_mm,height_mm,depth_mm) VALUES($1,$2,$2,true,true,500,50,100,50)',[product,sku]);
@@ -25,12 +25,29 @@ async function fixture(cod=false){
  }
  const settings:YcpSettings={accountId:'ycp-orders-test',environment:'test',publicOrigin:'https://asaya.example.test',priceUnit:'minor',vat:0,checkout:{deliveryPriceUnit:'minor'},warehouses:[{warehouseId:warehouse,address:'Test address',phone:'+79990000000',servedLocalities:['Москва'],ycpDeliveryEnabled:false}]};
  const checkout=new YcpCheckout(db,settings),orders=new YcpOrders(db,settings),external='external-order';
- await checkout.create({session_id:'session',warehouse_id:warehouse,items:[{id:'YCP-A',quantity:2,regular_price:100,final_price:100},{id:'YCP-B',quantity:1,regular_price:100,final_price:100}],customer:{full_name:'Private Name',phone:'+79990000000',email:'private@example.test'},delivery:{delivery_method:'courier',service_type:'yandex_delivery',price:10,address:{locality:'Москва',address:'Private street'},delivery_date_interval:{start_interval:{date:'2026-09-09'},end_interval:{date:'2026-09-10'},time_zone:3}}});
+ // Three eligible units receive the approved 10% quantity discount: 100 RUB -> 90 RUB.
+ // Keep this expectation literal; deriving it from priceRows would conceal pricing regressions.
+ await checkout.create({session_id:'session',warehouse_id:warehouse,items:[{id:'YCP-A',quantity:2,regular_price:100,final_price:finalPrice},{id:'YCP-B',quantity:1,regular_price:100,final_price:finalPrice}],customer:{full_name:'Private Name',phone:'+79990000000',email:'private@example.test'},delivery:{delivery_method:'courier',service_type:'yandex_delivery',price:10,address:{locality:'Москва',address:'Private street'},delivery_date_interval:{start_interval:{date:'2026-09-09'},end_interval:{date:'2026-09-10'},time_zone:3}}});
  await checkout.placed({session_id:'session',order_id:external,order_number:1,payment_method:cod?'on_delivery':'online',...(cod?{}:{acquiring_id:'acquiring-order',online_payment_method:'card'})});
- const id=(await db.pool.query('SELECT id FROM orders')).rows[0].id;
+ const saved=(await db.pool.query('SELECT id,subtotal_minor FROM orders')).rows[0];
+ assert.equal(saved.subtotal_minor,'27000');
+ assert.deepEqual((await db.pool.query('SELECT unit_minor,line_minor FROM order_items ORDER BY sku')).rows,[{unit_minor:'9000',line_minor:'18000'},{unit_minor:'9000',line_minor:'9000'}]);
+ const id=saved.id;
  return {db,settings,checkout,orders,id,q:{order_id:external},commerce:new CommerceService(db)};
 }
 const full={purchased_items:[{id:'YCP-A',quantity:2},{id:'YCP-B',quantity:1}]};
+
+test('obsolete undiscounted checkout fixture is rejected with canonical prices and no order or reserve mutation',async()=>{
+ await assert.rejects(fixture(false,100),error=>{
+  assert.ok(error instanceof YcpConflict);assert.equal(error.code,'INVENTORY_CHANGED');assert.equal(error.status,409);
+  const details=error.details as {actual_inventory:{items:Array<{id:string;regular_price:number;final_price:number}>};checkout_canceled:boolean};
+  assert.deepEqual(details.actual_inventory.items.map(({id,regular_price,final_price})=>({id,regular_price,final_price})),[{id:'YCP-A',regular_price:100,final_price:90},{id:'YCP-B',regular_price:100,final_price:90}]);
+  assert.equal(details.checkout_canceled,false);return true;
+ });
+ assert.equal((await ctx.db.pool.query('SELECT 1 FROM orders')).rowCount,0);
+ assert.equal((await ctx.db.pool.query('SELECT 1 FROM inventory_reservations')).rowCount,0);
+ assert.ok((await ctx.db.pool.query('SELECT on_hand,reserved FROM inventory_balances')).rows.every(r=>r.on_hand===10&&r.reserved===0));
+});
 
 test('admin sees review signals by order without queue secrets; processing an event does not imply resolution',async()=>{
  const f=await fixture(),actor=randomUUID(),admin=new AdminOrders(f.db);
