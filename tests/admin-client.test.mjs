@@ -7,6 +7,20 @@ const content={description:'Описание',volume:'300 мл',category:'body',
 const draft={sku:'NEW',name:'Новый товар',slug:'entirely-new',content,regularMinor:50000,finalMinor:45000,weightG:null,widthMm:null,heightMm:null,depthMm:null};
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status});
 
+test('product history accepts system events after a successful draft save, but rejects malformed actors',async()=>{
+ const created_at='2026-09-18T09:30:37.623Z';
+ const items=[{action:'product.draft_saved',actor_id:id,created_at},{action:'product.publication_restored',actor_id:null,created_at}];
+ const api=createAdminClient('/api/admin/v1',async(url,options)=>reply(options.method==='PUT'?{id,revision:3}:{items}));
+ await api.save(id,{...draft,finalMinor:44900},2,csrf);
+ assert.deepEqual(await api.history(id),[
+  {action:'product.draft_saved',actorId:id,createdAt:created_at},
+  {action:'product.publication_restored',actorId:null,createdAt:created_at}
+ ]);
+ for(const actor_id of [undefined,'not-a-uuid',123,{}]){
+  await assert.rejects(createAdminClient('/api',async()=>reply({items:[{...items[0],actor_id}]})).history(id),e=>e.code==='INVALID_RESPONSE');
+ }
+});
+
 test('product category filter and deletion confirmation carry canonical identity and size remains typed',async()=>{
  let call;const row={id,sku:'NEW',name:'Новый',active:false,revision:2,image:'/images/test.webp',category:'face'};
  const api=createAdminClient('/api/admin/v1',async(url,options)=>{call={url,options};return reply(options.method==='GET'?{items:[row],nextOffset:null}:{outcome:'archived'});});

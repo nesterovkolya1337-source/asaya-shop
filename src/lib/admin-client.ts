@@ -88,7 +88,7 @@ export function createAdminClient(base:string,fetcher:typeof fetch=fetch){
   async history(id:string){
    const r=object(await request(path(id)+'/history','GET'));
    if(!Array.isArray(r.items)||r.items.length>50)throw new AuthClientError('INVALID_RESPONSE');
-   return r.items.map(raw=>{const v=object(raw);if(typeof v.action!=='string'||typeof v.created_at!=='string'||!uuid(v.actor_id))throw new AuthClientError('INVALID_RESPONSE');return {action:v.action,createdAt:v.created_at,actorId:v.actor_id};});
+   return r.items.map(raw=>{const v=object(raw);if(typeof v.action!=='string'||typeof v.created_at!=='string'||(v.actor_id!==null&&!uuid(v.actor_id)))throw new AuthClientError('INVALID_RESPONSE');return {action:v.action,createdAt:v.created_at,actorId:v.actor_id};});
   }
  };
 }
