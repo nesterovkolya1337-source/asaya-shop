@@ -11,22 +11,20 @@ export async function priceRows(db:Pick<Tx,'query'>,rows:Array<{sku:string;final
  const settings=types[0]?.live??await liveMarketing(db);
  return priceCart(rows.map(r=>({sku:r.sku,quantity:quantities.find(i=>i.sku===r.sku)!.quantity,finalMinor:money(r.final_minor),eligible:types.find(t=>t.sku===r.sku)?.eligible===true})),settings);
 }
-export function priceCart(lines:Line[],settings:MarketingConfig,promo?:{id:string;code:string;percent:number}){
+export function priceCart(lines:Line[],settings:MarketingConfig){
  const eligibleUnits=lines.reduce((n,i)=>n+(i.eligible?i.quantity:0),0);
  const percent=eligibleUnits>=3?settings.threePercent:eligibleUnits===2?settings.twoPercent:0;
  // Quantity-discounted unit price rounds down once to whole RUB; totals use this value.
- const quantityItems=lines.map(i=>({...i,unitMinor:i.eligible&&percent?Math.floor(i.finalMinor*(100-percent)/10000)*100:i.finalMinor}));
- const items=quantityItems.map(i=>({...i,unitMinor:promo?Math.floor(i.unitMinor*(100-promo.percent)/10000)*100:i.unitMinor}));
- const beforePromoMinor=money(quantityItems.reduce((n,i)=>n+i.unitMinor*i.quantity,0));
+ const items=lines.map(i=>({...i,unitMinor:i.eligible&&percent?Math.floor(i.finalMinor*(100-percent)/10000)*100:i.finalMinor}));
  const subtotalMinor=money(items.reduce((n,i)=>n+i.unitMinor*i.quantity,0));
  const beforeMinor=money(lines.reduce((n,i)=>n+i.finalMinor*i.quantity,0));
- return {items,eligibleUnits,percent,subtotalMinor,discountMinor:beforeMinor-beforePromoMinor,...(promo?{promo:{...promo,beforeMinor:beforePromoMinor,discountMinor:beforePromoMinor-subtotalMinor,checkoutAvailable:false}}:{}),settings,shippingRemainingMinor:Math.max(0,settings.freeShippingMinor-subtotalMinor)};
+ return {items,eligibleUnits,percent,subtotalMinor,discountMinor:beforeMinor-subtotalMinor,settings,shippingRemainingMinor:Math.max(0,settings.freeShippingMinor-subtotalMinor)};
 }
 // Only published canonical classification participates; unpublished editor drafts do not.
 export const eligibleSql=`COALESCE(e.published->'content'->>'category','')<>'sets'
  AND COALESCE(e.published->'content'->>'setKind','none')='none'
  AND NOT EXISTS(SELECT 1 FROM product_components component WHERE component.product_id=p.id)`;
-export async function cartPricing(db:Pick<Tx,'query'>,raw:unknown,promo?:{id:string;code:string;percent:number}){
+export async function cartPricing(db:Pick<Tx,'query'>,raw:unknown){
  const body=cartItemsSchema.parse(raw);
  // A single statement snapshots both live configuration and canonical prices.
  const {rows}=await db.query(`SELECT p.sku,pr.final_minor,(${eligibleSql}) AS eligible,s.live
@@ -37,5 +35,5 @@ export async function cartPricing(db:Pick<Tx,'query'>,raw:unknown,promo?:{id:str
  const products=rows.filter(r=>r.sku);
  if(products.length!==body.items.length)throw new DomainError('PRODUCT_UNAVAILABLE',409);
  const settings=rows[0]?.live??await liveMarketing(db);
- return priceCart(body.items.map(i=>{const p=products.find(p=>p.sku===i.sku)!;return {...i,finalMinor:money(p.final_minor),eligible:p.eligible};}),settings,promo);
+ return priceCart(body.items.map(i=>{const p=products.find(p=>p.sku===i.sku)!;return {...i,finalMinor:money(p.final_minor),eligible:p.eligible};}),settings);
 }
