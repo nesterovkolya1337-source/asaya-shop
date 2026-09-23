@@ -29,3 +29,5 @@
 .loginCard label.smsConsent {display:flex;align-items:flex-start;gap:10px;font-size:var(--type-caption-size);line-height:var(--type-leading-body);}
 .loginCard .smsConsent input {width:18px;height:18px;flex:0 0 18px;padding:0;margin:2px 0 0;accent-color:#242424;}
 .smsConsent a {text-decoration:underline;}
+
+.loginCard p.smsConsent{font-size:var(--type-caption-size);line-height:1.5;color:#626262;margin:10px 0 16px;}

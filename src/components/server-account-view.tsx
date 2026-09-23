@@ -22,15 +22,7 @@ export function ServerAccountView({smsOnly=false}:{smsOnly?:boolean}) {
  const [smsAvailable,setSmsAvailable]=useState(!smsOnly);
  const [destination,setDestination]=useState('');
  const [challenge,setChallenge]=useState<Challenge|null>(null);
- const [consentAcceptedFor,setConsentAcceptedFor]=useState('');
- const [knownConsentFor,setKnownConsentFor]=useState('');
  const phone=normalizeCustomerPhone(destination);
- useEffect(()=>{
-  let active=true;setConsentAcceptedFor('');setKnownConsentFor('');
-  if(channel!=='sms'||!phone||view!=='guest')return;
-  const timer=setTimeout(()=>{void auth.smsConsentStatus(phone).then(s=>{if(active&&s.active&&s.version===SMS_CONSENT_VERSION)setKnownConsentFor(phone);}).catch(()=>{});},350);
-  return()=>{active=false;clearTimeout(timer);};
- },[phone,channel,view]);
  const [code,setCode]=useState('');
  const [notice,setNotice]=useState('');
  const [busy,setBusy]=useState(false);
@@ -75,19 +67,16 @@ export function ServerAccountView({smsOnly=false}:{smsOnly?:boolean}) {
   const method=challenge?.channel??channel;
   const target=method==='sms'?normalizeCustomerPhone(rawTarget):rawTarget;
   if(!target){setNotice('Введите номер телефона в формате +7 999 123-45-67.');return;}
-  if(method==='sms'&&knownConsentFor!==target&&consentAcceptedFor!==target){setNotice('Подтвердите согласие на SMS, чтобы получить код.');return;}
   pending.current=true;setBusy(true);setNotice('');
   const version=++operation.current;
   // A resend always targets the same destination as the visible challenge.
   try {
-   const sent=await auth.sendCode(method,target,method==='sms'&&consentAcceptedFor===target?{accepted:true,version:SMS_CONSENT_VERSION}:undefined);
+   const sent=await auth.sendCode(method,target,method==='sms'?{accepted:true,version:SMS_CONSENT_VERSION}:undefined);
    if(operation.current!==version)return;
-   if(method==='sms'){setKnownConsentFor(target);setConsentAcceptedFor('');}
    const at=Date.now();setNow(at);setCode('');
    setChallenge({...sent,destination:target,channel:method,expiresAt:at+sent.expiresInSeconds*1000,retryAt:at+sent.retryAfterSeconds*1000});
   } catch(error) {
    if(operation.current===version) {
-    if(error instanceof AuthClientError&&error.code==='SMS_CONSENT_REQUIRED'){setKnownConsentFor('');setConsentAcceptedFor('');}
     setNotice(error instanceof Error?error.message:'Не удалось отправить код.');
     // A failed resend may already have invalidated the previous code on the server.
     if(challenge){setDestination(target);setChannel(method);setChallenge(null);setCode('');}
@@ -134,11 +123,11 @@ export function ServerAccountView({smsOnly=false}:{smsOnly?:boolean}) {
      </div>}
      <form onSubmit={sendCode}>
       <label>{channel==='email'?'Email':'Телефон'}{channel==='sms'?<CustomerPhoneInput value={destination} onChange={setDestination} disabled={busy}/>:<input autoComplete="email" disabled={busy} maxLength={254} onChange={event=>setDestination(event.target.value)} placeholder="name@example.com" required type="email" value={destination}/>}</label>
-      {channel==='sms'&&(!phone||knownConsentFor!==phone)&&<label className={styles.smsConsent}><input type="checkbox" checked={!!phone&&consentAcceptedFor===phone} disabled={busy} onChange={e=>setConsentAcceptedFor(e.target.checked?(phone??''):'')}/><span>{SMS_CONSENT_LABEL} <Link href={SMS_CONSENT_URL} target="_blank" rel="noopener">Условия и порядок отзыва согласия</Link>.</span></label>}
-      <button disabled={busy||(smsOnly&&!smsAvailable)||(channel==='sms'&&(!phone||(knownConsentFor!==phone&&consentAcceptedFor!==phone)))} type="submit">{busy?'Отправляем…':'Получить код'}</button>
+      {channel==='sms'&&<p className={styles.smsConsent}>{SMS_CONSENT_LABEL} <Link href={SMS_CONSENT_URL} target="_blank" rel="noopener">Условия</Link></p>}
+      <button disabled={busy||(smsOnly&&!smsAvailable)||(channel==='sms'&&!phone)} type="submit">{busy?'Отправляем…':'Получить код'}</button>
      </form>
      {smsOnly&&!smsAvailable&&<p role="status">Вход по SMS пока недоступен. Попробуйте позже.</p>}
-     <Link href="/legal/privacy/">Политика конфиденциальности</Link>
+
     </> : <>
      <p>Отправили код на <strong>{challenge.channel==='sms'?displayPhone(challenge.destination):challenge.destination}</strong>. Код действует {Math.ceil(challenge.expiresInSeconds/60)} мин.</p>
      <form onSubmit={verify}>

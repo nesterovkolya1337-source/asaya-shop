@@ -1,0 +1,25 @@
+# SMS consent, YML и компактные бонусы — 24.09.2026
+
+Без deploy. Новых migrations/secrets/workers не требуется. Предыдущая migration 039 относится к ранее завершённому Admin/PDP пакету, не к этим изменениям.
+
+## SMS — complete
+Нет checkbox и отдельного status preflight. Под телефоном точный текст ТЗ, только «Условия» ведёт на `/legal/sms-consent/`. Кнопка передаёт существующее versioned consent в OTP request. Версия `2026-09-23-v2`, action=`request_otp`, UTC timestamp/normalized phone/text snapshot — в существующей таблице до provider call. Старые записи не меняются; active current consent повторно не создаётся, revoked/old version требует новое. Policy только для login/phone verification OTP, не рекламы. Admin consent history и OTP/security/provider flow сохранены.
+
+## YML — complete локально; Yandex import после deploy не выполнен
+Постоянный route: `https://asaya.ru/api/store/v1/yandex/feed.xml` (новая реализация ещё НЕ deployed).
+Canonical источники: products.sku/name, product_prices current approved RUB price, product_editor.published.content category/description/images, approved storefront_mappings.slug; общая функция asaya_stock_limit и inventory reserved, только active YCP warehouses. Никаких запросов CDEK при генерации. Test stock игнорируется. Missing/stale/unhealthy snapshot → available=false; нулевой Published offer остаётся. Sets с canonical SKU включены. Draft/hidden/archived не включены.
+Offer id=canonical SKU, тот же redirect items.id; render не создаёт и не читает Yandex mappings. Legacy prepare CLI оставлен для совместимости, публичный endpoint его не вызывает. Категории Hair=1 Body=2 Face=3 Sets=4. Price — одна единица до cart discounts. oldprice только из real base price при допустимой скидке 5–75%, целое число. Weight/dimensions только если известны, kg/cm; optional barcode из имеющихся допустимых кодов. Checkout flag повторяет существующую eligibility: sale_approved и отсутствие legacy component-composition (текущий checkout её не поддерживает). Такие наборы остаются в фиде с выключенной кнопкой; обычные Published наборы с собственным SKU допускаются. Состояния basket/dispatch не менялись.
+UTF-8 XML, escaped values, текущий timestamp, no-store; отсутствующие обязательные данные дают явную validation error, не выдумываются. Admin → Настройки → Проверка интеграции → «Проверить фид»: readonly URL/offers/time/status/ошибки, только technical role.
+Официальная схема: https://yandex.ru/support/merchants/ru/offers и https://yandex.ru/support/merchants/ru/export/vendor-model . Для российского рубля YML указывает **RUR**; canonical ASAYA currency остаётся RUB. Это обозначение той же валюты, не конвертация.
+Sample `YML_SAMPLE_20260924.xml` содержит три вымышленных fixture offers Hair/Body/Set, не production цены/остатки. После разрешённого deploy потребуется подключить URL в кабинете Яндекса и проверить импорт/express; сейчас этого не делали.
+
+## Бонусы — compact UI/preview complete, actual redemption BLOCKED
+Guest — приглашение войти без фиктивного баланса. Balance=0 — 0 и прогноз, без dead action. Balance>0 — баланс, лимит, раскрываемый серверный предварительный расчёт, reset. 1440/390 проверены.
+POST cart/pricing accepts optional previewPoints: backend повторно читает canonical discounted basket и SMS-verified customer balance из одного ledger. Лимит min(balance,floor(goodsMinor×20/10000)); денежная часть goodsMinor−points×100; начисление floor(cashMinor×3/10000). Доставка исключена. Настройки процентов берутся из существующего live Marketing; клиент своей формулы не имеет. Сохранено округление quantity unit вниз до целого рубля. Promo pipeline в текущем cart-pricing этой ветки отсутствует; новый не создавался.
+Preview возвращает applied=false/YCP_ORDER_LINKAGE_UNAVAILABLE; actual subtotal, redirect и ledger **не меняются**. UI прямо сообщает «не применены к оплате», нет ложного «Списано». Отдельный расчёт показывает уменьшенную сумму/начисление, основной итог остаётся реально оплачиваемым. Предварительный расчёт не выдаётся за сохраняемый redemption intent/reservation: без надёжной связи intent → final callback хранение такого intent не завершает интеграцию.
+Точный blocker: yandex_checkout_attempts хранит локальный redirect attempt, а YCP create/placed приходит по provider session_id; нет доказанной связи с выбранным персональным списанием. customer_id в basket/delivery не закрывает финальный checkout. Financial gate false сохранён; никакого phone/time/SKU workaround.
+
+## Проверки
+Backend build + Next production build --webpack/typecheck проходят. SMS consent 4, customer SMS 8, cart bonus 1, marketing 4, loyalty 2, CDEK tracking 14 — проходят. YML — 15 tests, frontend auth-client — 7 tests проходят. Старый ycp-orders suite падает на несовместимом fixture (см. отдельный audit), не скрыт как pass.
+Локальный браузер: телефон +7/нет checkbox/доступная CTA; guest/zero/positive bonus, partial preview/reset; Admin feed valid. Реальных SMS, оплат, CDEK shipments не было.
+Фотоотчёт workspace: outputs/ASAYA-Photo-Report-20260924.html. Предыдущие 4 ТЗ описаны в ADMIN_PDP_OPERATIONS_20260923.md, их screenshots включены в тот же отчёт.

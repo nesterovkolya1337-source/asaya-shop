@@ -18,7 +18,7 @@ test('consent gates SMS, preserves proof, repeats idempotently, records verifica
  await assert.rejects(auth.request('sms',phone,'ip'),/SMS_CONSENT_REQUIRED/);assert.equal(messages.length,0);
  const ch=await auth.request('sms',phone,'ip',consent);
  let rows=(await service.history(phone)).items;assert.equal(rows.length,1);assert.equal(rows[0].verified_at,null);
- assert.equal(rows[0].source,'customer_sms_login');assert.equal(rows[0].consent_type,'sms_auth_service');assert.ok(rows[0].text_snapshot.paragraphs.length);
+ assert.equal(rows[0].action,'request_otp');assert.equal(rows[0].source,'customer_sms_login');assert.equal(rows[0].consent_type,'sms_auth_service');assert.ok(rows[0].text_snapshot.paragraphs.length);
  const session=await auth.verify(ch.challengeId,messages[0]!.code,'ip');rows=(await service.history(phone)).items;
  assert.equal(rows[0].customer_id,session.user.id);assert.ok(rows[0].verified_at);
  now=new Date(+now+61000);await auth.request('sms',phone,'ip');assert.equal((await service.history(phone)).items.length,1);
@@ -51,4 +51,12 @@ test('HTTP consent status is origin checked, private/no-store; OTP refuses absen
   assert.equal((await app.inject('/api/admin/v1/sms-consents?phone=%2B79991234567')).statusCode,401);assert.equal(sends,0);
   assert.equal((await app.inject({method:'POST',url,headers:{origin},payload:{...payload,consent}})).statusCode,200);assert.equal(sends,1);
  }finally{await app.close();}
+});
+
+test('consent persistence failure blocks provider and OTP challenge creation',async()=>{
+ let sends=0;const auth=new AuthService(ctx.db,'s'.repeat(32),{sendOtp:async()=>{sends++;}});
+ await ctx.db.pool.query(`CREATE FUNCTION reject_consent() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'consent storage failure'; END $$`);
+ await ctx.db.pool.query('CREATE TRIGGER reject_consent BEFORE INSERT ON sms_consents FOR EACH ROW EXECUTE FUNCTION reject_consent()');
+ try{await assert.rejects(auth.request('sms','+79991234567','ip',consent),/consent storage failure/);assert.equal(sends,0);assert.equal((await ctx.db.pool.query('SELECT 1 FROM otp_challenges')).rowCount,0);}
+ finally{await ctx.db.pool.query('DROP TRIGGER reject_consent ON sms_consents');await ctx.db.pool.query('DROP FUNCTION reject_consent()');}
 });

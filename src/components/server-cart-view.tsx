@@ -1,5 +1,6 @@
 "use client";
 import Link from 'next/link';
+import {CartBonus} from './cart-bonus';
 import {useEffect,useRef,useState} from 'react';
 import {useShop} from './shop-provider';
 import {checkoutCart} from '@/lib/checkout-cart';
@@ -67,7 +68,7 @@ export function ServerCartView(){
  <section className={cartStyles.summary} aria-label="Итоги заказа">
  {quote&&valid&&<div className={cartStyles.delivery} aria-live="polite"><progress aria-label="До бесплатной доставки" value={progress} max={100}/><div className={cartStyles.progressLabels}><span>{rubles(quote.subtotalMinor)}</span><span>{rubles(quote.settings.freeShippingMinor)}</span></div><p>{quote.shippingRemainingMinor===0?'Бесплатная доставка':'До бесплатной доставки осталось '+rubles(quote.shippingRemainingMinor)}</p></div>}
  {quote&&quantityProgress(quote)&&<p className={cartStyles.discountBadge} role="status">{quantityProgress(quote)}</p>}
- {quote&&(quote.loyalty?<div className={cartStyles.loyalty} aria-label="Бонусы в корзине"><span>Ваши баллы ASAYA<small>1 балл = 1 ₽</small></span><strong>{quote.loyalty.balance}</strong></div>:<Link className={cartStyles.guestLink} href="/account/">Войти, чтобы увидеть баллы</Link>)}
+ {quote&&<CartBonus key={pricingKey} quote={quote} items={items}/>}
  <dl className={cartStyles.totals}><div><dt>Товары</dt><dd>{quote?rubles(quote.subtotalMinor+quote.discountMinor):'Рассчитываем…'}</dd></div>
  {quote&&quote.discountMinor>0&&<div><dt>Скидка за количество</dt><dd>−{rubles(quote.discountMinor)}</dd></div>}
  <div><dt>Доставка</dt><dd>{quote&&valid&&quote.shippingRemainingMinor===0?'Бесплатно':'При оформлении'}</dd></div>

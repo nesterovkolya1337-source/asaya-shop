@@ -2,6 +2,7 @@ import {before,after,beforeEach,test} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {writeFile} from 'node:fs/promises';
+import {SaxesParser} from 'saxes';
 import {testDatabase} from './postgres.js';
 import {YandexFeed,xmlText} from '../src/yandex-feed.js';
 import {YcpCatalog,type YcpSettings} from '../src/ycp-catalog.js';
@@ -77,41 +78,65 @@ test('feed prepares stable offer IDs only explicitly and preserves identity thro
  const checked=await new YcpCatalog(f.db,token,f.settings).basket({items:[{id:offer,quantity:1}],offers_id_from_merchant_center:true,locality:'Москва',is_health_check:true});assert.equal(checked.items[0]!.id,'SKU-FEED');assert.equal(checked.items[0]!.final_price,500);
  assert.equal((await f.db.pool.query('SELECT reserved FROM inventory_balances')).rows[0].reserved,3);
 });
-test('feed uses published fields, precise rubles and YML units, escaping XML without enabling checkout',async()=>{
+test('feed uses published fields, precise rubles and YML units, escaping XML with canonical checkout eligibility',async()=>{
  const f=await fixture();await f.feed.prepare(true);const result=await f.feed.render();assert.equal(result.included,1);assert.deepEqual(result.skipped,[]);
  assert.match(result.xml,/<price>500\.01<\/price>/);assert.match(result.xml,/<oldprice>600<\/oldprice>/);assert.match(result.xml,/<currencyId>RUR<\/currencyId>/);
- assert.match(result.xml,/<weight>0\.505<\/weight>/);assert.match(result.xml,/<dimensions>4\.2\/6\.1\/19\.2<\/dimensions>/);assert.match(result.xml,/<param name="is_checkout_enabled">false<\/param>/);
+ assert.match(result.xml,/<weight>0\.505<\/weight>/);assert.match(result.xml,/<dimensions>4\.2\/6\.1\/19\.2<\/dimensions>/);assert.match(result.xml,/<param name="is_checkout_enabled">true<\/param>/);
  assert.ok(result.xml.includes('Гель ASAYA &amp; «Киви» &lt;500 мл&gt;'));assert.ok(result.xml.includes(']]&gt;'));assert.ok(!result.xml.includes('PRIVATE'));assert.ok(!result.xml.includes(token));
  assert.ok(result.xml.includes('https://asaya.example.test/product/feed-gel/'));assert.ok(result.xml.includes('https://asaya.example.test/images/test-gel.webp'));
  if(process.env.ASAYA_FEED_TEST_OUTPUT)await writeFile(process.env.ASAYA_FEED_TEST_OUTPUT,result.xml,{encoding:'utf8',flag:'wx'});
  await f.db.pool.query('UPDATE product_prices SET regular_minor=60001');assert.ok(!(await f.feed.render()).xml.includes('<oldprice>'));
 });
-test('feed excludes incomplete products and unavailable stock without exposing reasons publicly',async()=>{
- const f=await fixture();let r=await f.feed.render();assert.equal(r.included,0);assert.equal(r.skipped[0]!.reason,'MISSING_OFFER_ID');await f.feed.prepare(true);
- await f.db.pool.query('UPDATE inventory_balances SET reserved=on_hand');r=await f.feed.render();assert.equal(r.included,0);assert.equal(r.skipped[0]!.reason,'OUT_OF_STOCK');assert.ok(!r.xml.includes('SKU-FEED'));
- await f.db.pool.query('UPDATE inventory_balances SET reserved=0');await f.db.pool.query('UPDATE products SET weight_g=NULL');assert.equal((await f.feed.render()).skipped[0]!.reason,'DIMENSIONS_NOT_READY');await f.db.pool.query('UPDATE products SET weight_g=505');
- await f.db.pool.query('UPDATE product_editor SET published=$1',[JSON.stringify({content:{...f.content,image:'/images/vector.svg'}})]);assert.equal((await f.feed.render()).skipped[0]!.reason,'IMAGE_NOT_READY');
- await f.db.pool.query('UPDATE product_editor SET published=$1',[JSON.stringify({content:{...f.content,description:''}})]);assert.equal((await f.feed.render()).skipped[0]!.reason,'CONTENT_NOT_READY');
+test('feed keeps zero stock and missing dimensions, rejects invalid required content explicitly',async()=>{
+ const f=await fixture();let r=await f.feed.render();assert.equal(r.included,1);assert.match(r.xml,/<offer id="SKU-FEED" available="false"/);
+ await f.db.pool.query('UPDATE inventory_balances SET reserved=on_hand');assert.equal((await f.feed.render()).included,1);
+ await f.db.pool.query('UPDATE products SET weight_g=NULL,width_mm=NULL');r=await f.feed.render();assert.ok(!r.xml.includes('<weight>'));assert.ok(!r.xml.includes('<dimensions>'));
+ await f.db.pool.query('UPDATE product_editor SET published=$1',[JSON.stringify({content:{...f.content,image:'/images/vector.svg'}})]);await assert.rejects(f.feed.render(),/YANDEX_FEED_VALIDATION_FAILED/);
 });
-test('feed excludes unpublished, unapproved and component-based goods and unconfigured warehouses',async()=>{
- const f=await fixture();await f.feed.prepare(true);
- for(const [table,field] of [['products','active'],['products','sale_approved'],['product_prices','approved'],['storefront_mappings','approved']]){await f.db.pool.query(`UPDATE ${table} SET ${field}=false`);assert.equal((await f.feed.render()).included,0);await f.db.pool.query(`UPDATE ${table} SET ${field}=true`);}
- assert.equal((await new YandexFeed(f.db,{...f.settings,warehouses:[]}).render()).included,0);
- await f.db.pool.query('UPDATE warehouses SET active=false');assert.equal((await f.feed.render()).included,0);await f.db.pool.query('UPDATE warehouses SET active=true');
- const component=randomUUID();await f.db.pool.query("INSERT INTO products(id,sku,name) VALUES($1,'COMPONENT','Hidden component')",[component]);await f.db.pool.query('INSERT INTO product_components(product_id,component_id,quantity) VALUES($1,$2,1)',[f.product,component]);assert.equal((await f.feed.render()).included,0);
- await f.db.pool.query('DELETE FROM product_components');await f.db.pool.query('UPDATE product_editor SET published=NULL');assert.equal((await f.feed.render()).included,0);
+
+test('feed excludes hidden, archived, drafts and unapproved prices but includes sets as canonical offers',async()=>{
+ const f=await fixture();
+ for(const [table,field] of [['products','active'],['product_prices','approved'],['storefront_mappings','approved']]){await f.db.pool.query(`UPDATE ${table} SET ${field}=false`);assert.equal((await f.feed.render()).included,0);await f.db.pool.query(`UPDATE ${table} SET ${field}=true`);}
+ await f.db.pool.query('UPDATE products SET sale_approved=false');assert.match((await f.feed.render()).xml,/<param name="is_checkout_enabled">false/);await f.db.pool.query('UPDATE products SET sale_approved=true');
+ assert.equal((await new YandexFeed(f.db,{...f.settings,warehouses:[]}).render()).included,1);
+ const component=randomUUID();await f.db.pool.query("INSERT INTO products(id,sku,name) VALUES($1,'COMPONENT','Hidden component')",[component]);await f.db.pool.query('INSERT INTO product_components(product_id,component_id,quantity) VALUES($1,$2,1)',[f.product,component]);assert.equal((await f.feed.render()).included,1);assert.match((await f.feed.render()).xml,/<param name="is_checkout_enabled">false/);
+ await f.db.pool.query("UPDATE products SET archived_at=now() WHERE id=$1",[f.product]);assert.equal((await f.feed.render()).included,0);await f.db.pool.query('UPDATE products SET archived_at=NULL');
+ await f.db.pool.query('UPDATE product_editor SET published=NULL');assert.equal((await f.feed.render()).included,0);
 });
-test('feed preserves existing IDs, isolates accounts, refuses ambiguous IDs and rolls back ID collisions',async()=>{
- const f=await fixture();await f.db.pool.query("INSERT INTO product_external_ids(provider,environment,account_id,external_id,product_id) VALUES('ycp','test','feed-test','old-offer',$1)",[f.product]);assert.equal((await f.feed.prepare(true)).items[0]!.offerId,'old-offer');assert.match((await f.feed.render()).xml,/<offer id="old-offer"/);
- assert.equal((await new YandexFeed(f.db,{...f.settings,accountId:'other'}).render()).included,0);
- await f.db.pool.query("INSERT INTO product_external_ids(provider,environment,account_id,external_id,product_id) VALUES('ycp','test','feed-test','second-offer',$1)",[f.product]);assert.equal((await f.feed.prepare(true)).items[0]!.action,'ambiguous');assert.equal((await f.feed.render()).skipped[0]!.reason,'AMBIGUOUS_OFFER_ID');
- await f.db.pool.query('DELETE FROM product_external_ids');const other=randomUUID();await f.db.pool.query("INSERT INTO products(id,sku,name) VALUES($1,'OTHER','Other')",[other]);await f.db.pool.query("INSERT INTO product_external_ids(provider,environment,account_id,external_id,product_id) VALUES('ycp','test','feed-test',$1,$2)",[`asaya-${f.product}`,other]);await assert.rejects(f.feed.prepare(true),/YCP_OFFER_ID_CONFLICT/);
- assert.equal((await f.db.pool.query('SELECT 1 FROM product_external_ids')).rowCount,1);
-});
-test('feed rejects invalid identifiers and strips invalid XML characters while preserving Unicode',async()=>{
+
+test('feed ignores legacy mappings, uses unique canonical SKUs and parses as valid XML',async()=>{
+ const f=await fixture();await f.db.pool.query("INSERT INTO product_external_ids(provider,environment,account_id,external_id,product_id) VALUES('ycp','test','feed-test','old-offer',$1)",[f.product]);
+ const result=await f.feed.render();assert.match(result.xml,/<offer id="SKU-FEED"/);assert.ok(!result.xml.includes('old-offer'));
+ assert.equal((await new YandexFeed(f.db,{...f.settings,accountId:'other'}).render()).included,1);
+ const parser=new SaxesParser();let count=0;parser.on('opentag',tag=>{if(tag.name==='offer')count++;});parser.write(result.xml).close();assert.equal(count,1);
  assert.equal(xmlText('А & < > " \' \u0001 😀 \ud800'),'А &amp; &lt; &gt; &quot; &apos;  😀 ');
- const f=await fixture();await f.feed.prepare(true);await f.db.pool.query("UPDATE product_external_ids SET external_id='bad id'");assert.equal((await f.feed.render()).skipped[0]!.reason,'INVALID_OFFER_ID');
+ await f.db.pool.query("UPDATE products SET sku='bad id'");await assert.rejects(f.feed.render(),/YANDEX_FEED_VALIDATION_FAILED/);
 });
+
+test('feed real-stock availability respects snapshot freshness/health and never falls back to inventory',async()=>{
+ const f=await fixture();
+ await f.db.pool.query("INSERT INTO stock_sources(warehouse_id,source_kind,environment,source_hash,payload_hash,generated_at,fetched_at,expires_at,healthy) VALUES($1,'cdek_ff_api','production',repeat('a',64),'fixture',now(),now(),now()+interval '10 minutes',true)",[f.warehouse]);
+ await f.db.pool.query('INSERT INTO stock_source_items(warehouse_id,product_id,provider_quantity,quantity,listed) VALUES($1,$2,10,10,true)',[f.warehouse,f.product]);
+ assert.match((await f.feed.render()).xml,/available="true"/);
+ for(const sql of ["UPDATE stock_sources SET healthy=false","UPDATE stock_sources SET healthy=true,expires_at=now()-interval '1 minute'"]){await f.db.pool.query(sql);const r=await f.feed.render();assert.equal(r.included,1);assert.match(r.xml,/available="false"/);}
+});
+
+test('representative Hair, Body and Set offers reference declared stable categories and current canonical one-unit prices',async()=>{
+ const f=await fixture();
+ for(const [sku,category] of [['HAIR-1','hair'],['SET-1','sets']]){
+  const id=randomUUID();await f.db.pool.query('INSERT INTO products(id,sku,name,active,sale_approved) VALUES($1,$2,$2,true,true)',[id,sku]);
+  await f.db.pool.query("INSERT INTO product_prices(product_id,currency,regular_minor,final_minor,approved) VALUES($1,'RUB',79900,79900,true)",[id]);
+  await f.db.pool.query("INSERT INTO storefront_mappings(slug,product_id,approved,confidence,reason) VALUES($1,$2,true,'high','fixture')",[sku!.toLowerCase(),id]);
+  await f.db.pool.query("INSERT INTO product_editor(product_id,revision,draft,published) VALUES($1,1,'{}',$2)",[id,{content:{...f.content,category}}]);
+ }
+ const result=await f.feed.render(),categories=new Set<string>(),references:string[]=[],parser=new SaxesParser();let element='';
+ parser.on('opentag',t=>{element=t.name;if(t.name==='category')categories.add(String(t.attributes.id));});parser.on('text',t=>{if(element==='categoryId')references.push(t);});parser.write(result.xml).close();
+ assert.equal(result.included,3);assert.deepEqual(references.sort(),['1','2','4']);assert.ok(references.every(id=>categories.has(id)));
+ assert.match(result.xml,/<price>799\.00<\/price>/);
+ if(process.env.ASAYA_FEED_SAMPLE)await writeFile(process.env.ASAYA_FEED_SAMPLE,result.xml,'utf8');
+ await f.db.pool.query("UPDATE product_prices SET final_minor=75000 WHERE product_id=(SELECT id FROM products WHERE sku='HAIR-1')");assert.equal((await f.feed.render()).items.find(i=>i.sku==='HAIR-1')!.finalMinor,75000);
+});
+
 test('feed HTTP is public only when configured, never writes mappings, and exposes no credentials or private fields',async()=>{
  const f=await fixture(),options={db:f.db,otpSecret:token,otpSender:new DisabledOtpSender(),origin:'http://127.0.0.1:3200',secureCookies:false},url='/api/store/v1/yandex/feed.xml';
  const app=await buildApp({...options,ycp:{token,settings:f.settings}});
@@ -120,7 +145,7 @@ test('feed HTTP is public only when configured, never writes mappings, and expos
   await f.feed.prepare(true);r=await app.inject({url});assert.ok(r.body.includes('<offer id='));assert.ok(!r.body.includes('PRIVATE'));assert.ok(!r.body.includes(token));assert.ok(!r.body.includes(f.settings.accountId));
   assert.equal((await app.inject({method:'POST',url:'/api/ycp/v1/checkout/basket/check',payload:{}})).statusCode,401);
  }finally{await app.close();}
- const disabled=await buildApp({...options,ycp:{token,settings:{...f.settings,feed:undefined}}});try{assert.equal((await disabled.inject({url})).statusCode,503);}finally{await disabled.close();}
+ const disabled=await buildApp({...options,ycp:{token,settings:{...f.settings,feed:undefined}}});try{assert.equal((await disabled.inject({url})).statusCode,200);}finally{await disabled.close();}
 });
 
 test('redirect attempts commit one snapshot under retry, isolate accounts and reject changed or expired requests',async()=>{
@@ -162,7 +187,7 @@ test('test stock launches express only; YCP, feed, balances, reserves and orders
  assert.equal((await new CommerceService(f.db).catalog(true))[0]!.available,5);
  const {url}=await service.checkoutLink(body),data=JSON.parse(Buffer.from(new URL(url).searchParams.get('data')!,'base64').toString());
  assert.deepEqual(Object.keys(data.items[0]).sort(),['final_price','id','price','quantity']);assert.equal(data.items[0].quantity,5);
- assert.deepEqual(await ycp.basket(request),real);assert.equal((await f.feed.render()).included,0);
+ assert.deepEqual(await ycp.basket(request),real);assert.match((await f.feed.render()).xml,/available="false"/);
  assert.deepEqual((await f.db.pool.query('SELECT * FROM inventory_balances')).rows,balance);
  for(const table of ['orders','inventory_reservations','integration_outbox'])assert.equal((await f.db.pool.query('SELECT 1 FROM '+table)).rowCount,0);
  await assert.rejects(service.checkoutLink({items:[{sku:'SKU-FEED',quantity:6}]}));

@@ -4,7 +4,7 @@ import {Trash} from './trash.js';
 import {Engagement} from './engagement.js';
 import {Loyalty,loyaltyAmounts} from './loyalty.js';
 import {Marketing} from './marketing.js';
-import {cartPricing} from './cart-pricing.js';
+import {cartPricing,cartItemsSchema} from './cart-pricing.js';
 import {StorefrontControls} from './storefront-controls.js';
 import {AdminStocks} from './admin-stocks.js';
 import type {StockSync} from './stock-sync.js';
@@ -201,6 +201,12 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   secured.get('/api/admin/v1/analytics',async req=>new AnalyticsReport(options.db).get(await actor(req.cookies[staffCookie]),req.query));
   secured.get('/api/admin/v1/statistics',async req=>new AdminStatistics(options.db).get(await actor(req.cookies[staffCookie]),req.query));
   const id=(raw:unknown)=>z.object({id:z.uuid()}).parse(raw).id;
+  secured.get('/api/admin/v1/yandex/feed-status',async()=>{
+   const url='/api/store/v1/yandex/feed.xml';
+   if(!yandexFeed)return {url,status:'unconfigured',offers:0,checkedAt:new Date().toISOString()};
+   try{const r=await yandexFeed.render();return {url,status:'valid',offers:r.included,checkedAt:r.generatedAt};}
+   catch(e){return {url,status:'invalid',offers:0,checkedAt:new Date().toISOString(),error:e instanceof DomainError?e.code:'FEED_CHECK_FAILED',issues:(e as {issues?:unknown}).issues??[]};}
+  });
   const merchandising=new AdminMerchandising(options.db);
   secured.get('/api/admin/v1/merchandising',async()=>merchandising.read());
   secured.put('/api/admin/v1/merchandising',async req=>merchandising.save(await actor(req.cookies[staffCookie]),req.body));
@@ -246,12 +252,17 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
  });
  app.post('/api/store/v1/analytics/events',{bodyLimit:8192},async req=>new ProductAnalytics(options.db).ingest(req.body));
  app.post('/api/store/v1/cart/pricing',async req=>{
-  const quote=await cartPricing(options.db.pool,req.body);
+  const body=cartItemsSchema.safeExtend({previewPoints:z.number().int().nonnegative().optional()}).parse(req.body);
+  const quote=await cartPricing(options.db.pool,{items:body.items});
   try{
    const user=await auth.session(req.cookies[cookieName]);
    const loyalty=await new Loyalty(options.db).account(user.id);
-   return {...quote,loyalty:{balance:loyalty.balance,maximum:loyaltyAmounts(quote.subtotalMinor,loyalty.balance,0,quote.settings.loyalty).maximum,redemptionAvailable:false}};
-  }catch(e){if(e instanceof DomainError&&e.code==='UNAUTHENTICATED')return {...quote,loyalty:null};throw e;}
+   const amounts=loyaltyAmounts(quote.subtotalMinor,loyalty.balance,body.previewPoints??0,quote.settings.loyalty);
+   // Calculation only: no order/intent correlation exists in the final YCP callback.
+   // This preview cannot alter canonical payable totals or authorize a ledger debit.
+   return {...quote,loyalty:{balance:loyalty.balance,maximum:amounts.maximum,cashbackPoints:loyaltyAmounts(quote.subtotalMinor,loyalty.balance,0,quote.settings.loyalty).cashbackPoints,redemptionAvailable:false,
+    preview:body.previewPoints===undefined?null:{...amounts,applied:false,reason:'YCP_ORDER_LINKAGE_UNAVAILABLE'}}};
+  }catch(e){if(e instanceof DomainError&&e.code==='UNAUTHENTICATED'&&!body.previewPoints)return {...quote,loyalty:null};throw e;}
  });
  app.get('/api/store/v1/banner',async()=>{const {revision,...banner}=await controls.banner();return banner;});
  app.get('/health/live',async()=>({status:'ok'}));
@@ -262,7 +273,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
  });
  app.get('/api/store/v1/yandex/feed.xml',async(req,reply)=>{
   if(!yandexFeed)throw new DomainError('YANDEX_FEED_UNAVAILABLE',503);
-  const result=await yandexFeed.render();return reply.type('application/xml; charset=utf-8').send(result.xml);
+  const result=await yandexFeed.render();return reply.header('cache-control','no-store').type('application/xml; charset=utf-8').send(result.xml);
  });
  // /api/v1 matches the server prefix in the published YCP OpenAPI contract.
  // Keep the existing explicit prefix for previous local integrations and tests.
