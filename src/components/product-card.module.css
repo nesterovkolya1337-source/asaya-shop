@@ -28,7 +28,7 @@
   border-radius: 999px;
   color: white;
   background: var(--color-foreground);
-  font-size: 14px;
+  font-size: var(--type-small-size);
 }
 
 .badges .discountBadge {
@@ -96,10 +96,10 @@
 
 .meta h3 {
   max-width: 205px;
-  font-family: var(--font-involve);
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 1.2;
+  font-family: var(--type-family-body);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-weight-regular);
+  line-height: var(--type-leading-tight);
 }
 
 .price {
@@ -107,7 +107,7 @@
   flex: none;
   justify-items: end;
   gap: 1px;
-  font-size: 16px;
+  font-size: var(--type-body-size);
   white-space: nowrap;
 }
 
@@ -209,7 +209,7 @@
   .badges span {
     min-height: 21px;
     padding: 0 8px;
-    font-size: 10px;
+    font-size: var(--type-micro-size);
   }
 
   .favorite {
@@ -238,15 +238,15 @@
 
   .meta h3 {
     max-width: none;
-    font-size: 13px;
-    line-height: 1.2;
+    font-size: var(--type-meta-size);
+    line-height: var(--type-leading-tight);
   }
 
   .price {
     display: flex;
     justify-items: start;
     gap: 7px;
-    font-size: 13px;
+    font-size: var(--type-meta-size);
   }
 
   .price > div {
@@ -259,7 +259,7 @@
     bottom: 8px;
     left: 8px;
     min-height: 32px;
-    font-size: 12px;
+    font-size: var(--type-caption-size);
   }
 
   .cartControl button {

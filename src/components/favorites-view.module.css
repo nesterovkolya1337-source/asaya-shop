@@ -6,7 +6,7 @@
 .saved > h1,
 .empty h1 {
   font-size: clamp(28px, 4vw, 46px);
-  font-weight: 400;
+  font-weight: var(--type-weight-regular);
   letter-spacing: -0.04em;
   text-align: center;
 }
@@ -37,7 +37,7 @@
   border-radius: 999px;
   color: white;
   background: var(--color-foreground);
-  font-size: 12px;
+  font-size: var(--type-caption-size);
   transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
@@ -57,8 +57,8 @@
 
 .recent h2 {
   margin-bottom: 14px;
-  font-size: 18px;
-  font-weight: 400;
+  font-size: var(--type-large-size);
+  font-weight: var(--type-weight-regular);
 }
 
 .recentGrid {
@@ -79,7 +79,7 @@
 
   .saved > h1 {
     padding: 22px 0;
-    font-size: 30px;
+    font-size: var(--type-h2-large-size);
   }
 
   .grid {
@@ -92,7 +92,7 @@
   }
 
   .empty h1 {
-    font-size: 28px;
+    font-size: var(--type-h2-size);
   }
 
   .recentGrid {

@@ -102,8 +102,8 @@
   border-radius: 999px;
   background: transparent;
   cursor: pointer;
-  font-size: 13px;
-  font-family: var(--font-involve);
+  font-size: var(--type-meta-size);
+  font-family: var(--type-family-body);
   transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
@@ -165,7 +165,7 @@
   }
 
   .headingActions > a {
-    font-size: 12px;
+    font-size: var(--type-caption-size);
   }
 
   .railControls {
@@ -181,7 +181,7 @@
   .tabs button {
     min-height: 32px;
     padding: 0 11px;
-    font-size: 12px;
+    font-size: var(--type-caption-size);
   }
 
   .rail {

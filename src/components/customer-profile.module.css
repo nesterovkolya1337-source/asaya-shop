@@ -1,9 +1,9 @@
 .profile {padding:8px 0 28px;max-width:620px;}
-.profile h2 {font-size:28px;font-weight:500;margin:0 0 16px;}
-.profile>p {line-height:1.6;color:#626262;font-size:15px;margin:0 0 28px;}
+.profile h2 {font-size:var(--type-h2-size);font-weight:var(--type-weight-medium);margin:0 0 16px;}
+.profile>p {line-height:var(--type-leading-relaxed);color:#626262;font-size:var(--type-body-size);margin:0 0 28px;}
 .profile fieldset {border:0;padding:0;display:grid;grid-template-columns:1fr;gap:22px;}
-.profile label {display:grid;gap:8px;font-size:14px;}
-.profile input {width:100%;min-width:0;padding:14px;border:1px solid #ccc;border-radius:10px;background:#fff;font-size:16px;}
+.profile label {display:grid;gap:8px;font-size:var(--type-small-size);}
+.profile input {width:100%;min-width:0;padding:14px;border:1px solid #ccc;border-radius:10px;background:#fff;font-size:var(--type-body-size);}
 .profile input[readonly] {background:#f4f4f4;}
 .profile button {grid-column:1/-1;justify-self:start;padding:12px 24px;border:0;border-radius:99px;background:#202020;color:white;cursor:pointer;}
 .profile button:disabled {opacity:.5;}

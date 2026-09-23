@@ -1,4 +1,47 @@
 :root {
+  /* Shared storefront typography. Variables alone do not restyle Admin.
+     Art-directed hero/PDP clamps and compact navigation remain local. */
+  --type-family-body: var(--font-gramatika-loaded);
+  --type-family-display: var(--type-family-body);
+  --type-micro-size: 10px;
+  --type-micro-readable-size: 11px;
+  --type-caption-size: 12px;
+  --type-meta-size: 13px;
+  --type-small-size: 14px;
+  --type-body-size: 16px;
+  --type-large-size: 18px;
+  --type-h3-size: 20px;
+  --type-h3-large-size: 22px;
+  --type-h2-small-size: 24px;
+  --type-h2-mobile-size: 26px;
+  --type-h2-size: 28px;
+  --type-h2-large-size: 30px;
+  --type-h1-mobile-size: 32px;
+  --type-metric-mobile-size: 34px;
+  --type-title-size: 36px;
+  --type-metric-size: 40px;
+  --type-h1-size: 48px;
+  --type-weight-regular: 400;
+  --type-weight-medium: 500;
+  --type-weight-semibold: 600;
+  --type-weight-bold: 700;
+  --type-leading-tight: 1.2;
+  --type-leading-heading: 1.25;
+  --type-leading-ui: 1.4;
+  --type-leading-copy-compact: 1.45;
+  --type-leading-body: 1.5;
+  --type-leading-relaxed: 1.6;
+  --type-nav-size: 15px;
+  --type-button-size: var(--type-body-size);
+  --type-button-large-size: var(--type-large-size);
+  --type-label-size: var(--type-small-size);
+  --type-tracking-body: 0;
+  --type-tracking-heading: -.025em;
+  --type-leading-display: 1;
+  --type-tracking-meta: .08em;
+  --type-display-size: clamp(48px, 5.2vw, 72px);
+  --type-display-leading: 1.04;
+
   --color-background: #ffffff;
   --color-foreground: #202020;
   --color-pink: #ffcfeb;
@@ -21,6 +64,12 @@ html,
 body {
   max-width: 100vw;
   overflow-x: clip;
+}
+
+/* SiteChrome marks customer pages. The standalone consent page uses the
+   explicit marker too. Admin inherits its existing font, including on login. */
+body:has([data-storefront]) {
+  font-family: var(--type-family-body);
 }
 
 body {

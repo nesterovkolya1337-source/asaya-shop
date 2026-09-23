@@ -36,8 +36,8 @@
   color: white;
   font-size: clamp(42px, 4.5vw, 54px);
   font-style: italic;
-  font-weight: 500;
-  font-family: var(--font-involve);
+  font-weight: var(--type-weight-medium);
+  font-family: var(--type-family-body);
   line-height: 1.04;
   letter-spacing: 0;
   text-align: center;
@@ -108,7 +108,7 @@
   background: transparent;
   cursor: pointer;
   transition: color 160ms ease, background 160ms ease, transform 160ms ease;
-  font-size: 13px;
+  font-size: var(--type-meta-size);
 }
 
 .filters .activeFilter,
@@ -136,7 +136,7 @@
   align-items: center;
   gap: 8px;
   color: var(--color-gray);
-  font-size: 12px;
+  font-size: var(--type-caption-size);
 }
 
 .sort select {
@@ -204,7 +204,7 @@
 .editorialCopy h2 {
   font-size: clamp(24px, 2.2vw, 36px);
   font-style: italic;
-  font-weight: 600;
+  font-weight: var(--type-weight-semibold);
   line-height: 1.02;
 }
 
@@ -216,7 +216,7 @@
   padding: 0 14px;
   border: 1px solid white;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--type-caption-size);
   text-transform: uppercase;
 }
 
@@ -292,7 +292,7 @@
   .filters button {
     min-height: 36px;
     padding-inline: 15px;
-    font-size: 13px;
+    font-size: var(--type-meta-size);
   }
 
   .sort {
@@ -310,7 +310,7 @@
   }
 
   .editorialCopy h2 {
-    font-size: 22px;
+    font-size: var(--type-h3-large-size);
   }
 
   .editorialCopy a {

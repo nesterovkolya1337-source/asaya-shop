@@ -55,19 +55,19 @@
 
 .heroCopy > p {
   margin-bottom: 14px;
-  font-size: 12px;
+  font-size: var(--type-caption-size);
   letter-spacing: .04em;
-  line-height: 1.5;
+  line-height: var(--type-leading-body);
   text-transform: uppercase;
 }
 
 .heroCopy :is(h1, h2) {
   max-width: 520px;
-  font-size: clamp(48px, 5.2vw, 72px);
-  font-weight: 400;
-  line-height: 1.04;
-  letter-spacing: 0;
-  font-family: var(--font-gramatika);
+  font-size: var(--type-display-size);
+  font-weight: var(--type-weight-regular);
+  line-height: var(--type-display-leading);
+  letter-spacing: var(--type-tracking-body);
+  font-family: var(--type-family-display);
 }
 
 .lightButton,
@@ -81,9 +81,9 @@
   margin-top: 30px;
   padding: 10px 24px;
   border-radius: 999px;
-  font-size: 16px;
-  font-family: var(--font-involve);
-  font-weight: 500;
+  font-size: var(--type-button-size);
+  font-family: var(--type-family-body);
+  font-weight: var(--type-weight-medium);
   line-height: 22px;
   transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
@@ -172,11 +172,11 @@
 }
 
 .manifesto h2 {
-  font-family: var(--font-gramatika);
+  font-family: var(--type-family-display);
   font-size: clamp(42px, 5.5vw, 76px);
-  font-weight: 400;
+  font-weight: var(--type-weight-regular);
   line-height: 1.06;
-  letter-spacing: 0;
+  letter-spacing: var(--type-tracking-body);
   text-wrap: balance;
 }
 
@@ -249,9 +249,9 @@
   color: white;
   font-size: clamp(26px, 3vw, 38px);
   font-style: italic;
-  font-weight: 600;
+  font-weight: var(--type-weight-semibold);
   line-height: 1.05;
-  font-family: var(--font-gramatika);
+  font-family: var(--type-family-display);
 }
 
 .categoryImage {
@@ -293,18 +293,18 @@
 }
 
 .careCopy h2 {
-  font-family: var(--font-gramatika);
+  font-family: var(--type-family-display);
   font-size: clamp(38px, 5vw, 64px);
-  font-weight: 500;
-  line-height: 1.04;
-  letter-spacing: 0;
+  font-weight: var(--type-weight-medium);
+  line-height: var(--type-display-leading);
+  letter-spacing: var(--type-tracking-body);
 }
 
 .careCopy p {
   max-width: 430px;
   margin-top: 28px;
-  font-size: 18px;
-  line-height: 1.4;
+  font-size: var(--type-large-size);
+  line-height: var(--type-leading-ui);
 }
 
 .community {
@@ -324,9 +324,9 @@
 }
 
 .community h2 {
-  font-family: var(--font-gramatika);
-  font-size: 40px;
-  font-weight: 500;
+  font-family: var(--type-family-display);
+  font-size: var(--type-metric-size);
+  font-weight: var(--type-weight-medium);
 }
 
 .communityGrid {
@@ -361,7 +361,7 @@
   border-radius: 50%;
   background: transparent;
   cursor: pointer;
-  font-size: 19px;
+  font-size: var(--type-large-size);
   transition: background 160ms ease, transform 160ms ease;
 }
 
@@ -446,7 +446,7 @@
   .darkButton,
   .aboutButton {
     padding-inline: 20px;
-    font-size: 14px;
+    font-size: var(--type-small-size);
   }
 
   .manifesto {
@@ -510,7 +510,7 @@
 
   .careCopy p {
     margin-top: 20px;
-    font-size: 16px;
+    font-size: var(--type-body-size);
   }
 
   .community {
@@ -518,7 +518,7 @@
   }
 
   .community h2 {
-    font-size: 32px;
+    font-size: var(--type-h1-mobile-size);
   }
 
   .communityHeading {
@@ -528,7 +528,7 @@
   .communityControls button {
     width: 36px;
     height: 36px;
-    font-size: 16px;
+    font-size: var(--type-body-size);
   }
 
   .communityGrid {

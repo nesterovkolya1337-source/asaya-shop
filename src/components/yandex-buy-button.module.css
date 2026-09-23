@@ -6,5 +6,5 @@
 .button:hover:not(:disabled) { background: #404040; }
 .button:focus-visible { outline: 3px solid #222; outline-offset: 3px; }
 .button:disabled { opacity: .55; cursor: default; }
-.note { margin: 8px 0 0; font-size: 12px; color: #666; text-align: center; }
-.error { margin: 10px 0 0; color: #a52716; font-size: 14px; }
+.note { margin: 8px 0 0; font-size: var(--type-caption-size); color: #666; text-align: center; }
+.error { margin: 10px 0 0; color: #a52716; font-size: var(--type-small-size); }

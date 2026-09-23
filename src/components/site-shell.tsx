@@ -87,7 +87,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   }, [overlay]);
 
   return (
-    <header className={`${styles.header} ${overlay ? styles.overlayPlacement : ""}`} ref={headerRef}>
+    <header data-storefront className={`${styles.header} ${overlay ? styles.overlayPlacement : ""}`} ref={headerRef}>
       <nav aria-label="Основная навигация" className={styles.navigation}>
         <div className={styles.navigationStart}>
           {menu&&<details className={styles.mobileMenu} open={menuOpen} ref={menuRef} {...attrs(menu)}>

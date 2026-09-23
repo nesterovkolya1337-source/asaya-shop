@@ -13,7 +13,7 @@
 
 .heading > p {
   color: var(--color-gray);
-  font-size: 13px;
+  font-size: var(--type-meta-size);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -22,17 +22,17 @@
   max-width: 980px;
   margin-top: 10px;
   font-size: clamp(58px, 9vw, 116px);
-  font-weight: 500;
-  line-height: 0.88;
-  letter-spacing: -0.065em;
+  font-weight: var(--type-weight-medium);
+  line-height: var(--type-leading-display);
+  letter-spacing: var(--type-tracking-heading);
 }
 
 .heading > span {
   max-width: 620px;
   margin-top: 28px;
   color: #5b5b5b;
-  font-size: 18px;
-  line-height: 1.4;
+  font-size: var(--type-large-size);
+  line-height: var(--type-leading-ui);
 }
 
 .heading > a {
@@ -79,21 +79,21 @@
 
 .grid article > span {
   color: var(--color-gray);
-  font-size: 13px;
+  font-size: var(--type-meta-size);
 }
 
 .grid h2 {
   margin-top: auto;
   font-size: clamp(28px, 3vw, 42px);
-  font-weight: 500;
+  font-weight: var(--type-weight-medium);
   line-height: 0.98;
-  letter-spacing: -0.04em;
+  letter-spacing: var(--type-tracking-heading);
 }
 
 .grid p {
   margin-top: 18px;
   color: #555;
-  line-height: 1.45;
+  line-height: var(--type-leading-copy-compact);
 }
 
 .grid p a {
@@ -129,7 +129,7 @@
 
   .heading > span {
     margin-top: 22px;
-    font-size: 16px;
+    font-size: var(--type-body-size);
   }
 
   .grid article {

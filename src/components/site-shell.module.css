@@ -8,8 +8,8 @@
   padding: 6px 12px;
   border-radius: var(--radius-card);
   background: var(--color-pink);
-  font-size: 13px;
-  line-height: 1.2;
+  font-size: var(--type-meta-size);
+  line-height: var(--type-leading-tight);
   text-align: center;
 }
 
@@ -60,7 +60,7 @@
   display: flex;
   align-items: center;
   gap: clamp(14px, 3vw, 34px);
-  font-size: 15px;
+  font-size: var(--type-nav-size);
 }
 
 .navigationEnd {
@@ -141,7 +141,7 @@
 .mobileMenuPanel a {
   padding: 12px 14px;
   border-radius: 10px;
-  font-size: 15px;
+  font-size: var(--type-nav-size);
 }
 
 .mobileMenuPanel a:hover {
@@ -209,7 +209,7 @@
   border-radius: 999px;
   color: var(--color-foreground);
   background: var(--color-pink);
-  font-size: 10px;
+  font-size: var(--type-micro-size);
   line-height: 1;
 }
 
@@ -272,8 +272,8 @@
   align-items: center;
   justify-content: space-between;
   color: var(--color-gray);
-  font-size: 12px;
-  letter-spacing: .08em;
+  font-size: var(--type-caption-size);
+  letter-spacing: var(--type-tracking-meta);
   text-transform: uppercase;
 }
 
@@ -311,7 +311,7 @@
   border: 0;
   outline: 0;
   background: transparent;
-  font-size: 20px;
+  font-size: var(--type-h3-size);
 }
 
 .searchResults {
@@ -347,7 +347,7 @@
 }
 
 .searchResults strong {
-  font-weight: 500;
+  font-weight: var(--type-weight-medium);
 }
 
 .searchResults small {
@@ -355,7 +355,7 @@
 }
 
 .searchResults b {
-  font-weight: 400;
+  font-weight: var(--type-weight-regular);
 }
 
 .searchResults p {
@@ -369,18 +369,18 @@
 
 .footerEyebrow {
   color: var(--color-gray);
-  font-size: 12px;
-  letter-spacing: .08em;
+  font-size: var(--type-caption-size);
+  letter-spacing: var(--type-tracking-meta);
   text-transform: uppercase;
 }
 
 .footerLead {
   max-width: 430px;
   margin-top: 8px;
-  font-size: 24px;
-  font-weight: 500;
+  font-size: var(--type-h2-small-size);
+  font-weight: var(--type-weight-medium);
   line-height: 1.15;
-  font-family: var(--font-gramatika);
+  font-family: var(--type-family-display);
 }
 
 .footerSocialRow {
@@ -436,7 +436,7 @@
 }
 
 .careLinks b {
-  font-weight: 400;
+  font-weight: var(--type-weight-regular);
 }
 
 .socials a:hover,
@@ -453,7 +453,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(120px, 1fr));
   gap: clamp(20px, 3vw, 34px);
-  font-family: var(--font-gramatika);
+  font-family: var(--type-family-display);
 }
 
 .footerNav > div {
@@ -465,8 +465,8 @@
 .footerNav p {
   margin-bottom: 6px;
   color: var(--color-gray);
-  font-size: 12px;
-  letter-spacing: .08em;
+  font-size: var(--type-caption-size);
+  letter-spacing: var(--type-tracking-meta);
   text-transform: uppercase;
 }
 
@@ -485,9 +485,9 @@
 .careLinks > p {
   margin-bottom: 8px;
   color: var(--color-gray);
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: .08em;
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-weight-regular);
+  letter-spacing: var(--type-tracking-meta);
   text-transform: uppercase;
 }
 
@@ -501,7 +501,7 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  font-size: 14px;
+  font-size: var(--type-small-size);
 }
 
 .careLinks > a:hover,
@@ -513,7 +513,7 @@
 
 .careLinks > a b {
   color: #5d5d5d;
-  font-size: 12px;
+  font-size: var(--type-caption-size);
   overflow-wrap: anywhere;
 }
 
@@ -526,7 +526,7 @@
   padding-top: 14px;
   border-top: 1px solid var(--color-gray);
   color: #666;
-  font-size: 12px;
+  font-size: var(--type-caption-size);
 }
 
 .legalRow > div {
@@ -567,7 +567,7 @@
   background: var(--color-foreground);
   box-shadow: 0 12px 36px rgb(0 0 0 / 20%);
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--type-micro-readable-size);
   list-style: none;
 }
 
@@ -596,8 +596,8 @@
 
 .supportBubble > div span {
   color: #666;
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: var(--type-small-size);
+  line-height: var(--type-leading-ui);
 }
 
 .supportBubble > div a {
@@ -608,7 +608,7 @@
   border-radius: 999px;
   color: white;
   background: var(--color-foreground);
-  font-size: 14px;
+  font-size: var(--type-small-size);
 }
 
 .supportBubble > div a:hover {
@@ -640,15 +640,15 @@
 }
 
 .cookieBanner strong {
-  font-size: 15px;
-  font-weight: 500;
+  font-size: var(--type-nav-size);
+  font-weight: var(--type-weight-medium);
 }
 
 .cookieBanner p {
   margin-top: 5px;
   color: #666;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--type-caption-size);
+  line-height: var(--type-leading-ui);
 }
 
 .cookieBanner a {
@@ -656,7 +656,7 @@
   margin-top: 7px;
   padding-bottom: 2px;
   border-bottom: 1px solid;
-  font-size: 11px;
+  font-size: var(--type-micro-readable-size);
 }
 
 .cookieActions {
@@ -673,7 +673,7 @@
   color: var(--color-foreground);
   background: transparent;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--type-caption-size);
   transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
@@ -696,7 +696,7 @@
   .promo {
     min-height: 32px;
     margin: 0 0 8px;
-    font-size: 12px;
+    font-size: var(--type-caption-size);
   }
 
   .header {
@@ -768,7 +768,7 @@
   }
 
   .searchPanel input {
-    font-size: 16px;
+    font-size: var(--type-body-size);
   }
 
   .cookieBanner {
@@ -832,13 +832,13 @@
   }
 
   .footerLead {
-    font-size: 20px;
+    font-size: var(--type-h3-size);
   }
 
   .footerNav {
     grid-template-columns: 1fr 1fr;
     gap: 24px 16px;
-    font-size: 13px;
+    font-size: var(--type-meta-size);
   }
 
   .legalRow {

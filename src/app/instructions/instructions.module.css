@@ -13,23 +13,23 @@
 
 .heading p {
   color: var(--color-gray);
-  font-size: 12px;
+  font-size: var(--type-caption-size);
   letter-spacing: .08em;
   text-transform: uppercase;
 }
 
 .heading h1 {
   font-size: clamp(48px, 6.5vw, 78px);
-  font-weight: 400;
+  font-weight: var(--type-weight-regular);
   line-height: .92;
-  letter-spacing: -.055em;
+  letter-spacing: var(--type-tracking-heading);
 }
 
 .heading span {
   max-width: 560px;
   color: #555;
-  font-size: 17px;
-  line-height: 1.4;
+  font-size: var(--type-body-size);
+  line-height: var(--type-leading-ui);
 }
 
 .controls {
@@ -68,7 +68,7 @@
   display: grid;
   gap: 5px;
   color: var(--color-gray);
-  font-size: 10px;
+  font-size: var(--type-micro-size);
 }
 
 .controls input {
@@ -127,30 +127,30 @@
 
 .cardCopy small {
   color: var(--color-gray);
-  font-size: 10px;
+  font-size: var(--type-micro-size);
   letter-spacing: .03em;
   text-transform: uppercase;
 }
 
 .cardCopy h2 {
   margin-top: 10px;
-  font-size: 22px;
-  font-weight: 400;
+  font-size: var(--type-h3-large-size);
+  font-weight: var(--type-weight-regular);
   line-height: 1.05;
 }
 
 .cardCopy p {
   margin-top: 12px;
   color: #666;
-  font-size: 13px;
+  font-size: var(--type-meta-size);
   line-height: 1.35;
 }
 
 .cardCopy strong {
   margin-top: auto;
   padding-top: 16px;
-  font-size: 12px;
-  font-weight: 400;
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-weight-regular);
 }
 
 .empty {
@@ -173,7 +173,7 @@
   }
 
   .heading span {
-    font-size: 15px;
+    font-size: var(--type-body-size);
   }
 
   .controls {
@@ -223,19 +223,19 @@
 
   .cardCopy h2 {
     margin-top: 7px;
-    font-size: 17px;
+    font-size: var(--type-body-size);
   }
 
   .cardCopy p {
     display: -webkit-box;
     margin-top: 7px;
     overflow: hidden;
-    font-size: 11px;
+    font-size: var(--type-micro-readable-size);
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
 
   .cardCopy strong {
-    font-size: 10px;
+    font-size: var(--type-micro-size);
   }
 }
