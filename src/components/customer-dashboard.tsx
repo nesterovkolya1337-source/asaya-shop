@@ -13,6 +13,7 @@ const sections=[{id:'overview',label:'Обзор'},{id:'orders',label:'Мои з
 type Section=typeof sections[number]['id'];
 export function CustomerDashboard({session,onExpired,onLogout,busy}:{session:ServerSession;onExpired:()=>void;onLogout:()=>void;busy:boolean}) {
  const [section,setSection]=useState<Section>('overview');
+ useEffect(()=>{if(window.location.hash==='#reviews')setSection('reviews');},[]);
  const [hasReminders,setHasReminders]=useState(false);
  const [profile,setProfile]=useState<CustomerProfile|null>(null);
 

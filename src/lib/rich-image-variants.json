@@ -1,0 +1,808 @@
+{
+  "/images/figma/rich-content/8db29686c8c8dcab65f6ccfdf7d13a37a396d79c.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/8db29686c8c8dcab65f6ccfdf7d13a37a396d79c-480.webp"
+    },
+    {
+      "width": 800,
+      "src": "/images/figma/rich-content/variants/8db29686c8c8dcab65f6ccfdf7d13a37a396d79c-800.webp"
+    }
+  ],
+  "/images/figma/rich-content/273c4a4e8204016c9bfbaf61b2e4ead20e3523d7.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/273c4a4e8204016c9bfbaf61b2e4ead20e3523d7-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/273c4a4e8204016c9bfbaf61b2e4ead20e3523d7-960.webp"
+    },
+    {
+      "width": 974,
+      "src": "/images/figma/rich-content/variants/273c4a4e8204016c9bfbaf61b2e4ead20e3523d7-974.webp"
+    }
+  ],
+  "/images/figma/rich-content/43d95a1be3d8413e1e5aba0ae0af3e0eb172b197.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/43d95a1be3d8413e1e5aba0ae0af3e0eb172b197-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/43d95a1be3d8413e1e5aba0ae0af3e0eb172b197-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/43d95a1be3d8413e1e5aba0ae0af3e0eb172b197-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/43d95a1be3d8413e1e5aba0ae0af3e0eb172b197-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/09a437dd75687e77b2f9609e5535dcefe861d086.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/09a437dd75687e77b2f9609e5535dcefe861d086-480.webp"
+    },
+    {
+      "width": 864,
+      "src": "/images/figma/rich-content/variants/09a437dd75687e77b2f9609e5535dcefe861d086-864.webp"
+    }
+  ],
+  "/images/figma/rich-content/d79b5cb7593fd70e08e94507d4bf3068a730c329.jpg": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/d79b5cb7593fd70e08e94507d4bf3068a730c329-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/d79b5cb7593fd70e08e94507d4bf3068a730c329-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/d79b5cb7593fd70e08e94507d4bf3068a730c329-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/d79b5cb7593fd70e08e94507d4bf3068a730c329-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/composition-440-3062.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/composition-440-3062-480.webp"
+    },
+    {
+      "width": 890,
+      "src": "/images/figma/rich-content/variants/composition-440-3062-890.webp"
+    }
+  ],
+  "/images/figma/rich-content/3e1583a47acb0364749b46e95cfb7493979130e4.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/3e1583a47acb0364749b46e95cfb7493979130e4-480.webp"
+    },
+    {
+      "width": 769,
+      "src": "/images/figma/rich-content/variants/3e1583a47acb0364749b46e95cfb7493979130e4-769.webp"
+    }
+  ],
+  "/images/figma/rich-content/c9d849effefe99aaf56e87b2158e9174b8ca3568.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/c9d849effefe99aaf56e87b2158e9174b8ca3568-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/c9d849effefe99aaf56e87b2158e9174b8ca3568-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/c9d849effefe99aaf56e87b2158e9174b8ca3568-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/c9d849effefe99aaf56e87b2158e9174b8ca3568-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/48cce2865a8b109fe6a205d5b2b323ef8e291731.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/48cce2865a8b109fe6a205d5b2b323ef8e291731-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/48cce2865a8b109fe6a205d5b2b323ef8e291731-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/48cce2865a8b109fe6a205d5b2b323ef8e291731-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/48cce2865a8b109fe6a205d5b2b323ef8e291731-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/a7070e2a6033140abeb044439f7aeef76f7a7065.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/a7070e2a6033140abeb044439f7aeef76f7a7065-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/a7070e2a6033140abeb044439f7aeef76f7a7065-960.webp"
+    },
+    {
+      "width": 1008,
+      "src": "/images/figma/rich-content/variants/a7070e2a6033140abeb044439f7aeef76f7a7065-1008.webp"
+    }
+  ],
+  "/images/figma/rich-content/composition-457-4259.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/composition-457-4259-480.webp"
+    },
+    {
+      "width": 890,
+      "src": "/images/figma/rich-content/variants/composition-457-4259-890.webp"
+    }
+  ],
+  "/images/figma/rich-content/1206485e6a76d5802e1d58cd42c6876fa50ddf7b.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/1206485e6a76d5802e1d58cd42c6876fa50ddf7b-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/1206485e6a76d5802e1d58cd42c6876fa50ddf7b-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/1206485e6a76d5802e1d58cd42c6876fa50ddf7b-1440.webp"
+    },
+    {
+      "width": 1660,
+      "src": "/images/figma/rich-content/variants/1206485e6a76d5802e1d58cd42c6876fa50ddf7b-1660.webp"
+    }
+  ],
+  "/images/figma/rich-content/5a4975bb6f0820a584f1eddc41f3966713f4221a.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/5a4975bb6f0820a584f1eddc41f3966713f4221a-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/5a4975bb6f0820a584f1eddc41f3966713f4221a-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/5a4975bb6f0820a584f1eddc41f3966713f4221a-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/5a4975bb6f0820a584f1eddc41f3966713f4221a-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/b405221d29ca042d7c56820c9f3b9c1f4dbe58b1.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/b405221d29ca042d7c56820c9f3b9c1f4dbe58b1-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/b405221d29ca042d7c56820c9f3b9c1f4dbe58b1-960.webp"
+    },
+    {
+      "width": 1008,
+      "src": "/images/figma/rich-content/variants/b405221d29ca042d7c56820c9f3b9c1f4dbe58b1-1008.webp"
+    }
+  ],
+  "/images/figma/rich-content/composition-457-4650.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/composition-457-4650-480.webp"
+    },
+    {
+      "width": 890,
+      "src": "/images/figma/rich-content/variants/composition-457-4650-890.webp"
+    }
+  ],
+  "/images/figma/rich-content/a53291a6da07c6b874ceb459ddc29cb9955d6a10.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/a53291a6da07c6b874ceb459ddc29cb9955d6a10-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/a53291a6da07c6b874ceb459ddc29cb9955d6a10-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/a53291a6da07c6b874ceb459ddc29cb9955d6a10-1440.webp"
+    },
+    {
+      "width": 1536,
+      "src": "/images/figma/rich-content/variants/a53291a6da07c6b874ceb459ddc29cb9955d6a10-1536.webp"
+    }
+  ],
+  "/images/figma/rich-content/ce6213c4cdbc6a74ead5aeef19adf492a316132b.jpg": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/ce6213c4cdbc6a74ead5aeef19adf492a316132b-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/ce6213c4cdbc6a74ead5aeef19adf492a316132b-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/ce6213c4cdbc6a74ead5aeef19adf492a316132b-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/ce6213c4cdbc6a74ead5aeef19adf492a316132b-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/19d1701670bddd164b985e3701d03d841b912f98.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/19d1701670bddd164b985e3701d03d841b912f98-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/19d1701670bddd164b985e3701d03d841b912f98-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/19d1701670bddd164b985e3701d03d841b912f98-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/19d1701670bddd164b985e3701d03d841b912f98-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/composition-457-5077.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/composition-457-5077-480.webp"
+    },
+    {
+      "width": 890,
+      "src": "/images/figma/rich-content/variants/composition-457-5077-890.webp"
+    }
+  ],
+  "/images/figma/rich-content/718ed7b58b469f06e8f3e884eb149a8dbe4fc4d3.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/718ed7b58b469f06e8f3e884eb149a8dbe4fc4d3-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/718ed7b58b469f06e8f3e884eb149a8dbe4fc4d3-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/718ed7b58b469f06e8f3e884eb149a8dbe4fc4d3-1440.webp"
+    },
+    {
+      "width": 1632,
+      "src": "/images/figma/rich-content/variants/718ed7b58b469f06e8f3e884eb149a8dbe4fc4d3-1632.webp"
+    }
+  ],
+  "/images/figma/rich-content/781197bfb88869670515f6969c89596287f30098.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/781197bfb88869670515f6969c89596287f30098-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/781197bfb88869670515f6969c89596287f30098-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/781197bfb88869670515f6969c89596287f30098-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/781197bfb88869670515f6969c89596287f30098-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/fb5b675064efdb3d7d0df87a165c56dceef6488c.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/fb5b675064efdb3d7d0df87a165c56dceef6488c-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/fb5b675064efdb3d7d0df87a165c56dceef6488c-960.webp"
+    },
+    {
+      "width": 1008,
+      "src": "/images/figma/rich-content/variants/fb5b675064efdb3d7d0df87a165c56dceef6488c-1008.webp"
+    }
+  ],
+  "/images/figma/rich-content/composition-457-5473.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/composition-457-5473-480.webp"
+    },
+    {
+      "width": 890,
+      "src": "/images/figma/rich-content/variants/composition-457-5473-890.webp"
+    }
+  ],
+  "/images/figma/rich-content/48271d09a06df83cb4f282c19098fb89cda677a1.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/48271d09a06df83cb4f282c19098fb89cda677a1-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/48271d09a06df83cb4f282c19098fb89cda677a1-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/48271d09a06df83cb4f282c19098fb89cda677a1-1440.webp"
+    },
+    {
+      "width": 1596,
+      "src": "/images/figma/rich-content/variants/48271d09a06df83cb4f282c19098fb89cda677a1-1596.webp"
+    }
+  ],
+  "/images/figma/rich-content/dee82d59f105da3488604a09ad88385c441c420d.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/dee82d59f105da3488604a09ad88385c441c420d-480.webp"
+    },
+    {
+      "width": 683,
+      "src": "/images/figma/rich-content/variants/dee82d59f105da3488604a09ad88385c441c420d-683.webp"
+    }
+  ],
+  "/images/figma/rich-content/ad0b8591433e789126bf79c6d65d1c76eeca37cb.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/ad0b8591433e789126bf79c6d65d1c76eeca37cb-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/ad0b8591433e789126bf79c6d65d1c76eeca37cb-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/ad0b8591433e789126bf79c6d65d1c76eeca37cb-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/ad0b8591433e789126bf79c6d65d1c76eeca37cb-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/49dd6c623f383fa205349169ca6a005d86771a64.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/49dd6c623f383fa205349169ca6a005d86771a64-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/49dd6c623f383fa205349169ca6a005d86771a64-960.webp"
+    },
+    {
+      "width": 1024,
+      "src": "/images/figma/rich-content/variants/49dd6c623f383fa205349169ca6a005d86771a64-1024.webp"
+    }
+  ],
+  "/images/figma/rich-content/7754b91ed174c717abe4b430a0a78d2a225dab83.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/7754b91ed174c717abe4b430a0a78d2a225dab83-480.webp"
+    },
+    {
+      "width": 683,
+      "src": "/images/figma/rich-content/variants/7754b91ed174c717abe4b430a0a78d2a225dab83-683.webp"
+    }
+  ],
+  "/images/figma/rich-content/f6b016ac9705d5d2399f9b139f6fdd0a83919282.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/f6b016ac9705d5d2399f9b139f6fdd0a83919282-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/f6b016ac9705d5d2399f9b139f6fdd0a83919282-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/f6b016ac9705d5d2399f9b139f6fdd0a83919282-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/f6b016ac9705d5d2399f9b139f6fdd0a83919282-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/a05d81f7e5865eb21946e6325a2f5ebf07878be1.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/a05d81f7e5865eb21946e6325a2f5ebf07878be1-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/a05d81f7e5865eb21946e6325a2f5ebf07878be1-960.webp"
+    },
+    {
+      "width": 1024,
+      "src": "/images/figma/rich-content/variants/a05d81f7e5865eb21946e6325a2f5ebf07878be1-1024.webp"
+    }
+  ],
+  "/images/figma/rich-content/1ff1866b759e5bc8a48292fa97656bb3b5d4402e.jpg": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/1ff1866b759e5bc8a48292fa97656bb3b5d4402e-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/1ff1866b759e5bc8a48292fa97656bb3b5d4402e-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/1ff1866b759e5bc8a48292fa97656bb3b5d4402e-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/1ff1866b759e5bc8a48292fa97656bb3b5d4402e-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/b994ce991b106f50468f8906d41815301c341792.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/b994ce991b106f50468f8906d41815301c341792-480.webp"
+    },
+    {
+      "width": 768,
+      "src": "/images/figma/rich-content/variants/b994ce991b106f50468f8906d41815301c341792-768.webp"
+    }
+  ],
+  "/images/figma/rich-content/219c21b70a5577b8791c7d1514f572e743f279cf.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/219c21b70a5577b8791c7d1514f572e743f279cf-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/219c21b70a5577b8791c7d1514f572e743f279cf-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/219c21b70a5577b8791c7d1514f572e743f279cf-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/219c21b70a5577b8791c7d1514f572e743f279cf-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/212e325b1c44f27f311d7ff5d396abc088d0c88a.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/212e325b1c44f27f311d7ff5d396abc088d0c88a-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/212e325b1c44f27f311d7ff5d396abc088d0c88a-960.webp"
+    },
+    {
+      "width": 1024,
+      "src": "/images/figma/rich-content/variants/212e325b1c44f27f311d7ff5d396abc088d0c88a-1024.webp"
+    }
+  ],
+  "/images/figma/rich-content/1ad2db261ec175fa0a95dd61b60b731ef7168a6d.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/1ad2db261ec175fa0a95dd61b60b731ef7168a6d-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/1ad2db261ec175fa0a95dd61b60b731ef7168a6d-960.webp"
+    },
+    {
+      "width": 1086,
+      "src": "/images/figma/rich-content/variants/1ad2db261ec175fa0a95dd61b60b731ef7168a6d-1086.webp"
+    }
+  ],
+  "/images/figma/rich-content/composition-418-4087.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/composition-418-4087-480.webp"
+    },
+    {
+      "width": 890,
+      "src": "/images/figma/rich-content/variants/composition-418-4087-890.webp"
+    }
+  ],
+  "/images/figma/rich-content/a075e867aa34ee179f3b2076a4144f658d3de9f5.jpg": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/a075e867aa34ee179f3b2076a4144f658d3de9f5-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/a075e867aa34ee179f3b2076a4144f658d3de9f5-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/a075e867aa34ee179f3b2076a4144f658d3de9f5-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/a075e867aa34ee179f3b2076a4144f658d3de9f5-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/ea755d3287a7fb6d8aa1ff512de2afeac2063740.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/ea755d3287a7fb6d8aa1ff512de2afeac2063740-480.webp"
+    },
+    {
+      "width": 820,
+      "src": "/images/figma/rich-content/variants/ea755d3287a7fb6d8aa1ff512de2afeac2063740-820.webp"
+    }
+  ],
+  "/images/figma/rich-content/b47136cfab1367493bf3b16702cd8c1e5f6c889a.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/b47136cfab1367493bf3b16702cd8c1e5f6c889a-480.webp"
+    },
+    {
+      "width": 683,
+      "src": "/images/figma/rich-content/variants/b47136cfab1367493bf3b16702cd8c1e5f6c889a-683.webp"
+    }
+  ],
+  "/images/figma/rich-content/c175740bafc1959e36c651515fc7bc2d7bb517e2.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/c175740bafc1959e36c651515fc7bc2d7bb517e2-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/c175740bafc1959e36c651515fc7bc2d7bb517e2-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/c175740bafc1959e36c651515fc7bc2d7bb517e2-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/c175740bafc1959e36c651515fc7bc2d7bb517e2-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/composition-418-4319.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/composition-418-4319-480.webp"
+    },
+    {
+      "width": 890,
+      "src": "/images/figma/rich-content/variants/composition-418-4319-890.webp"
+    }
+  ],
+  "/images/figma/rich-content/cf025037d6f22fb54f823187617d6bbb037547e6.jpg": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/cf025037d6f22fb54f823187617d6bbb037547e6-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/cf025037d6f22fb54f823187617d6bbb037547e6-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/cf025037d6f22fb54f823187617d6bbb037547e6-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/cf025037d6f22fb54f823187617d6bbb037547e6-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/f7997a789497cc799872be0b0ee8540f1cb19329.jpg": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/f7997a789497cc799872be0b0ee8540f1cb19329-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/f7997a789497cc799872be0b0ee8540f1cb19329-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/f7997a789497cc799872be0b0ee8540f1cb19329-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/f7997a789497cc799872be0b0ee8540f1cb19329-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/10ff4690c47a4b7aa12fcfe8dcbf00eb4ee4a93f.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/10ff4690c47a4b7aa12fcfe8dcbf00eb4ee4a93f-480.webp"
+    },
+    {
+      "width": 820,
+      "src": "/images/figma/rich-content/variants/10ff4690c47a4b7aa12fcfe8dcbf00eb4ee4a93f-820.webp"
+    }
+  ],
+  "/images/figma/rich-content/a9aa1e61b45c99e4b9abb2611e6eb59a3a3d1991.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/a9aa1e61b45c99e4b9abb2611e6eb59a3a3d1991-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/a9aa1e61b45c99e4b9abb2611e6eb59a3a3d1991-960.webp"
+    },
+    {
+      "width": 1092,
+      "src": "/images/figma/rich-content/variants/a9aa1e61b45c99e4b9abb2611e6eb59a3a3d1991-1092.webp"
+    }
+  ],
+  "/images/figma/rich-content/composition-418-4575.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/composition-418-4575-480.webp"
+    },
+    {
+      "width": 890,
+      "src": "/images/figma/rich-content/variants/composition-418-4575-890.webp"
+    }
+  ],
+  "/images/figma/rich-content/7ff9eed2a29645a2f8026bfe2d1e7d5d3dda0fdf.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/7ff9eed2a29645a2f8026bfe2d1e7d5d3dda0fdf-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/7ff9eed2a29645a2f8026bfe2d1e7d5d3dda0fdf-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/7ff9eed2a29645a2f8026bfe2d1e7d5d3dda0fdf-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/7ff9eed2a29645a2f8026bfe2d1e7d5d3dda0fdf-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/16b146bc277596b03327cfab5c7ae364390c2ece.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/16b146bc277596b03327cfab5c7ae364390c2ece-480.webp"
+    },
+    {
+      "width": 820,
+      "src": "/images/figma/rich-content/variants/16b146bc277596b03327cfab5c7ae364390c2ece-820.webp"
+    }
+  ],
+  "/images/figma/rich-content/58795f8f69bc1b2dc025cc3e270042ad7969af00.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/58795f8f69bc1b2dc025cc3e270042ad7969af00-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/58795f8f69bc1b2dc025cc3e270042ad7969af00-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/58795f8f69bc1b2dc025cc3e270042ad7969af00-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/58795f8f69bc1b2dc025cc3e270042ad7969af00-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/2d4cb458c118cd0698bac2e08f32ae6e89d70b6b.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/2d4cb458c118cd0698bac2e08f32ae6e89d70b6b-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/2d4cb458c118cd0698bac2e08f32ae6e89d70b6b-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/2d4cb458c118cd0698bac2e08f32ae6e89d70b6b-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/2d4cb458c118cd0698bac2e08f32ae6e89d70b6b-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/composition-418-4830.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/composition-418-4830-480.webp"
+    },
+    {
+      "width": 890,
+      "src": "/images/figma/rich-content/variants/composition-418-4830-890.webp"
+    }
+  ],
+  "/images/figma/rich-content/3fd6aed4e4405e8ea691516367ad246068e0a8d4.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/3fd6aed4e4405e8ea691516367ad246068e0a8d4-480.webp"
+    },
+    {
+      "width": 561,
+      "src": "/images/figma/rich-content/variants/3fd6aed4e4405e8ea691516367ad246068e0a8d4-561.webp"
+    }
+  ],
+  "/images/figma/rich-content/aa3d1f7ffab8ece3bada5c1b6d9d2b3ad8c2ce9a.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/aa3d1f7ffab8ece3bada5c1b6d9d2b3ad8c2ce9a-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/aa3d1f7ffab8ece3bada5c1b6d9d2b3ad8c2ce9a-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/aa3d1f7ffab8ece3bada5c1b6d9d2b3ad8c2ce9a-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/aa3d1f7ffab8ece3bada5c1b6d9d2b3ad8c2ce9a-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/96e461a50c182e3ec732caef747ef22af022615f.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/96e461a50c182e3ec732caef747ef22af022615f-480.webp"
+    },
+    {
+      "width": 768,
+      "src": "/images/figma/rich-content/variants/96e461a50c182e3ec732caef747ef22af022615f-768.webp"
+    }
+  ],
+  "/images/figma/rich-content/e23ccd6148e84dbae323923a9dedf936e5e976ef.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/e23ccd6148e84dbae323923a9dedf936e5e976ef-480.webp"
+    },
+    {
+      "width": 960,
+      "src": "/images/figma/rich-content/variants/e23ccd6148e84dbae323923a9dedf936e5e976ef-960.webp"
+    },
+    {
+      "width": 1440,
+      "src": "/images/figma/rich-content/variants/e23ccd6148e84dbae323923a9dedf936e5e976ef-1440.webp"
+    },
+    {
+      "width": 1920,
+      "src": "/images/figma/rich-content/variants/e23ccd6148e84dbae323923a9dedf936e5e976ef-1920.webp"
+    }
+  ],
+  "/images/figma/rich-content/composition-418-5083.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/composition-418-5083-480.webp"
+    },
+    {
+      "width": 890,
+      "src": "/images/figma/rich-content/variants/composition-418-5083-890.webp"
+    }
+  ],
+  "/images/figma/rich-content/af33b2ff4f60344cb03a06f23360777d6db4b183.png": [
+    {
+      "width": 480,
+      "src": "/images/figma/rich-content/variants/af33b2ff4f60344cb03a06f23360777d6db4b183-480.webp"
+    },
+    {
+      "width": 833,
+      "src": "/images/figma/rich-content/variants/af33b2ff4f60344cb03a06f23360777d6db4b183-833.webp"
+    }
+  ]
+}

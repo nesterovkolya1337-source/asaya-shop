@@ -1,10 +1,10 @@
+import {selectRecommendations} from './recommendations.ts';
 import type {Product} from './store-data';
 import type {CartPricing} from './cart-pricing';
 
 // The existing public catalog is the only source: never fetch Admin or drafts.
 export function cartRecommendations(products:Product[],cart:Record<string,number>){
- return products.filter(p=>p.active&&p.sku&&!(cart[p.id]>0))
-  .sort((a,b)=>(a.placement?.catalogOrder??100000)-(b.placement?.catalogOrder??100000)||a.id.localeCompare(b.id)).slice(0,4);
+ return selectRecommendations(products,Object.keys(cart).filter(id=>cart[id]>0));
 }
 export function deliveryProgress(quote:Pick<CartPricing,'settings'|'shippingRemainingMinor'>){
  const threshold=quote.settings.freeShippingMinor;

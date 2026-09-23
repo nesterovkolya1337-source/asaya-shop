@@ -5,12 +5,12 @@ import {richSections} from '@/lib/pdp-presentation';
 import {assetPath} from '@/lib/asset-path';
 import styles from './product-rich-content.module.css';
 import type {CSSProperties} from 'react';
-function Media({media,alt=''}:{media:PdpMedia;alt?:string}){return <div className={styles.image}><CroppedImage src={media.src} crop={media.crop} alt={alt} fill sizes="(max-width: 900px) 94vw, 47vw"/></div>;}
+function Media({media,alt=''}:{media:PdpMedia;alt?:string}){return <div className={styles.image}><CroppedImage loading="lazy" src={media.src} crop={media.crop} alt={alt} fill sizes="(max-width: 900px) 94vw, 47vw"/></div>;}
 function Visual({media,ratio=0.9}:{media:PdpMedia[];ratio?:number}){
  if(!media.some(m=>m.layout))return <div className={styles.visual}>{media.map((m,n)=><Media key={n} media={m}/>)}</div>;
  return <div className={styles.composition} style={{aspectRatio:ratio}}>{media.map((m,n)=>{
   const l=m.layout??{x:0,y:0,width:100,height:100,rotation:0,flipX:false,flipY:false};const f=m.frame??{x:0,y:0,width:100,height:100};
-  return <div key={n} className={styles.photoLayer} style={{left:l.x+'%',top:l.y+'%',width:l.width+'%',height:l.height+'%',transform:`rotate(${l.rotation}deg) scale(${l.flipX?-1:1},${l.flipY?-1:1})`}}><CroppedImage src={m.src} crop={m.crop} alt="" fill sizes="(max-width: 900px) 94vw, 70vw" style={m.crop?undefined:{right:'auto',bottom:'auto',left:f.x+'%',top:f.y+'%',width:f.width+'%',height:f.height+'%',objectFit:'cover'} as CSSProperties}/></div>;
+  return <div key={n} className={styles.photoLayer} style={{left:l.x+'%',top:l.y+'%',width:l.width+'%',height:l.height+'%',transform:`rotate(${l.rotation}deg) scale(${l.flipX?-1:1},${l.flipY?-1:1})`}}><CroppedImage loading="lazy" src={m.src} crop={m.crop} alt="" fill sizes={`(max-width: 900px) ${Math.min(94,(m.layout?.width??100)*0.9)}vw, ${Math.min(70,(m.layout?.width??100)*0.47)}vw`} style={m.crop?undefined:{right:'auto',bottom:'auto',left:f.x+'%',top:f.y+'%',width:f.width+'%',height:f.height+'%',objectFit:'cover'} as CSSProperties}/></div>;
  })}</div>;
 }
 export function ProductRichContent({content}:{content?:PdpContent}){

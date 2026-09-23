@@ -8,7 +8,7 @@ import {CroppedImage} from './cropped-image';
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type MouseEvent, type PointerEvent, useRef, useState } from "react";
+import { type MouseEvent, type PointerEvent, useEffect, useRef, useState } from "react";
 import { ProductCard } from "@/components/product-card";
 import { YandexBuyButton, YandexCheckoutButton } from "@/components/yandex-buy-button";
 import { useShop } from "@/components/shop-provider";
@@ -24,6 +24,20 @@ export function ProductView({ productId }: { productId: string }) {
   const recommendationDrag = useRef({ active: false, moved: false, pointerId: -1, startX: 0, startY: 0, scrollLeft: 0 });
   const recommendationRail = useRef<HTMLDivElement>(null);
   const product = products.find((item) => item.id === productId && item.active);
+
+  const mainActions = useRef<HTMLDivElement>(null);
+  const [showSticky, setShowSticky] = useState(false);
+  useEffect(() => {
+    setShowSticky(false);
+    const target = mainActions.current;
+    if (!target) return;
+    // Do not show the bar while the initial CTA is still below the viewport.
+    const observer = new IntersectionObserver(([entry]) => {
+      setShowSticky(!entry.isIntersecting && entry.boundingClientRect.bottom <= 0);
+    }, {threshold: 0});
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [product?.id]);
 
   if (!product) {
     return (
@@ -142,7 +156,7 @@ export function ProductView({ productId }: { productId: string }) {
           </div>
           <p className={styles.stock}>{product.stock > 0 ? "В наличии" : "Нет в наличии"}</p>
 
-          <div className={styles.buyArea}>
+          <div ref={mainActions} data-main-buy><div className={styles.buyArea}>
             {quantity && product.stock>0 ? (
               <div className={styles.quantity} aria-label={`Количество ${product.name} в корзине`}>
                 <button aria-label={`Уменьшить количество ${product.name}`} onClick={() => changeQuantity(product.id, quantity - 1)} type="button">−</button>
@@ -157,7 +171,7 @@ export function ProductView({ productId }: { productId: string }) {
             {quantity > 0 && <Link className={styles.checkoutLink} href={catalogOnly ? "/cart" : "/checkout"}>Перейти к оформлению</Link>}
           </div>
 
-          <YandexBuyButton sku={product.sku} stock={product.stock} quantity={quantity || 1} />
+          <YandexBuyButton sku={product.sku} stock={product.stock} quantity={quantity || 1} /></div>
           <ul className={styles.features}>
             {product.features.map((feature) => <li key={feature}>{feature}</li>)}
           </ul>
@@ -184,8 +198,8 @@ export function ProductView({ productId }: { productId: string }) {
         </div>
       </section>
 
+      {product.sku&&<ProductReviews sku={product.sku} slug={product.id}/>}
       <ProductRichContent content={product.pdp}/>
-      {product.sku&&<ProductReviews sku={product.sku}/>}
 
       {recommendations.length>0&&<section className={styles.recommendations} aria-labelledby="recommendations-title">
         <div className={styles.sectionHeading}>
@@ -213,9 +227,9 @@ export function ProductView({ productId }: { productId: string }) {
         </div>
       </section>
       }
-      <aside className={styles.stickyBuy} aria-label="Быстрая покупка">
+      <aside data-visible={showSticky} className={styles.stickyBuy} aria-label="Быстрая покупка">
         <div><small>{product.name}</small><strong>{formatPrice(product.price)}</strong></div>
-        {yandexCheckoutEnabled && product.sku ? <YandexCheckoutButton key={JSON.stringify([product.sku,quantity,product.stock])} compact items={[{sku:product.sku,quantity:quantity||1}]} disabled={product.stock<(quantity||1)} label={!product.stock ? 'Нет в наличии' : 'Купить сейчас'} /> : <button className={styles.buyNow} disabled={(catalogOnly && !checkoutEnabled && !product.testMode) || !product.stock} onClick={buyNow} type="button">{!product.stock ? 'Нет в наличии' : catalogOnly && !checkoutEnabled && !product.testMode ? 'Продажи пока закрыты' : 'Купить сейчас'}</button>}
+        <div className={styles.stickySecondary}>{yandexCheckoutEnabled && product.sku ? <YandexCheckoutButton key={JSON.stringify([product.sku,quantity,product.stock])} compact items={[{sku:product.sku,quantity:quantity||1}]} disabled={product.stock<(quantity||1)} label={!product.stock ? 'Нет в наличии' : 'Купить сейчас'} /> : <button className={styles.buyNow} disabled={(catalogOnly && !checkoutEnabled && !product.testMode) || !product.stock} onClick={buyNow} type="button">{!product.stock ? 'Нет в наличии' : catalogOnly && !checkoutEnabled && !product.testMode ? 'Продажи пока закрыты' : 'Купить сейчас'}</button>}</div>
         <button className={styles.stickyCart} disabled={(catalogOnly && !checkoutEnabled && !product.testMode) || !product.stock || quantity >= product.stock} onClick={() => addToCart(product.id)} type="button">{!product.stock ? 'Нет в наличии' : quantity ? `В корзине · ${quantity}` : "В корзину"}</button>
       </aside>
     </main>

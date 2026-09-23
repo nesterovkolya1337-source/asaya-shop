@@ -4,6 +4,7 @@ import {useEffect,useState} from 'react';
 import {assetPath} from '@/lib/asset-path';
 import {createStoreRequest,AuthClientError,type ServerSession} from '@/lib/auth-client';
 import styles from './customer-dashboard.module.css';
+import reviewStyles from './product-reviews.module.css';
 const request=createStoreRequest(assetPath('/api/store/v1'),fetch);
 type Product={id:string;name:string;slug:string|null;reviewed:boolean};
 type Data={code:string;products:Product[];reminders:Product[]};
@@ -22,8 +23,17 @@ export function CustomerEngagement({session,onExpired,section,onReminders}:{sess
  </>}</section>;
 
 }
-export function ProductReviews({sku}:{sku:string}){
- const [items,setItems]=useState<Array<{id:string;rating:number;body:string;reply:string}>>([]),[error,setError]=useState(false);
- useEffect(()=>{void request('reviews/'+encodeURIComponent(sku),'GET').then(v=>setItems((v as {items:typeof items}).items)).catch(()=>setError(true));},[sku]);
- return <section aria-label="Отзывы покупателей"><h2>Отзывы покупателей</h2>{error?<p>Не удалось загрузить отзывы.</p>:items.length?items.map(r=><article key={r.id}><p>Оценка: {r.rating} из 5</p><p>{r.body}</p>{r.reply&&<p><strong>Ответ ASAYA: </strong>{r.reply}</p>}</article>):<p>Отзывов пока нет.</p>}<a href={assetPath('/account/')}>Оставить отзыв о покупке в личном кабинете</a></section>;
+type PublicReview={id:string;rating:number;body:string;reply:string|null;created_at:string};
+export function ProductReviews({sku,slug}:{sku:string;slug:string}){
+ const [items,setItems]=useState<PublicReview[]>([]),[status,setStatus]=useState<'loading'|'ready'|'error'>('loading'),[eligible,setEligible]=useState(false);
+ useEffect(()=>{let active=true;setItems([]);setStatus('loading');setEligible(false);
+ void request('reviews/'+encodeURIComponent(sku),'GET').then(v=>{if(active){setItems((v as {items:PublicReview[]}).items);setStatus('ready');}}).catch(()=>{if(active)setStatus('error');});
+ // Existing authenticated endpoint is authoritative for verified-purchase eligibility.
+ void request('account/engagement','GET').then(v=>{if(active)setEligible((v as Data).products.some(p=>p.slug===slug&&!p.reviewed));}).catch(()=>{});
+ return ()=>{active=false;};},[sku,slug]);
+ const average=items.length?items.reduce((sum,r)=>sum+r.rating,0)/items.length:0;
+ return <section className={reviewStyles.section} aria-label="Отзывы покупателей" data-product-reviews>
+  <header className={reviewStyles.heading}><div><h2>Отзывы покупателей</h2>{items.length>0&&<p><strong>{average.toLocaleString('ru-RU',{maximumFractionDigits:1})} / 5</strong> · Отзывов: {items.length}</p>}</div>{eligible&&<a className={reviewStyles.action} href={assetPath('/account/#reviews')}>Оставить отзыв</a>}</header>
+  {status!=='ready'?<p className={reviewStyles.empty} role="status">{status==='loading'?'Загружаем отзывы…':'Не удалось загрузить отзывы. Попробуйте обновить страницу.'}</p>:!items.length?<div className={reviewStyles.empty}><h3>Отзывов пока нет</h3><p>Здесь появятся впечатления покупателей об этом товаре.</p></div>:<div className={reviewStyles.list}>{items.map(r=><article key={r.id} className={reviewStyles.card}><div className={reviewStyles.meta}><strong>Покупатель ASAYA</strong>{r.created_at&&<time dateTime={r.created_at}>{new Date(r.created_at).toLocaleDateString('ru-RU')}</time>}</div><p className={reviewStyles.stars} aria-label={`Оценка ${r.rating} из 5`}>{'★'.repeat(r.rating)}{'☆'.repeat(5-r.rating)}</p><p className={reviewStyles.body}>{r.body}</p>{r.reply&&<div className={reviewStyles.reply}><strong>Ответ ASAYA</strong><p>{r.reply}</p></div>}</article>)}</div>}
+ </section>;
 }

@@ -11,3 +11,14 @@ test('responsive managed media uses six derivative widths and preserves layout s
  assert.equal(responsiveMedia('/images/legacy.webp','370px'),null);
  assert.equal(responsiveMedia('https://other.test/image.jpg','370px'),null);
 });
+
+import variants from '../src/lib/rich-image-variants.json' with {type:'json'};
+import {existsSync} from 'node:fs';
+test('only known Figma masters use existing bounded WebP variants; originals and managed crops remain intact',()=>{
+ for(const [source,images] of Object.entries(variants)){
+  const result=responsiveMedia(source,'320px');assert.equal(result.sizes,'320px');assert.ok(result.src.endsWith('.webp'));
+  assert.ok(images.every(v=>v.width<=1920&&existsSync('public'+v.src)));
+  assert.ok(responsiveMedia('/manage'+source,'320px').src.startsWith('/manage/images/'));
+ }
+ assert.equal(responsiveMedia('/images/figma/rich-content/unknown.png','320px'),null);
+});
