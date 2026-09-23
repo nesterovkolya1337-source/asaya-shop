@@ -2,9 +2,9 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {cartRecommendations,deliveryProgress} from '../src/lib/cart-presentation.ts';
 test('recommendations are stable public-catalog selections, exclude saved cart and inactive items, do not mutate catalog',()=>{
- const items=[{id:'current',sku:'A',active:true},{id:'hidden',sku:'H',active:false},{id:'no-sku',active:true},...['e','d','c','b','a'].map(id=>({id,sku:id,active:true,stock:0}))];
+ const items=[{id:'current',sku:'A',active:true},{id:'hidden',sku:'H',active:false},{id:'no-sku',active:true},...['e','d','c','b','a'].map(id=>({id,sku:id,active:true,stock:4,category:'body'}))];
  const before=structuredClone(items);
- assert.deepEqual(cartRecommendations(items,{current:2}).map(p=>p.id),['a','b','c','d']);
+ assert.deepEqual(cartRecommendations(items,{current:2}).map(p=>p.id),['a','b','c','d','e']);
  assert.deepEqual(items,before);
  assert.deepEqual(cartRecommendations([],{}),[]);
 });

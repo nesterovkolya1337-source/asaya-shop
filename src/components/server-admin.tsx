@@ -1,4 +1,7 @@
 "use client";
+import {AdminPrices} from './admin-prices';
+import {AdminMerchandising} from './admin-merchandising';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import {useEffect,useRef,useState,useCallback,type FormEvent} from 'react';
@@ -20,7 +23,7 @@ import {AdminStatistics} from './admin-analytics';
 import styles from './server-admin.module.css';
 import shell from './admin-shell.module.css';
 import {publicationIssues,publicationLabels} from '../../backend/src/publication-issues';
-const lifecycleLabels={draft:'Черновик',published:'Опубликован',unpublished:'Снят с публикации',archived:'Архив',deleted:'Удалён'};
+const lifecycleLabels={draft:'Черновик',published:'Опубликован',unpublished:'Скрыт',archived:'Архив',deleted:'Удалён'};
 import {AdminSiteEditor} from './admin-site-editor';
 const api=createAdminClient(assetPath('/api/admin/v1'));
 const blankContent:ProductContent={description:'',volume:'',category:'hair',setKind:'none',usage:'',ingredients:'',aroma:'',features:[],image:'',gallery:[],badge:'',instruction:{steps:[],amount:'',tip:''},safety:'',recommendations:[],sensory:[]};
@@ -38,7 +41,8 @@ function PriceField({label,value,onChange}:{label:string;value:number|null;onCha
  return <label>{label}<input inputMode="decimal" value={raw} onChange={e=>{const v=e.target.value;if(/^\d*(?:[.,]\d{0,2})?$/.test(v)){setRaw(v);onChange(v===''||v==='.'||v===','?null:Math.round(Number(v.replace(',','.'))*100));}}}/></label>;
 }
 export function ServerAdmin(){
- const [section,setSection]=useState<'content'|'catalog'|'orders'|'statistics'|'integration'|'employees'|'marketing'|'trash'>('content');
+ const [section,setSection]=useState<'content'|'catalog'|'orders'|'statistics'|'integration'|'employees'|'marketing'|'trash'|'prices'|'merchandising'>('content');
+ const [operationsDirty,setOperationsDirty]=useState(false);
  const [contentDirty,setContentDirty]=useState(false),[logoutConfirm,setLogoutConfirm]=useState(false);
  const [selectedOrder,setSelectedOrder]=useState<string|undefined>();
  const [session,setSession]=useState<StaffSession|null>(null),[checking,setChecking]=useState(true),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
@@ -58,8 +62,8 @@ export function ServerAdmin(){
   try{await api.logout(session.csrfToken);setSession(null);setNotice('');}catch(e){setNotice(adminError(e));}finally{pending.current=false;setBusy(false);}}
  return <div className={shell.shell}>
  <header className={shell.header}><div className={shell.brand}><strong>ASAYA</strong><small>Управление магазином</small></div>
- {session&&<nav className={shell.nav} aria-label="Разделы админки">{([['content','Редактор сайта'],['catalog','Товары'],['orders','Заказы'],['statistics','Аналитика'],['marketing','Маркетинг'],['trash','Корзина и архив'],['integration','Настройки'],['employees','Сотрудники']] as const).filter(([key])=>session.user.staffRole!=='manager'||!['employees','integration'].includes(key)).map(([key,label])=><button key={key} aria-current={section===key?'page':undefined} onClick={()=>setSection(key)}>{label}{key==='content'&&contentDirty?' •':''}</button>)}</nav>}
- <div className={shell.headerActions}><Link href="/">Открыть сайт ↗</Link>{session&&<button disabled={busy} onClick={()=>contentDirty?setLogoutConfirm(true):void logout()}>Выйти</button>}</div></header>
+ {session&&<nav className={shell.nav} aria-label="Разделы админки">{([['content','Редактор сайта'],['catalog','Товары'],['prices','Цены'],['merchandising','Выдача'],['orders','Заказы'],['statistics','Аналитика'],['marketing','Маркетинг'],['trash','Корзина и архив'],['integration','Настройки'],['employees','Сотрудники']] as const).filter(([key])=>session.user.staffRole!=='manager'||!['employees','integration'].includes(key)).map(([key,label])=><button key={key} aria-current={section===key?'page':undefined} onClick={()=>{if(operationsDirty&&!window.confirm('Есть несохранённые изменения. Перейти без сохранения?'))return;setSection(key);}}>{label}{key==='content'&&contentDirty?' •':''}</button>)}</nav>}
+ <div className={shell.headerActions}><Link href="/">Открыть сайт ↗</Link>{session&&<button disabled={busy} onClick={()=>contentDirty||operationsDirty?setLogoutConfirm(true):void logout()}>Выйти</button>}</div></header>
  {process.env.NEXT_PUBLIC_EDITOR_PREVIEW==='true'&&<p className={shell.notice}>Предпросмотр редактора · тестовые данные на этом компьютере. Изменения не затрагивают сайт ASAYA.</p>}
  {notice&&<p role="alert" className={shell.notice}>{notice}</p>}
  {logoutConfirm&&<div role="alert" className={shell.notice}><p>В редакторе сайта есть несохранённые правки. Выйти без сохранения?</p><button disabled={busy} onClick={()=>{setLogoutConfirm(false);void logout();}}>Выйти без сохранения</button><button onClick={()=>{setLogoutConfirm(false);setSection('content');}}>Вернуться к редактору</button></div>}
@@ -71,6 +75,8 @@ export function ServerAdmin(){
  {section==='integration'&&session.user.staffRole!=='manager'&&<AdminIntegration onExpired={onExpired} onOrder={id=>{setSelectedOrder(id);setSection('orders');}}/>}
  <div hidden={section!=='trash'}><AdminTrash session={session}/></div>
  <div hidden={section!=='marketing'}><AdminMarketing session={session} onExpired={onExpired}/></div>
+ {section==='prices'&&<AdminPrices session={session} onDirty={setOperationsDirty}/>}
+ {section==='merchandising'&&<AdminMerchandising session={session} onDirty={setOperationsDirty}/>}
  {section==='statistics'&&<AdminStatistics onExpired={onExpired} csrf={session.csrfToken}/>}
  {section==='orders'&&<AdminOrders key={selectedOrder} initialOrderId={selectedOrder} session={session} onExpired={onExpired}/>}
  {section==='employees'&&session.user.staffRole!=='manager'&&<AdminEmployees session={session} onExpired={onExpired}/>}
@@ -81,6 +87,7 @@ export function ServerAdmin(){
  <button className={styles.primary}>Войти</button><button type="button" onClick={()=>setActivationMode(true)}>Первый вход / восстановление доступа</button></fieldset></form>}</div>}</main></div>;
 }
 function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>void}){
+ const editorRef=useRef<HTMLElement>(null);
  const {reloadCatalog}=useShop();
  const [tab,setTab]=useState('main');
  const [saveFailed,setSaveFailed]=useState(false);
@@ -89,7 +96,7 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  const [category,setCategory]=useState(''),[appliedFilter,setAppliedFilter]=useState({search:'',category:''});
  const [rows,setRows]=useState<ProductRow[]>([]),[search,setSearch]=useState(''),[next,setNext]=useState<number|null>(null);
  const [product,setProduct]=useState<AdminProduct|null>(null),[draft,setDraft]=useState<AdminDraft>(blankDraft),[dirty,setDirty]=useState(false);
- const [operationBusy,setBusy]=useState(false),[mediaBusy,setMediaBusy]=useState(false),[notice,setNotice]=useState(''),[confirm,setConfirm]=useState<'publish'|'unpublish'|'discard'|'remove'|null>(null);
+ const [operationBusy,setBusy]=useState(false),[mediaBusy,setMediaBusy]=useState(false),[notice,setNotice]=useState(''),[confirm,setConfirm]=useState<'save'|'discard'|'remove'|null>(null);
  const busy=operationBusy||mediaBusy;
  const issues=publicationIssues(draft),deleted=product?.lifecycle==='deleted'||product?.lifecycle==='archived';
  const [history,setHistory]=useState<Array<{action:string;createdAt:string;actorId:string|null}>>([]);
@@ -108,7 +115,7 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  async function list(offset=0){const filter=offset?appliedFilter:{search,category};const r=await api.list(filter.search,offset,filter.category);setAppliedFilter(filter);setRows(previous=>offset?[...previous,...r.items]:r.items);setNext(r.nextOffset);}
  async function open(id:string){
   const p=await api.detail(id);setProduct(p);setDraft(initialDraft(p));setDirty(false);setSaveFailed(false);setConfirm(null);
-  setHistory((await api.history(id)));
+  setHistory((await api.history(id)));requestAnimationFrame(()=>editorRef.current?.scrollIntoView({block:'start'}));
  }
  function choose(action:()=>Promise<void>){
   if(dirty){nextAction.current=action;setConfirm('discard');return;}
@@ -120,14 +127,16 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  function change(value:Partial<AdminDraft>){setDraft(d=>({...d,...value}));setDirty(true);setConfirm(null);}
  function content(value:Partial<ProductContent>){change({content:{...draft.content,...value}});}
  async function save(e:FormEvent){
-  e.preventDefault();if(!product)return;
+  e.preventDefault();if(!product)return;setConfirm('save');
+ }
+ async function confirmedSave(){if(!product)return;
   await run(async()=>{
    const cleaned={...draft,content:{...draft.content,features:draft.content.features.filter(v=>v.trim()),gallery:draft.content.gallery.filter(v=>v.trim()),recommendations:draft.content.recommendations.filter(v=>v.trim()),instruction:{...draft.content.instruction,steps:draft.content.instruction.steps.filter(v=>v.trim())}}};
-   await api.save(product.id,cleaned,product.revision,session.csrfToken);await open(product.id);await list();reloadCatalog();setSaveFailed(false);setNotice('Сохранено · Не опубликовано. Для изменения сайта нажмите «Опубликовать».');
+   await api.save(product.id,cleaned,product.revision,session.csrfToken);await open(product.id);await list();reloadCatalog();setSaveFailed(false);setNotice(product.active?'Изменения сохранены и применены на сайте.':product.everPublished?'Изменения сохранены. Товар остаётся скрытым.':'Черновик сохранён.');
   });
  }
- async function publication(){
-  if(!product)return;const operation=confirm;
+ async function publication(operation:'publish'|'unpublish'){
+  if(!product||dirty)return;
   await run(async()=>{if(operation==='publish')await api.publish(product.id,product.revision,session.csrfToken);else await api.unpublish(product.id,product.revision,session.csrfToken);
    await open(product.id);await list();reloadCatalog();setNotice(operation==='publish'?'Товар опубликован.':'Товар скрыт с витрины. Заказы и история сохранены.');});
  }
@@ -136,22 +145,22 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  const textField=(label:string,key:'name'|'slug')=><label>{label}<input value={draft[key]} maxLength={key==='slug'?80:300} onChange={e=>change({[key]:e.target.value})}/></label>;
  const contentField=(label:string,key:'description'|'volume'|'usage'|'ingredients'|'aroma'|'image'|'safety',large=false)=><label>{label}{large?<textarea aria-label={label} rows={4} value={draft.content[key]} onChange={e=>content({[key]:e.target.value})}/>:<input aria-label={label} value={draft.content[key]} onChange={e=>content({[key]:e.target.value})}/>}</label>;
  const lines=(label:string,key:'features'|'gallery'|'recommendations')=><label>{label}<textarea rows={3} value={draft.content[key].join('\n')} onChange={e=>content({[key]:e.target.value.split('\n')})}/></label>;
- return <><p>Новую карточку сохраните и опубликуйте. Сохранение меняет только черновик. Для изменения сайта нажмите «Опубликовать». Остатки не влияют на публикацию.</p>
+ return <><p>Сохранение применяет изменения и сохраняет текущую видимость. Новый черновик нужно опубликовать отдельно.</p>
  {notice&&<p role="status" className={styles.notice}>{notice}</p>}
  {confirm==='discard'&&<div className={styles.notice}><p>Есть несохранённые правки. Отбросить их и продолжить?</p><button disabled={busy} onClick={()=>{setConfirm(null);void run(nextAction.current!);}}>Отбросить правки</button><button onClick={()=>setConfirm(null)}>Остаться</button></div>}
  <div className={styles.layout}><aside className={styles.sidebar}><form onSubmit={e=>{e.preventDefault();void run(()=>list());}}><label>Найти товар<input value={search} onChange={e=>setSearch(e.target.value)}/></label><label>Категория в списке<select value={category} onChange={e=>setCategory(e.target.value)}><option value="">Все категории</option><option value="hair">Волосы</option><option value="body">Тело</option><option value="face">Лицо</option><option value="sets">Наборы</option></select></label><button disabled={busy}>Найти</button></form>
  <button className={styles.primary} disabled={busy} onClick={newProduct}>Добавить товар</button>
  <ul>{rows.map(row=><li key={row.id}><button disabled={busy} aria-current={product?.id===row.id?'true':undefined} onClick={()=>choose(()=>open(row.id))}><span className={styles.productRow}>{row.image?<Image unoptimized width={56} height={64} className={styles.thumbnail} src={row.image.startsWith('/')?assetPath(row.image):row.image} alt=""/>:<span className={styles.thumbnail}>Нет фото</span>}<span><strong>{row.name||'Без названия'}</strong><span>{row.sku}</span><span>{({hair:'Волосы',body:'Тело',face:'Лицо',sets:'Наборы','':'Без категории'})[row.category]} · {lifecycleLabels[row.lifecycle??(row.active?'published':'draft')]}</span></span></span></button></li>)}</ul>
  {!rows.length&&<p>Товары не найдены.</p>}{next!==null&&<button disabled={busy} onClick={()=>void run(()=>list(next))}>Показать ещё</button>}</aside>
- <section className={styles.editor}>{!product?<p>Выберите товар или добавьте новый.</p>:<><header className={styles.productToolbar}><h2>{draft.name||'Новый товар'}</h2><p>{lifecycleLabels[product.lifecycle??(product.active?'published':product.publishedAt?'unpublished':'draft')]} · {saveFailed?'Ошибка сохранения':dirty?'Есть несохранённые изменения':product.active&&!product.hasUnpublishedChanges?'Опубликовано':'Сохранено · Не опубликовано'}</p>
- <div className={styles.actions}><button type="submit" form="product-edit" disabled={busy||deleted||!dirty}>Сохранить</button><button disabled={busy||deleted||!product.hasDraft||dirty||issues.length>0} onClick={()=>setConfirm('publish')}>Опубликовать</button><button disabled={busy||dirty||!product.active} onClick={()=>setConfirm('unpublish')}>Снять с публикации</button>
+ <section ref={editorRef} className={styles.editor}>{!product?<p>Выберите товар или добавьте новый.</p>:<><header className={styles.productToolbar}><h2>{draft.name||'Новый товар'}</h2><p>{lifecycleLabels[product.lifecycle??(product.active?'published':product.publishedAt?'unpublished':'draft')]} · {saveFailed?'Ошибка сохранения':dirty?'Есть несохранённые изменения':'Все изменения сохранены'}</p>
+ <div className={styles.actions}><button type="submit" form="product-edit" disabled={busy||deleted||!dirty}>Сохранить изменения</button>{product.active?<button disabled={busy||dirty} onClick={()=>void publication('unpublish')}>Скрыть</button>:<button disabled={busy||deleted||!product.hasDraft||dirty||issues.length>0} onClick={()=>void publication('publish')}>Опубликовать</button>}
  
  {product.revision>0&&<button disabled={busy} onClick={()=>choose(()=>open(product.id))}>Загрузить с сервера</button>}
  {product.active&&<Link href={'/product/'+product.draft.slug}>Посмотреть товар</Link>}</div></header>
- {(confirm==='publish'||confirm==='unpublish')&&<div className={styles.notice}><p>{confirm==='publish'?'Опубликовать сохранённые данные и цены?':'Скрыть товар с витрины? Существующие заказы сохранятся.'}</p><button disabled={busy} onClick={()=>void publication()}>Подтвердить</button><button disabled={busy} onClick={()=>setConfirm(null)}>Назад</button></div>}
+ {confirm==='save'&&<div className={styles.confirmModal} role="dialog" aria-modal="true" aria-label="Сохранить изменения"><p>{product.active?'Сохранить изменения? Они сразу появятся на сайте.':product.everPublished?'Сохранить изменения? Товар останется скрытым.':'Сохранить черновик?'}</p><button disabled={busy} onClick={()=>void confirmedSave()}>Подтвердить сохранение</button><button onClick={()=>setConfirm(null)}>Отмена</button></div>}
  {confirm==='remove'&&<div className={styles.confirmModal} role="dialog" aria-modal="true" aria-label="Удаление товара"><p>Убрать товар «{product.draft.name}» ({product.draft.sku})? {product.everPublished?'Товар будет перемещён в архив без удаления истории.':'Черновик будет храниться в Корзине 30 дней.'}</p><button disabled={busy} onClick={()=>void remove()}>{product.everPublished?'В архив':'Переместить в Корзину'}</button><button disabled={busy} onClick={()=>setConfirm(null)}>Назад</button></div>}
  {issues.length>0&&<p role="status">Обязательные поля: {issues.map(key=>publicationLabels[key]).join('; ')}.</p>}
- <nav className={styles.productTabs} aria-label="Разделы карточки">{([['main','Основное'],['pdp','Rich Content'],['placement','Размещение'],['technical','Технические данные'],['stock','Остатки']] as const).map(([key,label])=><button key={key} type="button" aria-pressed={tab===key} onClick={()=>setTab(key)}>{label}</button>)}</nav><form id="product-edit" onSubmit={save} key={product.id+':'+product.revision}><fieldset disabled={busy||deleted}>
+ <nav className={styles.productTabs} aria-label="Разделы карточки">{([['main','Основное'],['pdp','Rich Content'],['technical','Технические данные'],['stock','Остатки']] as const).map(([key,label])=><button key={key} type="button" aria-pressed={tab===key} onClick={()=>setTab(key)}>{label}</button>)}</nav><form id="product-edit" onSubmit={save} key={product.id+':'+product.revision}><fieldset disabled={busy||deleted}>
  <div hidden={tab!=='main'}><h3>Основное</h3>{textField('Название','name')}
  <div className={styles.columns}><label>Категория<select value={draft.content.category} onChange={e=>content({category:e.target.value as ProductContent['category']})}><option value="hair">Волосы</option><option value="body">Тело</option><option value="face">Лицо</option><option value="sets">Наборы</option></select></label>
  <label>Тип товара<select value={draft.content.setKind} onChange={e=>content({setKind:e.target.value as ProductContent['setKind']})}><option value="none">Отдельный товар</option><option value="combo">Комбо-набор</option><option value="gift">Подарочный набор</option></select></label></div>
@@ -164,15 +173,12 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  <details><summary>Фото по ссылке</summary><p>Можно использовать HTTPS-ссылку или путь к изображению сайта.</p>{contentField('Основное фото — ссылка','image')}{lines('Галерея — по одной ссылке на строке','gallery')}</details>
  <h3>Цена</h3><div className={styles.columns}><PriceField label="Обычная цена, ₽" value={draft.regularMinor} onChange={v=>change({regularMinor:v})}/><PriceField label="Цена продажи, ₽" value={draft.finalMinor} onChange={v=>change({finalMinor:v})}/></div>
  <label>Метка<select value={draft.content.badge} onChange={e=>content({badge:e.target.value})}>{['','Бестселлер','Новинка','Выбор ASAYA','Лимитированная серия'].map(v=><option key={v} value={v}>{v||'Без метки'}</option>)}</select></label>
- </div><div hidden={tab!=='pdp'}><AdminPdpEditor products={rows.filter(p=>p.active&&p.sku!==draft.sku)} value={draft.content.pdp} onChange={pdp=>content({pdp})} csrf={session.csrfToken} disabled={operationBusy} onBusy={setMediaBusy} onExpired={onExpired}/><details><summary>Инструкция и рекомендации прежней карточки</summary> <h3>Инструкция</h3><label>Шаги — по одному на строке<textarea rows={4} value={draft.content.instruction.steps.join('\n')} onChange={e=>content({instruction:{...draft.content.instruction,steps:e.target.value.split('\n')}})}/></label>
+ </div><div hidden={tab!=='pdp'}><AdminPdpEditor products={rows.filter(p=>p.active&&p.sku!==draft.sku)} value={draft.content.pdp} onChange={pdp=>content({pdp})} csrf={session.csrfToken} disabled={operationBusy} onBusy={setMediaBusy} onExpired={onExpired}/><details><summary>Справочно / Legacy data</summary> <h3>Инструкция</h3><label>Шаги — по одному на строке<textarea rows={4} value={draft.content.instruction.steps.join('\n')} onChange={e=>content({instruction:{...draft.content.instruction,steps:e.target.value.split('\n')}})}/></label>
  <label>Количество средства<textarea value={draft.content.instruction.amount} onChange={e=>content({instruction:{...draft.content.instruction,amount:e.target.value}})}/></label>
  <label>Совет<textarea value={draft.content.instruction.tip} onChange={e=>content({instruction:{...draft.content.instruction,tip:e.target.value}})}/></label>
  {contentField('Указания и предостережения с упаковки','safety',true)}
- {!draft.content.pdp&&lines('Адреса рекомендуемых карточек — по одному на строке','recommendations')}
-</details></div><div hidden={tab!=='placement'}> <fieldset><legend>Размещение на сайте</legend><p>Меньшее число — ближе к началу. Категория определяет раздел каталога. Подборки на главной включаются отдельно от метки на карточке.</p>
- <label>Порядок в каталоге<input type="number" min={0} max={100000} required value={draft.content.placement?.catalogOrder??0} onChange={e=>content({placement:{catalogOrder:Number(e.target.value),bestsellerOrder:draft.content.placement?draft.content.placement.bestsellerOrder:(draft.content.badge==='Бестселлер'?0:null),newOrder:draft.content.placement?draft.content.placement.newOrder:(draft.content.badge==='Новинка'?0:null)}})}/></label>
- {(['bestsellerOrder','newOrder'] as const).map((key,index)=>{const p=draft.content.placement??{catalogOrder:0,bestsellerOrder:draft.content.badge==='Бестселлер'?0:null,newOrder:draft.content.badge==='Новинка'?0:null};return <div key={key}><label><input type="checkbox" checked={p[key]!==null} onChange={e=>content({placement:{...p,[key]:e.target.checked?0:null}})}/>{index===0?'Показывать в бестселлерах':'Показывать в новинках'}</label>{p[key]!==null&&<label>Позиция в подборке<input type="number" min={0} max={100000} required value={p[key]!} onChange={e=>content({placement:{...p,[key]:Number(e.target.value)}})}/></label>}</div>;})}</fieldset>
-</div><div hidden={tab!=='technical'}><p>Служебные параметры. Меняйте их только при необходимости настройки карточки.</p> <h3>Основная информация</h3><p>Пустые артикул и адрес карточки будут созданы автоматически. Артикул можно исправить только до первой публикации и использования в заказах или интеграциях. Архивирование не снимает это ограничение.</p><label>Артикул<input placeholder="Будет создан автоматически" maxLength={100} readOnly={product.active||!!product.publishedAt} value={draft.sku} onChange={e=>change({sku:e.target.value})}/></label>
+
+</details></div><div hidden={tab!=='technical'}><p>Служебные параметры. Меняйте их только при необходимости настройки карточки.</p> <h3>Основная информация</h3><p>Пустые артикул и адрес карточки будут созданы автоматически. Артикул можно исправить только до первой публикации и использования в заказах или интеграциях. Архивирование не снимает это ограничение.</p><label>Артикул<input placeholder="Будет создан автоматически" maxLength={100} readOnly={product.active||!!product.publishedAt} value={draft.sku} onChange={e=>change({sku:e.target.value})}/></label>
  {textField('Адрес карточки: латинские буквы, цифры и дефисы','slug')}
  <h3>Параметры отправки</h3><div className={styles.columns}>{([['Вес, г','weightG'],['Ширина, мм','widthMm'],['Высота, мм','heightMm'],['Глубина, мм','depthMm']] as const).map(([label,key])=><label key={key}>{label}<input type="number" min={1} value={draft[key]??''} onChange={e=>change({[key]:e.target.value===''?null:Number(e.target.value)})}/></label>)}</div>
  </div></fieldset></form>

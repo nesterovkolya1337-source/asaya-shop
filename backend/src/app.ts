@@ -1,3 +1,4 @@
+import {AdminMerchandising} from './admin-merchandising.js';
 import {SmsConsent,smsConsentInput} from './sms-consent.js';
 import {Trash} from './trash.js';
 import {Engagement} from './engagement.js';
@@ -103,11 +104,11 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   if(options.deploymentMode==='catalog'&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/sms-consent/status','/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!cartQuote&&!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!engagementEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
+   if(!cartQuote&&!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!engagementEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|products(?:\/.*)?|prices(?:\/.*)?|merchandising|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
   }
   if(liveYcp&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
-   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
+   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|products(?:\/.*)?|prices(?:\/.*)?|merchandising|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
    const checkoutLink=req.method==='POST'&&route==='/api/store/v1/yandex/checkout-link';
    // Yandex owns checkout/payments; CDEK callbacks have their own boundary. Do not enable the
    // local checkout or local-only order changes with customer SMS sign-in.
@@ -169,7 +170,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
    const session=await staff.session(req.cookies[staffCookie]);
    reply.setCookie(staffCookie,req.cookies[staffCookie]!,staffCookieOptions);
    const route=req.routeOptions.url??'';
-   if(session.user.staffRole==='manager'&&(!/^\/api\/admin\/v1\/(auth\/(me|logout)|products(?:\/.*)?|orders(?:\/.*)?|analytics(?:\/.*)?|statistics|marketing(?:\/.*)?|site-pages(?:\/.*)?|banner|media(?:\/.*)?|trash(?:\/.*)?)$/.test(route)||route.endsWith('/privacy')))throw new DomainError('FORBIDDEN',403);
+   if(session.user.staffRole==='manager'&&(!/^\/api\/admin\/v1\/(auth\/(me|logout)|products(?:\/.*)?|prices(?:\/.*)?|merchandising|orders(?:\/.*)?|analytics(?:\/.*)?|statistics|marketing(?:\/.*)?|site-pages(?:\/.*)?|banner|media(?:\/.*)?|trash(?:\/.*)?)$/.test(route)||route.endsWith('/privacy')))throw new DomainError('FORBIDDEN',403);
    if(req.method!=='GET'&&(typeof req.headers['x-csrf-token']!=='string'||!equal(req.headers['x-csrf-token'],session.csrfToken)))throw new DomainError('CSRF_REJECTED',403);
   });
   const actor=async(token:string|undefined)=>(await staff!.session(token)).user.id;
@@ -200,6 +201,13 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   secured.get('/api/admin/v1/analytics',async req=>new AnalyticsReport(options.db).get(await actor(req.cookies[staffCookie]),req.query));
   secured.get('/api/admin/v1/statistics',async req=>new AdminStatistics(options.db).get(await actor(req.cookies[staffCookie]),req.query));
   const id=(raw:unknown)=>z.object({id:z.uuid()}).parse(raw).id;
+  const merchandising=new AdminMerchandising(options.db);
+  secured.get('/api/admin/v1/merchandising',async()=>merchandising.read());
+  secured.put('/api/admin/v1/merchandising',async req=>merchandising.save(await actor(req.cookies[staffCookie]),req.body));
+  secured.get('/api/admin/v1/prices',async()=>merchandising.prices());
+  secured.put('/api/admin/v1/prices/:id',async req=>merchandising.price(await actor(req.cookies[staffCookie]),id(req.params),req.body));
+  secured.put('/api/admin/v1/products/:id/apply',async req=>adminCatalog.save(await actor(req.cookies[staffCookie]),id(req.params),req.body,true));
+
   secured.get('/api/admin/v1/warehouses',async()=>new Warehouses(options.db).list());
   secured.put('/api/admin/v1/warehouses/:id',async req=>new Warehouses(options.db).save(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   secured.get('/api/admin/v1/orders',async req=>adminOrders.list(await actor(req.cookies[staffCookie]),req.query));

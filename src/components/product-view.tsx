@@ -36,7 +36,18 @@ export function ProductView({ productId }: { productId: string }) {
       setShowSticky(!entry.isIntersecting && entry.boundingClientRect.bottom <= 0);
     }, {threshold: 0});
     observer.observe(target);
-    return () => observer.disconnect();
+    // A fast scroll can jump from below to above the viewport without an
+    // intersection transition. Cover that case without a fixed page offset.
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        setShowSticky(target.getBoundingClientRect().bottom <= 0);
+      });
+    };
+    window.addEventListener('scroll', onScroll, {passive: true});
+    return () => { observer.disconnect(); window.removeEventListener('scroll', onScroll); cancelAnimationFrame(frame); };
   }, [product?.id]);
 
   if (!product) {
@@ -51,7 +62,7 @@ export function ProductView({ productId }: { productId: string }) {
 
   const quantity = cart[product.id] ?? 0;
   const isFavorite = favorites.includes(product.id);
-  const recommendations = pdpRecommendations(products,product);
+  const recommendations = pdpRecommendations(products,product,Object.keys(cart).filter(id=>cart[id]>0));
   const gallery = [...new Set([product.image, ...product.gallery].filter(Boolean))];
   const buyNow = () => {
     if (!quantity && product.stock) addToCart(product.id);

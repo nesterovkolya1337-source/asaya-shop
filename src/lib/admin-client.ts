@@ -80,7 +80,7 @@ export function createAdminClient(base:string,fetcher:typeof fetch=fetch){
    return {items,nextOffset:r.nextOffset as number|null};
   },
   async detail(id:string){const d=parseAdminProduct(await request(path(id),'GET'));if(d.id!==id)throw new AuthClientError('INVALID_RESPONSE');return d;},
-  async save(id:string,draft:AdminDraft,revision:number,csrf:string){changed(await request(path(id),'PUT',{...draft,revision},csrf),id,revision);},
+  async save(id:string,draft:AdminDraft,revision:number,csrf:string){changed(await request(path(id)+'/apply','PUT',{...draft,revision},csrf),id,revision);},
   async publish(id:string,revision:number,csrf:string){changed(await request(path(id)+'/publish','POST',{revision},csrf),id,revision);},
   async unpublish(id:string,revision:number,csrf:string){ok(await request(path(id)+'/unpublish','POST',{revision},csrf));},
   async remove(id:string,revision:number,sku:string,csrf:string){const r=object(await request(path(id)+'/remove','POST',{revision,sku,confirmed:true},csrf));if(r.outcome!=='archived'&&r.outcome!=='deleted')throw new AuthClientError('INVALID_RESPONSE');return r.outcome;},

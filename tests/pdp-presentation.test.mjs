@@ -8,9 +8,11 @@ test('rich content is optional, explicitly enabled and suppresses empty sections
  assert.equal(richSections({...pdp,enabled:true,sections:[{...empty,body:'Text'}]}).length,1);
 });
 test('recommendations use published public candidates, exclude current, deduplicate and fill four; cart excludes cart items',()=>{
- const ps=Array.from({length:6},(_,i)=>({id:'p'+i,sku:'SKU'+i,active:true,recommendations:[]}));
+ const ps=Array.from({length:6},(_,i)=>({id:'p'+i,sku:'SKU'+i,active:true,stock:5,stockState:'known',category:'body',merchandising:{catalogOrder:i,categoryOrder:i,prioritySku:i===0?'SKU2':null,soldUnits:0},recommendations:[]}));
  const current={...ps[0],pdp:{recommendations:['SKU2','SKU2','missing','SKU0']}};
- assert.deepEqual(pdpRecommendations([...ps,{id:'hidden',sku:'H',active:false}],current).map(p=>p.id),['p2','p1','p3','p4']);
+ assert.deepEqual(pdpRecommendations([...ps,{id:'hidden',sku:'H',active:false}],current).map(p=>p.id),['p2','p1','p3','p4','p5']);
  assert.equal(pdpRecommendations(ps.slice(0,2),current).length,1);
  assert.equal(cartRecommendations(ps,{p0:1,p1:1}).length,4);
 });
+
+test('block visibility preserves content while suppressing rendering',()=>{const hidden={...empty,body:'Keep me',visible:false};assert.deepEqual(richSections({enabled:true,sections:[hidden]}),[]);assert.equal(richSections({enabled:true,sections:[{...hidden,visible:true}]}).length,1);});

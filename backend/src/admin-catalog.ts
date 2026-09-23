@@ -77,13 +77,13 @@ export class AdminCatalog{
    weightG:r.weight_g,widthMm:r.width_mm,heightMm:r.height_mm,depthMm:r.depth_mm};
   return {id,revision:r.revision??0,everPublished:r.ever_published,lifecycle:r.archived_at?(r.ever_published?'archived':'deleted'):r.active?'published':r.ever_published?'unpublished':'draft',active:r.active,hasDraft:!!r.draft,hasUnpublishedChanges:JSON.stringify(r.draft)!==JSON.stringify(r.published),publishedAt:r.published_at,draft,stocks};
  }
- async save(actor:string,id:string,raw:unknown){
+ async save(actor:string,id:string,raw:unknown,apply=false){
   z.uuid().parse(id);const input=draftSchema.parse(raw);const {revision,...draft}=input;
   if(draft.content.size){const s=draft.content.size;draft.content.volume=String(s.value)+' '+({ml:'мл',g:'г',pcs:'шт.'}[s.unit]);}
   try{return await this.db.transaction(async tx=>{
    await admin(tx,actor);await lock(tx,'catalog:admin');
    await checkMedia(tx,draft.content);
-   const p=(await tx.query('SELECT sku,active,archived_at FROM products WHERE id=$1 FOR UPDATE',[id])).rows[0];
+   const p=(await tx.query('SELECT sku,active,ever_published,archived_at FROM products WHERE id=$1 FOR UPDATE',[id])).rows[0];
    const editor=(await tx.query('SELECT revision,published_at,published FROM product_editor WHERE product_id=$1 FOR UPDATE',[id])).rows[0];
    if((editor?.revision??0)!==revision)throw new DomainError('EDIT_CONFLICT');
    if(p?.archived_at)throw new DomainError('PRODUCT_ARCHIVED');
@@ -102,7 +102,14 @@ export class AdminCatalog{
    }
    await tx.query(`INSERT INTO product_editor(product_id,revision,draft,updated_by) VALUES($1,1,$2,$3)
     ON CONFLICT(product_id) DO UPDATE SET revision=product_editor.revision+1,draft=excluded.draft,updated_by=excluded.updated_by,updated_at=now()`,[id,JSON.stringify(draft),actor]);
-   await audit(tx,actor,'product.draft_saved',id,{revision:revision+1});
+   if(apply&&p?.ever_published){
+    if(publicationIssues(draft).length)throw new DomainError('PUBLISH_INCOMPLETE');
+    await writePublished(tx,id,{...draft,revision},editor??{});
+    // Applying content must preserve visibility, including an unpublished product.
+    await tx.query('UPDATE products SET active=$2,sale_approved=$2 WHERE id=$1',[id,p.active]);
+    await tx.query('UPDATE product_editor SET published=draft WHERE product_id=$1',[id]);
+   }
+   await audit(tx,actor,apply&&p?.ever_published?'product.changes_applied':'product.draft_saved',id,{revision:revision+1});
    return {id,revision:revision+1};
   });}catch(e){if((e as {code?:string}).code==='23505')throw new DomainError('SKU_IN_USE');throw e;}
  }

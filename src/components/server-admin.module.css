@@ -14,3 +14,4 @@
 .dangerZone button {background:#a61919;color:#fff}
 .confirmModal {position:fixed;inset:25% 20%;z-index:100;background:white;box-shadow:0 0 0 100vmax #0008;padding:32px;border-radius:16px;overflow:auto}
 @media(max-width:700px){.confirmModal{inset:15% 5%}.productToolbar{padding:10px}.productTabs{gap:4px}}
+@media(min-width:851px){.sidebar{position:sticky;top:16px;max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain}.editor{align-self:start}.layout{align-items:start}}

@@ -61,7 +61,7 @@ export function CatalogView({ initialFilter = "all" }: { initialFilter?: Filter 
     }
   }, []);
 
-  const visibleProducts = useMemo(() => placedProducts(products,'catalog').filter((product) => {
+  const visibleProducts = useMemo(() => placedProducts(products,'catalog',filter!=='all').filter((product) => {
     const matchesFilter = filter === "all" ? product.category !== "sets" : product.category === filter;
     const matchesSearch = product.name.toLocaleLowerCase("ru").includes(search.trim().toLocaleLowerCase("ru"));
     return product.active && matchesFilter && matchesSearch;
