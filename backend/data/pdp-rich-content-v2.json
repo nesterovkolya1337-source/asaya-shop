@@ -1,0 +1,2761 @@
+[
+  {
+    "sku": "1S-BA-02-02",
+    "pdp": {
+      "version": 1,
+      "node": "440:2890",
+      "enabled": true,
+      "sections": [
+        {
+          "kind": "result",
+          "title": "Мягкое очищение и увлажнение",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "не нарушает естественный баланс кожи"
+            },
+            {
+              "title": "",
+              "body": "не оставляет чувства стянутости\nи дискомфорта"
+            },
+            {
+              "title": "",
+              "body": "гладкая и упругая кожа на ощупь"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/8db29686c8c8dcab65f6ccfdf7d13a37a396d79c.png",
+              "layout": {
+                "x": -19.75743,
+                "y": -37.35879,
+                "width": 157.32189,
+                "height": 212.3505,
+                "rotation": 180.0,
+                "flipX": false,
+                "flipY": true
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Результат",
+          "visualAspectRatio": 0.9
+        },
+        {
+          "kind": "howTo",
+          "title": "Как использовать ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "Нанесите каплю геля, превращая ее в воздушную пену",
+              "media": {
+                "src": "/images/figma/rich-content/273c4a4e8204016c9bfbaf61b2e4ead20e3523d7.png",
+                "layout": {
+                  "x": -27.93026,
+                  "y": -5.27165,
+                  "width": 145.16276,
+                  "height": 158.11071,
+                  "rotation": -16.92,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Мягкая ароматная пена очищает и увлажняет кожу",
+              "media": {
+                "src": "/images/figma/rich-content/43d95a1be3d8413e1e5aba0ae0af3e0eb172b197.png",
+                "layout": {
+                  "x": -17.99793,
+                  "y": -15.04023,
+                  "width": 139.98045,
+                  "height": 193.3291,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Смойте, ощущая гладкость и питание кожи",
+              "media": {
+                "src": "/images/figma/rich-content/09a437dd75687e77b2f9609e5535dcefe861d086.png",
+                "layout": {
+                  "x": -0.3958,
+                  "y": 3.57143,
+                  "width": 100.81034,
+                  "height": 143.11357,
+                  "rotation": 180.0,
+                  "flipX": false,
+                  "flipY": true
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Наслаждайтесь свежестью и комфортом после душа",
+              "media": {
+                "src": "/images/figma/rich-content/d79b5cb7593fd70e08e94507d4bf3068a730c329.jpg",
+                "layout": {
+                  "x": 7.23509,
+                  "y": -43.69908,
+                  "width": 125.06679,
+                  "height": 194.22782,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            }
+          ],
+          "media": []
+        },
+        {
+          "kind": "lifehack",
+          "title": "Лайфхак",
+          "body": "Вспеньте гель с небольшим количеством воды в ладонях или на мочалке — так вы получите больше воздушной пены и уменьшите расход продукта",
+          "additionalBody": "",
+          "items": [],
+          "media": []
+        },
+        {
+          "kind": "fragrance",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Верхние ноты",
+              "body": "освежающая кислинка лимонада и брызги сочного лимона"
+            },
+            {
+              "title": "Ноты сердца",
+              "body": "горсть красных ягод, спелая, сладкая гуава и тропический бриз"
+            },
+            {
+              "title": "Базовые данные",
+              "body": "лёгкий древесный аккорд"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/composition-440-3062.png",
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              }
+            }
+          ],
+          "eyebrow": "Аромат",
+          "visualAspectRatio": 0.89
+        },
+        {
+          "kind": "ingredients",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Масло авокадо",
+              "body": "смягчает и защищает от сухости"
+            },
+            {
+              "title": "Гиалуроновая кислота",
+              "body": "удерживает влагу и поддерживает упругость"
+            },
+            {
+              "title": "Ферментированный зеленый чай",
+              "body": "защищает кожу и поддерживает её барьер"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/3e1583a47acb0364749b46e95cfb7493979130e4.png",
+              "layout": {
+                "x": -16.77868,
+                "y": -125.38126,
+                "width": 170.45939,
+                "height": 389.7625,
+                "rotation": -7.5,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 2.25
+        },
+        {
+          "kind": "faq",
+          "title": "FAQ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Оставляет ли гель ощущение стянутости после душа?",
+              "body": "Нет, после использования кожа ощущается мягкой, гладкой и увлажнённой"
+            },
+            {
+              "title": "Подходит ли для ежедневного использования?",
+              "body": "Да, гель подходит для ежедневного ухода и мягко очищает кожу"
+            },
+            {
+              "title": "Не сушит ли гель кожу?",
+              "body": "Нет, формула помогает поддерживать естественное увлажнение кожи и не оставляет ощущения сухости и стянутости"
+            },
+            {
+              "title": "Хорошо ли гель пенится?",
+              "body": "Да, при контакте с водой гель превращается в мягкую воздушную пену"
+            },
+            {
+              "title": "Есть ли в составе ухаживающие компоненты?",
+              "body": "Да, формула содержит алоэ, масло авокадо, гиалуронат натрия, мочевину, глицерин и бетаин"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/c9d849effefe99aaf56e87b2158e9174b8ca3568.png",
+              "layout": {
+                "x": -15.08954,
+                "y": -21.76514,
+                "width": 122.76225,
+                "height": 132.43443,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 0.8090909090909091
+        }
+      ],
+      "recommendations": [
+        "1S-BA-02-01",
+        "1S-BA-02-04",
+        "1S-BA-03",
+        "1S-BA-01"
+      ]
+    }
+  },
+  {
+    "sku": "1S-BA-02-05",
+    "pdp": {
+      "version": 1,
+      "node": "457:3502",
+      "enabled": true,
+      "sections": [
+        {
+          "kind": "result",
+          "title": "Мягкое очищение и увлажнение",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "не нарушает естественный баланс кожи"
+            },
+            {
+              "title": "",
+              "body": "не оставляет чувства стянутости\nи дискомфорта"
+            },
+            {
+              "title": "",
+              "body": "гладкая и упругая кожа на ощупь"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/48cce2865a8b109fe6a205d5b2b323ef8e291731.png",
+              "layout": {
+                "x": -10.10498,
+                "y": -18.83066,
+                "width": 145.80404,
+                "height": 196.78895,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Результат",
+          "visualAspectRatio": 0.9
+        },
+        {
+          "kind": "howTo",
+          "title": "Как использовать ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "Нанесите каплю геля, превращая ее в воздушную пену",
+              "media": {
+                "src": "/images/figma/rich-content/a7070e2a6033140abeb044439f7aeef76f7a7065.png",
+                "layout": {
+                  "x": -27.92186,
+                  "y": -7.09995,
+                  "width": 145.13908,
+                  "height": 158.11905,
+                  "rotation": -16.92,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Мягкая ароматная пена очищает и увлажняет кожу",
+              "media": {
+                "src": "/images/figma/rich-content/43d95a1be3d8413e1e5aba0ae0af3e0eb172b197.png",
+                "layout": {
+                  "x": -17.99793,
+                  "y": -17.42118,
+                  "width": 139.98045,
+                  "height": 193.3291,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Смойте, ощущая гладкость и питание кожи",
+              "media": {
+                "src": "/images/figma/rich-content/09a437dd75687e77b2f9609e5535dcefe861d086.png",
+                "layout": {
+                  "x": -0.3958,
+                  "y": 1.19048,
+                  "width": 100.81034,
+                  "height": 143.11357,
+                  "rotation": 180.0,
+                  "flipX": false,
+                  "flipY": true
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Наслаждайтесь свежестью и комфортом после душа",
+              "media": {
+                "src": "/images/figma/rich-content/d79b5cb7593fd70e08e94507d4bf3068a730c329.jpg",
+                "layout": {
+                  "x": 7.23509,
+                  "y": -46.08003,
+                  "width": 125.06679,
+                  "height": 194.22782,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            }
+          ],
+          "media": []
+        },
+        {
+          "kind": "lifehack",
+          "title": "Лайфхак",
+          "body": "Вспеньте гель с небольшим количеством воды в ладонях или на мочалке — так вы получите больше воздушной пены и уменьшите расход продукта",
+          "additionalBody": "",
+          "items": [],
+          "media": []
+        },
+        {
+          "kind": "fragrance",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Верхние ноты",
+              "body": "освежающая цедра юзу и искрящиеся нотки бергамота"
+            },
+            {
+              "title": "Ноты сердца",
+              "body": "нежный флер цветков юдзу и сочные аккорды мандарина"
+            },
+            {
+              "title": "Базовые данные",
+              "body": "теплая амбра и бархатистая древесина сандала"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/composition-457-4259.png",
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              }
+            }
+          ],
+          "eyebrow": "Аромат",
+          "visualAspectRatio": 0.89
+        },
+        {
+          "kind": "ingredients",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Масло авокадо",
+              "body": "смягчает и защищает от сухости"
+            },
+            {
+              "title": "Гиалуроновая кислота",
+              "body": "удерживает влагу и поддерживает упругость"
+            },
+            {
+              "title": "Ферментированный зеленый чай",
+              "body": "защищает кожу и поддерживает её барьер"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/1206485e6a76d5802e1d58cd42c6876fa50ddf7b.png",
+              "layout": {
+                "x": -1.86189,
+                "y": -136.49235,
+                "width": 143.91883,
+                "height": 431.8795,
+                "rotation": -29.99,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 2.25
+        },
+        {
+          "kind": "faq",
+          "title": "FAQ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Оставляет ли гель ощущение стянутости после душа?",
+              "body": "Нет, после использования кожа ощущается мягкой, гладкой и увлажнённой"
+            },
+            {
+              "title": "Подходит ли для ежедневного использования?",
+              "body": "Да, гель подходит для ежедневного ухода и мягко очищает кожу"
+            },
+            {
+              "title": "Не сушит ли гель кожу?",
+              "body": "Нет, формула помогает поддерживать естественное увлажнение кожи и не оставляет ощущения сухости и стянутости"
+            },
+            {
+              "title": "Хорошо ли гель пенится?",
+              "body": "Да, при контакте с водой гель превращается в мягкую воздушную пену"
+            },
+            {
+              "title": "Есть ли в составе ухаживающие компоненты?",
+              "body": "Да, формула содержит алоэ, масло авокадо, гиалуронат натрия, мочевину, глицерин и бетаин"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/c9d849effefe99aaf56e87b2158e9174b8ca3568.png",
+              "layout": {
+                "x": -15.08954,
+                "y": -21.76514,
+                "width": 122.76225,
+                "height": 132.43443,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 0.8090909090909091
+        }
+      ],
+      "recommendations": [
+        "1S-BA-02-01",
+        "1S-BA-02-04",
+        "1S-BA-03",
+        "1S-BA-01"
+      ]
+    }
+  },
+  {
+    "sku": "1S-BA-02-04",
+    "pdp": {
+      "version": 1,
+      "node": "457:4268",
+      "enabled": true,
+      "sections": [
+        {
+          "kind": "result",
+          "title": "Мягкое очищение и увлажнение",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "не нарушает естественный баланс кожи"
+            },
+            {
+              "title": "",
+              "body": "не оставляет чувства стянутости\nи дискомфорта"
+            },
+            {
+              "title": "",
+              "body": "гладкая и упругая кожа на ощупь"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/5a4975bb6f0820a584f1eddc41f3966713f4221a.png",
+              "layout": {
+                "x": -2.38433,
+                "y": -15.09875,
+                "width": 102.38433,
+                "height": 138.24828,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Результат",
+          "visualAspectRatio": 0.9
+        },
+        {
+          "kind": "howTo",
+          "title": "Как использовать ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "Нанесите каплю геля, превращая ее в воздушную пену",
+              "media": {
+                "src": "/images/figma/rich-content/b405221d29ca042d7c56820c9f3b9c1f4dbe58b1.png",
+                "layout": {
+                  "x": -27.94078,
+                  "y": -7.10125,
+                  "width": 145.19333,
+                  "height": 158.1781,
+                  "rotation": -16.92,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Мягкая ароматная пена очищает и увлажняет кожу",
+              "media": {
+                "src": "/images/figma/rich-content/43d95a1be3d8413e1e5aba0ae0af3e0eb172b197.png",
+                "layout": {
+                  "x": -17.99793,
+                  "y": -17.42118,
+                  "width": 139.98045,
+                  "height": 193.3291,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Смойте, ощущая гладкость и питание кожи",
+              "media": {
+                "src": "/images/figma/rich-content/09a437dd75687e77b2f9609e5535dcefe861d086.png",
+                "layout": {
+                  "x": -0.3958,
+                  "y": 1.19048,
+                  "width": 100.81034,
+                  "height": 143.11357,
+                  "rotation": 180.0,
+                  "flipX": false,
+                  "flipY": true
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Наслаждайтесь свежестью и комфортом после душа",
+              "media": {
+                "src": "/images/figma/rich-content/d79b5cb7593fd70e08e94507d4bf3068a730c329.jpg",
+                "layout": {
+                  "x": 7.23509,
+                  "y": -46.08003,
+                  "width": 125.06679,
+                  "height": 194.22782,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            }
+          ],
+          "media": []
+        },
+        {
+          "kind": "lifehack",
+          "title": "Лайфхак",
+          "body": "Вспеньте гель с небольшим количеством воды в ладонях или на мочалке — так вы получите больше воздушной пены и уменьшите расход продукта",
+          "additionalBody": "",
+          "items": [],
+          "media": []
+        },
+        {
+          "kind": "fragrance",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Верхние ноты",
+              "body": "хрустальная свежесть зеленого яблока и брызги лайма"
+            },
+            {
+              "title": "Ноты сердца",
+              "body": "спелое киви и нежное послевкусие тропических фруктов"
+            },
+            {
+              "title": "Базовые данные",
+              "body": "прохлада мятного листа"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/composition-457-4650.png",
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              }
+            }
+          ],
+          "eyebrow": "Аромат",
+          "visualAspectRatio": 0.89
+        },
+        {
+          "kind": "ingredients",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Масло авокадо",
+              "body": "смягчает и защищает от сухости"
+            },
+            {
+              "title": "Гиалуроновая кислота",
+              "body": "удерживает влагу и поддерживает упругость"
+            },
+            {
+              "title": "Ферментированный зеленый чай",
+              "body": "защищает кожу и поддерживает её барьер"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/a53291a6da07c6b874ceb459ddc29cb9955d6a10.png",
+              "layout": {
+                "x": 1.15207,
+                "y": -118.48461,
+                "width": 130.33,
+                "height": 391.04225,
+                "rotation": -23.6,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 2.25
+        },
+        {
+          "kind": "faq",
+          "title": "FAQ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Оставляет ли гель ощущение стянутости после душа?",
+              "body": "Нет, после использования кожа ощущается мягкой, гладкой и увлажнённой"
+            },
+            {
+              "title": "Подходит ли для ежедневного использования?",
+              "body": "Да, гель подходит для ежедневного ухода и мягко очищает кожу"
+            },
+            {
+              "title": "Не сушит ли гель кожу?",
+              "body": "Нет, формула помогает поддерживать естественное увлажнение кожи и не оставляет ощущения сухости и стянутости"
+            },
+            {
+              "title": "Хорошо ли гель пенится?",
+              "body": "Да, при контакте с водой гель превращается в мягкую воздушную пену"
+            },
+            {
+              "title": "Есть ли в составе ухаживающие компоненты?",
+              "body": "Да, формула содержит алоэ, масло авокадо, гиалуронат натрия, мочевину, глицерин и бетаин"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/c9d849effefe99aaf56e87b2158e9174b8ca3568.png",
+              "layout": {
+                "x": -15.08954,
+                "y": -21.76514,
+                "width": 122.76225,
+                "height": 132.43443,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 0.8090909090909091
+        }
+      ],
+      "recommendations": [
+        "1S-BA-02-01",
+        "1S-BA-02-04",
+        "1S-BA-03",
+        "1S-BA-01"
+      ]
+    }
+  },
+  {
+    "sku": "1S-BA-02-01",
+    "pdp": {
+      "version": 1,
+      "node": "457:4920",
+      "enabled": true,
+      "sections": [
+        {
+          "kind": "result",
+          "title": "Мягкое очищение и увлажнение",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "не нарушает естественный баланс кожи"
+            },
+            {
+              "title": "",
+              "body": "не оставляет чувства стянутости\nи дискомфорта"
+            },
+            {
+              "title": "",
+              "body": "гладкая и упругая кожа на ощупь"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/ce6213c4cdbc6a74ead5aeef19adf492a316132b.jpg",
+              "layout": {
+                "x": -15.98785,
+                "y": -7.5,
+                "width": 120.52104,
+                "height": 162.64355,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Результат",
+          "visualAspectRatio": 0.9
+        },
+        {
+          "kind": "howTo",
+          "title": "Как использовать ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "Нанесите каплю геля, превращая ее в воздушную пену",
+              "media": {
+                "src": "/images/figma/rich-content/19d1701670bddd164b985e3701d03d841b912f98.png",
+                "layout": {
+                  "x": 58.72261,
+                  "y": -26.23396,
+                  "width": 198.67826,
+                  "height": 235.0293,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Мягкая ароматная пена очищает и увлажняет кожу",
+              "media": {
+                "src": "/images/figma/rich-content/19d1701670bddd164b985e3701d03d841b912f98.png",
+                "layout": {
+                  "x": -45.87509,
+                  "y": -26.23396,
+                  "width": 198.67826,
+                  "height": 235.0293,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Смойте, ощущая гладкость и питание кожи",
+              "media": {
+                "src": "/images/figma/rich-content/09a437dd75687e77b2f9609e5535dcefe861d086.png",
+                "layout": {
+                  "x": -0.3958,
+                  "y": 1.19048,
+                  "width": 100.81034,
+                  "height": 143.11357,
+                  "rotation": 180.0,
+                  "flipX": false,
+                  "flipY": true
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Наслаждайтесь свежестью и комфортом после душа",
+              "media": {
+                "src": "/images/figma/rich-content/d79b5cb7593fd70e08e94507d4bf3068a730c329.jpg",
+                "layout": {
+                  "x": 7.23509,
+                  "y": -46.08003,
+                  "width": 125.06679,
+                  "height": 194.22782,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            }
+          ],
+          "media": []
+        },
+        {
+          "kind": "lifehack",
+          "title": "Лайфхак",
+          "body": "Вспеньте гель с небольшим количеством воды в ладонях или на мочалке — так вы получите больше воздушной пены и уменьшите расход продукта",
+          "additionalBody": "",
+          "items": [],
+          "media": []
+        },
+        {
+          "kind": "fragrance",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Верхние ноты",
+              "body": "игривая сладость сахарной ваты и аромат спелой лесной клубники"
+            },
+            {
+              "title": "Ноты сердца",
+              "body": "нежный розовый зефир с лёгкой карамельной корочкой от костра"
+            },
+            {
+              "title": "Базовые данные",
+              "body": "уютный аккорд томлёной ванили"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/composition-457-5077.png",
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              }
+            }
+          ],
+          "eyebrow": "Аромат",
+          "visualAspectRatio": 0.89
+        },
+        {
+          "kind": "ingredients",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Масло авокадо",
+              "body": "смягчает и защищает от сухости"
+            },
+            {
+              "title": "Гиалуроновая кислота",
+              "body": "удерживает влагу и поддерживает упругость"
+            },
+            {
+              "title": "Ферментированный зеленый чай",
+              "body": "защищает кожу и поддерживает её барьер"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/718ed7b58b469f06e8f3e884eb149a8dbe4fc4d3.png",
+              "layout": {
+                "x": -1.14885,
+                "y": -145.57996,
+                "width": 150.10822,
+                "height": 450.233,
+                "rotation": -19.22,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 2.25
+        },
+        {
+          "kind": "faq",
+          "title": "FAQ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Оставляет ли гель ощущение стянутости после душа?",
+              "body": "Нет, после использования кожа ощущается мягкой, гладкой и увлажнённой"
+            },
+            {
+              "title": "Подходит ли для ежедневного использования?",
+              "body": "Да, гель подходит для ежедневного ухода и мягко очищает кожу"
+            },
+            {
+              "title": "Не сушит ли гель кожу?",
+              "body": "Нет, формула помогает поддерживать естественное увлажнение кожи и не оставляет ощущения сухости и стянутости"
+            },
+            {
+              "title": "Хорошо ли гель пенится?",
+              "body": "Да, при контакте с водой гель превращается в мягкую воздушную пену"
+            },
+            {
+              "title": "Есть ли в составе ухаживающие компоненты?",
+              "body": "Да, формула содержит алоэ, масло авокадо, гиалуронат натрия, мочевину, глицерин и бетаин"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/c9d849effefe99aaf56e87b2158e9174b8ca3568.png",
+              "layout": {
+                "x": -15.08954,
+                "y": -21.76514,
+                "width": 122.76225,
+                "height": 132.43443,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 0.8090909090909091
+        }
+      ],
+      "recommendations": [
+        "1S-BA-02-01",
+        "1S-BA-02-04",
+        "1S-BA-03",
+        "1S-BA-01"
+      ]
+    }
+  },
+  {
+    "sku": "1S-BA-02-03",
+    "pdp": {
+      "version": 1,
+      "node": "457:5317",
+      "enabled": true,
+      "sections": [
+        {
+          "kind": "result",
+          "title": "Мягкое очищение и увлажнение",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "не нарушает естественный баланс кожи"
+            },
+            {
+              "title": "",
+              "body": "не оставляет чувства стянутости\nи дискомфорта"
+            },
+            {
+              "title": "",
+              "body": "гладкая и упругая кожа на ощупь"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/781197bfb88869670515f6969c89596287f30098.png",
+              "layout": {
+                "x": -75.68739,
+                "y": -56.23901,
+                "width": 223.79255,
+                "height": 244.57329,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Результат",
+          "visualAspectRatio": 0.9
+        },
+        {
+          "kind": "howTo",
+          "title": "Как использовать ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "Нанесите каплю геля, превращая ее в воздушную пену",
+              "media": {
+                "src": "/images/figma/rich-content/fb5b675064efdb3d7d0df87a165c56dceef6488c.png",
+                "layout": {
+                  "x": -27.66119,
+                  "y": -7.31054,
+                  "width": 144.74851,
+                  "height": 157.62571,
+                  "rotation": -16.92,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Мягкая ароматная пена очищает и увлажняет кожу",
+              "media": {
+                "src": "/images/figma/rich-content/43d95a1be3d8413e1e5aba0ae0af3e0eb172b197.png",
+                "layout": {
+                  "x": -17.99793,
+                  "y": -17.42118,
+                  "width": 139.98045,
+                  "height": 193.3291,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Смойте, ощущая гладкость и питание кожи",
+              "media": {
+                "src": "/images/figma/rich-content/09a437dd75687e77b2f9609e5535dcefe861d086.png",
+                "layout": {
+                  "x": -0.3958,
+                  "y": 1.19048,
+                  "width": 100.81034,
+                  "height": 143.11357,
+                  "rotation": 180.0,
+                  "flipX": false,
+                  "flipY": true
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Наслаждайтесь свежестью и комфортом после душа",
+              "media": {
+                "src": "/images/figma/rich-content/d79b5cb7593fd70e08e94507d4bf3068a730c329.jpg",
+                "layout": {
+                  "x": 7.23509,
+                  "y": -46.08003,
+                  "width": 125.06679,
+                  "height": 194.22782,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            }
+          ],
+          "media": []
+        },
+        {
+          "kind": "lifehack",
+          "title": "Лайфхак",
+          "body": "Вспеньте гель с небольшим количеством воды в ладонях или на мочалке — так вы получите больше воздушной пены и уменьшите расход продукта",
+          "additionalBody": "",
+          "items": [],
+          "media": []
+        },
+        {
+          "kind": "fragrance",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Верхние ноты",
+              "body": "сочная лесная черника с её яркой, освежающей кислинкой"
+            },
+            {
+              "title": "Ноты сердца",
+              "body": "нежный цветочный аккорд василька"
+            },
+            {
+              "title": "Базовые данные",
+              "body": "мягкий аккорд нежного йогурта"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/composition-457-5473.png",
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              }
+            }
+          ],
+          "eyebrow": "Аромат",
+          "visualAspectRatio": 0.89
+        },
+        {
+          "kind": "ingredients",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Масло авокадо",
+              "body": "смягчает и защищает от сухости"
+            },
+            {
+              "title": "Гиалуроновая кислота",
+              "body": "удерживает влагу и поддерживает упругость"
+            },
+            {
+              "title": "Ферментированный зеленый чай",
+              "body": "защищает кожу и поддерживает её барьер"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/48271d09a06df83cb4f282c19098fb89cda677a1.png",
+              "layout": {
+                "x": -12.60165,
+                "y": -169.59597,
+                "width": 164.38839,
+                "height": 493.26488,
+                "rotation": -28.64,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 2.25
+        },
+        {
+          "kind": "faq",
+          "title": "FAQ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Оставляет ли гель ощущение стянутости после душа?",
+              "body": "Нет, после использования кожа ощущается мягкой, гладкой и увлажнённой"
+            },
+            {
+              "title": "Подходит ли для ежедневного использования?",
+              "body": "Да, гель подходит для ежедневного ухода и мягко очищает кожу"
+            },
+            {
+              "title": "Не сушит ли гель кожу?",
+              "body": "Нет, формула помогает поддерживать естественное увлажнение кожи и не оставляет ощущения сухости и стянутости"
+            },
+            {
+              "title": "Хорошо ли гель пенится?",
+              "body": "Да, при контакте с водой гель превращается в мягкую воздушную пену"
+            },
+            {
+              "title": "Есть ли в составе ухаживающие компоненты?",
+              "body": "Да, формула содержит алоэ, масло авокадо, гиалуронат натрия, мочевину, глицерин и бетаин"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/c9d849effefe99aaf56e87b2158e9174b8ca3568.png",
+              "layout": {
+                "x": -15.08954,
+                "y": -21.76514,
+                "width": 122.76225,
+                "height": 132.43443,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 0.8090909090909091
+        }
+      ],
+      "recommendations": [
+        "1S-BA-02-01",
+        "1S-BA-02-04",
+        "1S-BA-03",
+        "1S-BA-01"
+      ]
+    }
+  },
+  {
+    "sku": "1S-FL-02",
+    "pdp": {
+      "version": 1,
+      "node": "418:3505",
+      "enabled": true,
+      "sections": [
+        {
+          "kind": "result",
+          "title": "Разглаживание, увлажнение и упругость",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "кожа выглядит более гладкой и подтянутой"
+            },
+            {
+              "title": "",
+              "body": "становится мягкой, упругой и увлажнённой"
+            },
+            {
+              "title": "",
+              "body": "уменьшается ощущение сухости и признаки усталости"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/dee82d59f105da3488604a09ad88385c441c420d.png",
+              "layout": {
+                "x": -22.88824,
+                "y": -29.32631,
+                "width": 151.96181,
+                "height": 186.39586,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Результат",
+          "visualAspectRatio": 0.8181818181818182
+        },
+        {
+          "kind": "lifehack",
+          "title": "Лайфхак",
+          "body": "Мягко распределите крем по массажным линиям — от центра лица к периферии. Это помогает улучшить микроциркуляцию и уменьшить ощущение отёчности",
+          "additionalBody": "",
+          "items": [],
+          "media": []
+        },
+        {
+          "kind": "feature",
+          "title": "Почему «Лифтинг»?",
+          "body": "Комплекс активных компонентов помогает коже выглядеть более гладкой, упругой и подтянутой. Пептид способствует разглаживанию мимических морщин, а гиалуроновая кислота, ниацинамид и сквалан поддерживают увлажнённость и эластичность кожи",
+          "additionalBody": "Результат: более гладкая, упругая и ухоженная кожа",
+          "items": [],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/ad0b8591433e789126bf79c6d65d1c76eeca37cb.png",
+              "layout": {
+                "x": -9.01598,
+                "y": -20.95002,
+                "width": 109.87402,
+                "height": 133.28047,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Эффект",
+          "visualAspectRatio": 0.8090909090909091
+        },
+        {
+          "kind": "ingredients",
+          "title": "Ниацинамид, пептид, гиалуроновая кислота и сквалан",
+          "body": "Ниацинамид укрепляет защитный барьер и выравнивает тон кожи, пептид помогает разгладить кожу и уменьшить выраженность мимических морщин, гиалуроновая кислота поддерживает увлажнённость и упругость, а сквалан смягчает кожу и предотвращает потерю влаги",
+          "additionalBody": "Также содержит кофеин, масло ши, асаи, фукус и троксерутин — для питания, увлажнения и свежего вида кожи",
+          "items": [],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/49dd6c623f383fa205349169ca6a005d86771a64.png",
+              "layout": {
+                "x": -4.11743,
+                "y": -7.96448,
+                "width": 110.62869,
+                "height": 138.92905,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Активные компоненты",
+          "visualAspectRatio": 2.25
+        }
+      ],
+      "recommendations": [
+        "1S-BA-02-01",
+        "1S-BA-02-04",
+        "1S-BA-03",
+        "1S-BA-01"
+      ]
+    }
+  },
+  {
+    "sku": "1S-FL-01",
+    "pdp": {
+      "version": 1,
+      "node": "418:3744",
+      "enabled": true,
+      "sections": [
+        {
+          "kind": "result",
+          "title": "Мягкое увлажнение\nи восстановление кожи",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "поддерживает естественный защитный барьер кожи"
+            },
+            {
+              "title": "",
+              "body": "уменьшает ощущение сухости и стянутости"
+            },
+            {
+              "title": "",
+              "body": "делает кожу более гладкой, мягкой и упругой"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/7754b91ed174c717abe4b430a0a78d2a225dab83.png",
+              "layout": {
+                "x": -9.37435,
+                "y": -21.87984,
+                "width": 113.38403,
+                "height": 139.05478,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Результат",
+          "visualAspectRatio": 0.8181818181818182
+        },
+        {
+          "kind": "lifehack",
+          "title": "Лайфхак",
+          "body": "Наносите крем на слегка влажную кожу сразу после умывания — так кожа дольше сохраняет влагу и ощущается более мягкой и наполненной",
+          "additionalBody": "",
+          "items": [],
+          "media": []
+        },
+        {
+          "kind": "feature",
+          "title": "Почему «Восстанавливающий»?",
+          "body": "Комплекс активных компонентов помогает коже восстановить комфорт, мягкость и защитный барьер. Ниацинамид, аллантоин и центелла поддерживают защитные функции кожи, а NMF-комплекс, гиалуроновая кислота и масла помогают восполнить влагу и уменьшить её потерю",
+          "additionalBody": "Результат: увлажнённая, мягкая и более защищённая кожа",
+          "items": [],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/f6b016ac9705d5d2399f9b139f6fdd0a83919282.png",
+              "layout": {
+                "x": -22.47389,
+                "y": -15.03098,
+                "width": 141.98728,
+                "height": 172.23482,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Эффект",
+          "visualAspectRatio": 0.8090909090909091
+        },
+        {
+          "kind": "ingredients",
+          "title": "Ниацинамид, пептид, гиалуроновая кислота",
+          "body": "Ниацинамид помогает укреплять защитный барьер и выравнивать тон кожи, пептид поддерживает упругость и плотность кожи, а гиалуроновая кислота и NMF-комплекс насыщают кожу влагой и помогают сохранить её",
+          "additionalBody": "Также содержит: аллантоин, инулин и растительные экстракты для успокоения и восстановления кожи, а масла — для питания и смягчения",
+          "items": [],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/a05d81f7e5865eb21946e6325a2f5ebf07878be1.png",
+              "layout": {
+                "x": -4.66669,
+                "y": -4.90619,
+                "width": 105.75803,
+                "height": 132.81241,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Активные компоненты",
+          "visualAspectRatio": 2.25
+        }
+      ],
+      "recommendations": [
+        "1S-BA-02-01",
+        "1S-BA-02-04",
+        "1S-BA-03",
+        "1S-BA-01"
+      ]
+    }
+  },
+  {
+    "sku": "1S-HK-02",
+    "pdp": {
+      "version": 1,
+      "node": "418:3983",
+      "enabled": true,
+      "sections": [
+        {
+          "kind": "result",
+          "title": "Послушные и гладкие",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "сияющие и здоровые: глянцевый блеск"
+            },
+            {
+              "title": "",
+              "body": "устойчивые к повреждениям и внешним воздействиям"
+            },
+            {
+              "title": "",
+              "body": "наполненные влагой и упругие"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/1ff1866b759e5bc8a48292fa97656bb3b5d4402e.jpg",
+              "layout": {
+                "x": -7.47613,
+                "y": -9.19249,
+                "width": 113.06641,
+                "height": 138.6956,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Результат",
+          "visualAspectRatio": 0.8181818181818182
+        },
+        {
+          "kind": "howTo",
+          "title": "Как использовать ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "Встряхните флакон перед использованием",
+              "media": {
+                "src": "/images/figma/rich-content/b994ce991b106f50468f8906d41815301c341792.png",
+                "layout": {
+                  "x": -16.83235,
+                  "y": -35.51967,
+                  "width": 114.85907,
+                  "height": 158.61491,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Распылите по длине на расстояние 15-20 см, избегая области у корней",
+              "media": {
+                "src": "/images/figma/rich-content/219c21b70a5577b8791c7d1514f572e743f279cf.png",
+                "layout": {
+                  "x": -51.76904,
+                  "y": -143.26009,
+                  "width": 283.9974,
+                  "height": 388.14372,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Расчешите для равномерного распределения",
+              "media": {
+                "src": "/images/figma/rich-content/212e325b1c44f27f311d7ff5d396abc088d0c88a.png",
+                "layout": {
+                  "x": 0.00943,
+                  "y": -7.96515,
+                  "width": 99.99999,
+                  "height": 155.256,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Не смывая, приступите к укладке обычным или «кудрявым» методом",
+              "media": {
+                "src": "/images/figma/rich-content/1ad2db261ec175fa0a95dd61b60b731ef7168a6d.png",
+                "layout": {
+                  "x": -3.95339,
+                  "y": -27.78367,
+                  "width": 107.92542,
+                  "height": 149.14279,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            }
+          ],
+          "media": []
+        },
+        {
+          "kind": "lifehack",
+          "title": "Лайфхак",
+          "body": "Освежите укладку: пару пшиков спрея и равномерное прочёсывание — причёска как новая",
+          "additionalBody": "",
+          "items": [],
+          "media": []
+        },
+        {
+          "kind": "fragrance",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Верхние ноты",
+              "body": "сочный спелый персик, хрустящая карамель"
+            },
+            {
+              "title": "Ноты сердца",
+              "body": "ванильный крем, цветочные аккорды жасмина"
+            },
+            {
+              "title": "Базовые данные",
+              "body": "мускус, древесные нотки, пралине"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/composition-418-4087.png",
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              }
+            }
+          ],
+          "eyebrow": "Аромат",
+          "visualAspectRatio": 0.8090909090909091
+        },
+        {
+          "kind": "ingredients",
+          "title": "Кератин, аминокислотный комплекс, термозащитные и разглаживающие компоненты",
+          "body": "Кератин помогает сделать волосы более плотными и гладкими, аминокислоты поддерживают увлажнённость и эластичность, а разглаживающие компоненты уменьшают пушение и облегчают укладку",
+          "additionalBody": "Также содержит экстракт персика и термозащитные компоненты",
+          "items": [],
+          "media": [],
+          "visualAspectRatio": 2.25
+        }
+      ],
+      "recommendations": [
+        "1S-BA-02-01",
+        "1S-BA-02-04",
+        "1S-BA-03",
+        "1S-BA-01"
+      ]
+    }
+  },
+  {
+    "sku": "1S-HK-03",
+    "pdp": {
+      "version": 1,
+      "node": "418:4215",
+      "enabled": true,
+      "sections": [
+        {
+          "kind": "result",
+          "title": "С каждым днем волосы сильнее ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "интенсивное увлажнение по всей длине"
+            },
+            {
+              "title": "",
+              "body": "зеркальный глянец и глубина цвета"
+            },
+            {
+              "title": "",
+              "body": "лёгкая укладка и идеальная гладкость"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/a075e867aa34ee179f3b2076a4144f658d3de9f5.jpg",
+              "layout": {
+                "x": -13.30859,
+                "y": 0.0,
+                "width": 113.3086,
+                "height": 138.99269,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Результат",
+          "visualAspectRatio": 0.8181818181818182
+        },
+        {
+          "kind": "howTo",
+          "title": "Как использовать ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "Нанеси на чистые влажные волосы по длине, избегая зоны у корней",
+              "media": {
+                "src": "/images/figma/rich-content/ea755d3287a7fb6d8aa1ff512de2afeac2063740.png",
+                "layout": {
+                  "x": 6.89655,
+                  "y": -11.61761,
+                  "width": 93.78742,
+                  "height": 121.37953,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Равномерно распредели по длине уделив внимание кончикам",
+              "media": {
+                "src": "/images/figma/rich-content/b47136cfab1367493bf3b16702cd8c1e5f6c889a.png",
+                "layout": {
+                  "x": 0.00898,
+                  "y": -92.06729,
+                  "width": 151.21498,
+                  "height": 234.80863,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Оставь на 1–2 минуты (не требует долгого выдерживания!)",
+              "media": {
+                "src": "/images/figma/rich-content/212e325b1c44f27f311d7ff5d396abc088d0c88a.png",
+                "layout": {
+                  "x": 0.00898,
+                  "y": -7.96515,
+                  "width": 99.99999,
+                  "height": 155.256,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Тщательно смой прохладной водой для запечатывания кутикулы",
+              "media": {
+                "src": "/images/figma/rich-content/c175740bafc1959e36c651515fc7bc2d7bb517e2.png",
+                "layout": {
+                  "x": -107.88748,
+                  "y": -141.62621,
+                  "width": 241.26437,
+                  "height": 374.6385,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            }
+          ],
+          "media": []
+        },
+        {
+          "kind": "lifehack",
+          "title": "Лайфхак",
+          "body": "Расчеши волосы гребнем с редкими и широкими зубьями после нанесения бальзама, чтобы равномерно распределить бальзам по длине и облегчить расчесывание после высыхания",
+          "additionalBody": "",
+          "items": [],
+          "media": []
+        },
+        {
+          "kind": "fragrance",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Верхние ноты",
+              "body": "марин, черная смородина, груша, розовый перец"
+            },
+            {
+              "title": "Ноты сердца",
+              "body": "жасмин, апельсиновый цвет, роза, фиалка"
+            },
+            {
+              "title": "Базовые данные",
+              "body": "ваниль, пачули, белый кедр, мускус"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/composition-418-4319.png",
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              }
+            }
+          ],
+          "eyebrow": "Аромат",
+          "visualAspectRatio": 0.8090909090909091
+        },
+        {
+          "kind": "ingredients",
+          "title": "Кератин, кокосовое масло, глицерин и растительные экстракты",
+          "body": "Кератин помогает сделать волосы более гладкими, плотными и визуально ухоженными. Кокосовое масло питает и смягчает волосы, а глицерин удерживает влагу и помогает поддерживать их мягкость и эластичность",
+          "additionalBody": "Также содержит экстракты асаи, малины и розмарина — для дополнительного ухода, гладкости и естественного блеска волос",
+          "items": [],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/cf025037d6f22fb54f823187617d6bbb037547e6.jpg",
+              "layout": {
+                "x": 27.34601,
+                "y": -77.72664,
+                "width": 113.92183,
+                "height": 320.45325,
+                "rotation": -166.6,
+                "flipX": false,
+                "flipY": true
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 2.25
+        }
+      ],
+      "recommendations": [
+        "1S-BA-02-01",
+        "1S-BA-02-04",
+        "1S-BA-03",
+        "1S-BA-01"
+      ]
+    }
+  },
+  {
+    "sku": "1S-HK-01",
+    "pdp": {
+      "version": 1,
+      "node": "418:4470",
+      "enabled": true,
+      "sections": [
+        {
+          "kind": "result",
+          "title": "Мягкое, но эффективное очищение",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "напитанные и увлажненные"
+            },
+            {
+              "title": "",
+              "body": "гладкие и упругие"
+            },
+            {
+              "title": "",
+              "body": "стойкий цвет дольше на 2-3 недели"
+            },
+            {
+              "title": "",
+              "body": "послушные и сияющие"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/f7997a789497cc799872be0b0ee8540f1cb19329.jpg",
+              "layout": {
+                "x": -31.35026,
+                "y": -17.93599,
+                "width": 146.48512,
+                "height": 179.68946,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Результат",
+          "visualAspectRatio": 0.8181818181818182
+        },
+        {
+          "kind": "howTo",
+          "title": "Как использовать ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "Нанеси шампунь на корни волос",
+              "media": {
+                "src": "/images/figma/rich-content/10ff4690c47a4b7aa12fcfe8dcbf00eb4ee4a93f.png",
+                "layout": {
+                  "x": 6.38411,
+                  "y": -8.63677,
+                  "width": 92.0023,
+                  "height": 119.06905,
+                  "rotation": -1.64,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Промассируй подушечками пальцев 1-2 минуты",
+              "media": {
+                "src": "/images/figma/rich-content/a9aa1e61b45c99e4b9abb2611e6eb59a3a3d1991.png",
+                "layout": {
+                  "x": -22.58396,
+                  "y": -89.24363,
+                  "width": 145.18566,
+                  "height": 198.29125,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Тщательно смой шампунь водой",
+              "media": {
+                "src": "/images/figma/rich-content/212e325b1c44f27f311d7ff5d396abc088d0c88a.png",
+                "layout": {
+                  "x": 0.00898,
+                  "y": -8.67943,
+                  "width": 99.99999,
+                  "height": 155.256,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Приступите к дальнейшему уходу"
+            }
+          ],
+          "media": []
+        },
+        {
+          "kind": "lifehack",
+          "title": "Лайфхак",
+          "body": "Смывайте теплой или прохладной водой, чтобы уменьшить жирность и добавить блеска",
+          "additionalBody": "",
+          "items": [],
+          "media": []
+        },
+        {
+          "kind": "fragrance",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Верхние ноты",
+              "body": "марин, черная смородина, груша, розовый перец"
+            },
+            {
+              "title": "Ноты сердца",
+              "body": "жасмин, апельсиновый цвет, роза, фиалка"
+            },
+            {
+              "title": "Базовые данные",
+              "body": "ваниль, пачули, белый кедр, мускус"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/composition-418-4575.png",
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              }
+            }
+          ],
+          "eyebrow": "Аромат",
+          "visualAspectRatio": 0.8090909090909091
+        },
+        {
+          "kind": "ingredients",
+          "title": "Кератин, глицерин, кондиционирующий комплекс и растительные экстракты",
+          "body": "Кератин помогает сделать волосы более гладкими, плотными и визуально ухоженными. Глицерин удерживает влагу и помогает сохранить мягкость волос после очищения, а кондиционирующий компонент Polyquaternium-7 облегчает расчёсывание и уменьшает спутывание",
+          "additionalBody": "Также содержит экстракты асаи и манго — для дополнительного ухода, мягкости и естественного сияния волос",
+          "items": [],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/cf025037d6f22fb54f823187617d6bbb037547e6.jpg",
+              "layout": {
+                "x": 27.50187,
+                "y": -69.56735,
+                "width": 107.40956,
+                "height": 302.13463,
+                "rotation": 26.72,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 2.25
+        }
+      ],
+      "recommendations": [
+        "1S-BA-02-01",
+        "1S-BA-02-04",
+        "1S-BA-03",
+        "1S-BA-01"
+      ]
+    }
+  },
+  {
+    "sku": "1S-HK-05",
+    "pdp": {
+      "version": 1,
+      "node": "418:4726",
+      "enabled": true,
+      "sections": [
+        {
+          "kind": "result",
+          "title": "Мгновенное сияние",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "реконструирует разрушенную структуру"
+            },
+            {
+              "title": "",
+              "body": "возвращает прядям настоящий здоровый блеск"
+            },
+            {
+              "title": "",
+              "body": "облегчает расчёсывание в 3 раза"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/7ff9eed2a29645a2f8026bfe2d1e7d5d3dda0fdf.png",
+              "layout": {
+                "x": -37.13086,
+                "y": -7.48748,
+                "width": 162.28659,
+                "height": 199.07271,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Результат",
+          "visualAspectRatio": 0.8181818181818182
+        },
+        {
+          "kind": "howTo",
+          "title": "Как использовать ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "Нанесите на чистые влажные волосы",
+              "media": {
+                "src": "/images/figma/rich-content/16b146bc277596b03327cfab5c7ae364390c2ece.png",
+                "layout": {
+                  "x": 7.16819,
+                  "y": -11.26651,
+                  "width": 93.51614,
+                  "height": 121.02841,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Равномерно распределите по длине",
+              "media": {
+                "src": "/images/figma/rich-content/58795f8f69bc1b2dc025cc3e270042ad7969af00.png",
+                "layout": {
+                  "x": -27.16814,
+                  "y": -105.11063,
+                  "width": 149.7623,
+                  "height": 232.55286,
+                  "rotation": -1.02,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Нанесите от середины до кончиков, избегая корней",
+              "media": {
+                "src": "/images/figma/rich-content/212e325b1c44f27f311d7ff5d396abc088d0c88a.png",
+                "layout": {
+                  "x": 0.00898,
+                  "y": -7.96515,
+                  "width": 99.99999,
+                  "height": 155.256,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Оставьте на 5-7 минут, после тщательно смойте",
+              "media": {
+                "src": "/images/figma/rich-content/2d4cb458c118cd0698bac2e08f32ae6e89d70b6b.png",
+                "layout": {
+                  "x": -14.93961,
+                  "y": -5.70044,
+                  "width": 105.44897,
+                  "height": 141.76857,
+                  "rotation": -5.04,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": -23.16,
+                  "width": 141.57,
+                  "height": 123.16
+                }
+              }
+            }
+          ],
+          "media": []
+        },
+        {
+          "kind": "lifehack",
+          "title": "Лайфхак",
+          "body": "После маски используйте бальзам ASAYA. Он закрепит результат, сохранит полезные вещества внутри волоса и подарит им гладкость",
+          "additionalBody": "",
+          "items": [],
+          "media": []
+        },
+        {
+          "kind": "fragrance",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Верхние ноты",
+              "body": "марин, черная смородина, груша, розовый перец"
+            },
+            {
+              "title": "Ноты сердца",
+              "body": "жасмин, апельсиновый цвет, роза, фиалка"
+            },
+            {
+              "title": "Базовые данные",
+              "body": "ваниль, пачули, белый кедр, мускус"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/composition-418-4830.png",
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              }
+            }
+          ],
+          "eyebrow": "Аромат",
+          "visualAspectRatio": 0.8090909090909091
+        },
+        {
+          "kind": "ingredients",
+          "title": "Кератин, аминокислотный комплекс и разглаживающий компонент",
+          "body": "Кератин помогает сделать волосы более плотными, гладкими и визуально восстановленными. Аминокислоты поддерживают увлажнённость и эластичность волос, а разглаживающий компонент уменьшает пушение, облегчает расчёсывание и придаёт волосам блеск",
+          "additionalBody": "Также содержит экстракт черники — источник антиоксидантов, который дополняет уход и помогает сохранить здоровый и сияющий вид волос",
+          "items": [],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/3fd6aed4e4405e8ea691516367ad246068e0a8d4.png",
+              "layout": {
+                "x": 29.65803,
+                "y": -80.43097,
+                "width": 74.66389,
+                "height": 306.862,
+                "rotation": -3.25,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 2.25
+        }
+      ],
+      "recommendations": [
+        "1S-BA-02-01",
+        "1S-BA-02-04",
+        "1S-BA-03",
+        "1S-BA-01"
+      ]
+    }
+  },
+  {
+    "sku": "1S-HK-04",
+    "pdp": {
+      "version": 1,
+      "node": "418:4981",
+      "enabled": true,
+      "sections": [
+        {
+          "kind": "result",
+          "title": "Верните волосам силу и красоту",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "интенсивное увлажнение и шёлковая мягкость"
+            },
+            {
+              "title": "",
+              "body": "глянцевая сглаженная кутикула"
+            },
+            {
+              "title": "",
+              "body": "лёгкая укладка, комфорт при расчёсывании"
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/aa3d1f7ffab8ece3bada5c1b6d9d2b3ad8c2ce9a.png",
+              "layout": {
+                "x": -105.09201,
+                "y": -46.14493,
+                "width": 303.55556,
+                "height": 372.36364,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "eyebrow": "Результат",
+          "visualAspectRatio": 0.8181818181818182
+        },
+        {
+          "kind": "howTo",
+          "title": "Как использовать ",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "",
+              "body": "Встряхните флакон перед использованием",
+              "media": {
+                "src": "/images/figma/rich-content/96e461a50c182e3ec732caef747ef22af022615f.png",
+                "layout": {
+                  "x": -9.63452,
+                  "y": -29.9728,
+                  "width": 107.19602,
+                  "height": 148.06803,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            },
+            {
+              "title": "",
+              "body": "Распылите на чистые и подсушенные полотенцем волосы, на расстоянии 15-20 см"
+            },
+            {
+              "title": "",
+              "body": "Расчешите для равномерного распределения"
+            },
+            {
+              "title": "",
+              "body": "Не смывая, приступите к укладке обычным или «кудрявым» методом",
+              "media": {
+                "src": "/images/figma/rich-content/e23ccd6148e84dbae323923a9dedf936e5e976ef.png",
+                "layout": {
+                  "x": -0.27299,
+                  "y": -14.72703,
+                  "width": 101.33598,
+                  "height": 131.1556,
+                  "rotation": 0,
+                  "flipX": false,
+                  "flipY": false
+                },
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 100
+                }
+              }
+            }
+          ],
+          "media": []
+        },
+        {
+          "kind": "lifehack",
+          "title": "Лайфхак",
+          "body": "После укладки нанесите 1–2 распыления на ладони, разотрите и слегка пройдитесь по длине и кончикам. Это поможет пригладить пушение и добавить ухоженный вид",
+          "additionalBody": "",
+          "items": [],
+          "media": []
+        },
+        {
+          "kind": "fragrance",
+          "title": "",
+          "body": "",
+          "additionalBody": "",
+          "items": [
+            {
+              "title": "Верхние ноты",
+              "body": "сочная вишня, прохладная мята"
+            },
+            {
+              "title": "Ноты сердца",
+              "body": "нежный жасмин,\nтаинственный ирис"
+            },
+            {
+              "title": "Базовые данные",
+              "body": "глубокий сандал,\nтёплый мускус "
+            }
+          ],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/composition-418-5083.png",
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              }
+            }
+          ],
+          "eyebrow": "Аромат",
+          "visualAspectRatio": 0.8090909090909091
+        },
+        {
+          "kind": "ingredients",
+          "title": "Кератин, аминокислотный комплекс, разглаживающие и кондиционирующие компоненты",
+          "body": "Кератин помогает сделать волосы более плотными, гладкими и визуально восстановленными. Аминокислотный комплекс поддерживает увлажнённость и эластичность волос, делая их мягкими и более живыми. Разглаживающие компоненты уменьшают пушение, облегчают расчёсываниея и помогают сохранить аккуратный вид волос",
+          "additionalBody": "Также содержит экстракт вишни — для мягкости и естественного сияния волос",
+          "items": [],
+          "media": [
+            {
+              "src": "/images/figma/rich-content/af33b2ff4f60344cb03a06f23360777d6db4b183.png",
+              "layout": {
+                "x": 3.04622,
+                "y": -67.34247,
+                "width": 129.86587,
+                "height": 359.32483,
+                "rotation": 0,
+                "flipX": false,
+                "flipY": false
+              },
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100
+              }
+            }
+          ],
+          "visualAspectRatio": 2.25
+        }
+      ],
+      "recommendations": [
+        "1S-BA-02-01",
+        "1S-BA-02-04",
+        "1S-BA-03",
+        "1S-BA-01"
+      ]
+    }
+  }
+]

@@ -811,7 +811,7 @@
 .recommendationGrid {
   composes: layout from "./product-layout.module.css";
   display: grid;
-  grid-auto-columns: var(--product-rail-column);
+  grid-auto-columns: calc(25% - 18.5625px);
   grid-template-columns: none;
   grid-auto-flow: column;
   gap: var(--product-gap);
@@ -1135,4 +1135,6 @@
 }
 @media(max-width:900px){.product{grid-template-columns:1fr;align-items:start}.galleryColumn{height:auto;min-height:0}.gallery{min-height:0;aspect-ratio:890/920}.details{height:auto;max-height:none;overflow:visible}}
 
-@media(min-width:901px){.recommendationGrid{grid-auto-columns:calc((100% - 3 * var(--product-gap)) / 4)}}
+@media (max-width: 900px) {
+  .recommendationGrid { grid-auto-columns: var(--product-rail-column); }
+}
