@@ -1,3 +1,5 @@
+import {SMS_CONSENT_VERSION} from '../src/sms-consent-policy.js';
+const smsConsent={accepted:true as const,version:SMS_CONSENT_VERSION} as const;
 import { before,after,beforeEach,test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -649,7 +651,7 @@ test('OTP limits persist after failed verification and codes are single use',asy
 });
 test('expired OTP and unavailable providers cannot authenticate',async()=>{
  const sender=new MemorySender();const auth=new AuthService(db,secret,sender,()=>now);
- const ch=await auth.request('sms','+79990000000','ip-1');now=new Date(now.getTime()+301_000);
+ const ch=await auth.request('sms','+79990000000','ip-1',smsConsent);now=new Date(now.getTime()+301_000);
  await assert.rejects(auth.verify(ch.challengeId,sender.messages[0]!.code,'ip-1'),/INVALID_OTP/);
  const disabled=new AuthService(db,secret,new DisabledOtpSender(),()=>now);
  await assert.rejects(disabled.request('email','fail@example.test','ip-2'),/OTP_DELIVERY_UNAVAILABLE/);

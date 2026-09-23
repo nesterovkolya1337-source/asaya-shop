@@ -1,3 +1,5 @@
+import {SMS_CONSENT_VERSION} from '../src/sms-consent-policy.js';
+const smsConsent={accepted:true as const,version:SMS_CONSENT_VERSION} as const;
 import {buildApp} from '../src/app.js';
 import {AuthService,DisabledOtpSender} from '../src/auth.js';
 import {StaffAuth} from '../src/staff-auth.js';
@@ -137,7 +139,7 @@ test('HTTP customer and manager flows enforce identity/CSRF and are allowed in c
  await ctx.db.pool.query("INSERT INTO staff_sessions(token_hash,user_id,created_at,expires_at) VALUES($1,$2,now(),now()+interval '1 hour')",[hash(staffToken),staffId]);
  const staffCsrf=(await staff.session(staffToken)).csrfToken;
  let code='';const auth=new AuthService(ctx.db,secret,{sendOtp:async(input)=>{code=input.code;}});
- const challenge=await auth.request('sms','+79990000001','127.0.0.1');const session=await auth.verify(challenge.challengeId,code,'127.0.0.1');
+ const challenge=await auth.request('sms','+79990000001','127.0.0.1',smsConsent);const session=await auth.verify(challenge.challengeId,code,'127.0.0.1');
  for(const deploymentMode of ['catalog','ycp'] as const){
   const app=await buildApp({db:ctx.db,deploymentMode,origin,staffSecret:secret,otpSecret:secret,otpSender:{sendOtp:async()=>{}},customerSmsEnabled:true,secureCookies:true,...(deploymentMode==='ycp'?{ycp:{token:'x'.repeat(40),settings:{accountId:'fixture',environment:'production',publicOrigin:origin,warehouses:[]}}}:{})});
   try{

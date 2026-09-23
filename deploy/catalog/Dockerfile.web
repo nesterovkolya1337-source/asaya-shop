@@ -5,7 +5,7 @@ COPY package*.json ./
 RUN npm ci
 COPY next.config.ts tsconfig.json ./
 COPY src ./src
-COPY backend/src/site-content-format.ts backend/src/site-content-defaults.ts backend/src/site-legal-defaults.ts backend/src/pdp-content.ts backend/src/image-crop.ts backend/src/customer-phone.ts backend/src/publication-issues.ts ./backend/src/
+COPY backend/src/site-content-format.ts backend/src/site-content-defaults.ts backend/src/site-legal-defaults.ts backend/src/sms-consent-policy.ts backend/src/pdp-content.ts backend/src/image-crop.ts backend/src/customer-phone.ts backend/src/publication-issues.ts ./backend/src/
 COPY public ./public
 RUN npm run build
 

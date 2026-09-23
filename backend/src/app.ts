@@ -1,3 +1,4 @@
+import {SmsConsent,smsConsentInput} from './sms-consent.js';
 import {Trash} from './trash.js';
 import {Engagement} from './engagement.js';
 import {Loyalty,loyaltyAmounts} from './loyalty.js';
@@ -101,16 +102,16 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   const ffRecheck=!!options.fulfillment&&req.method==='POST'&&req.routeOptions.url==='/api/admin/v1/orders/:id/fulfillment/recheck';
   if(options.deploymentMode==='catalog'&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
-   const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!cartQuote&&!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!engagementEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
+   const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/sms-consent/status','/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
+   if(!cartQuote&&!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!engagementEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
   }
   if(liveYcp&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
-   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
+   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|products(?:\/.*)?|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
    const checkoutLink=req.method==='POST'&&route==='/api/store/v1/yandex/checkout-link';
    // Yandex owns checkout/payments; CDEK callbacks have their own boundary. Do not enable the
    // local checkout or local-only order changes with customer SMS sign-in.
-   const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
+   const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/sms-consent/status','/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
    if(!cartQuote&&!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!ffRecheck&&!accountEdit&&!engagementEdit&&!adminEdit&&!checkoutLink&&!customerLogin&&!req.routeOptions.config.ycp)throw new DomainError('YANDEX_CHECKOUT_ONLY',503);
   }
   if(req.routeOptions.config.ycp){
@@ -184,6 +185,9 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   secured.post('/api/admin/v1/employees/:id',async req=>staff!.changeEmployee(await actor(req.cookies[staffCookie]),z.object({id:z.uuid()}).parse(req.params).id,req.body));
   secured.get('/api/admin/v1/products',async req=>adminCatalog.list(req.query));
   const pageId=(raw:unknown)=>z.object({page:z.string().max(50)}).parse(raw).page;
+  const smsConsents=new SmsConsent(options.db);
+  secured.get('/api/admin/v1/sms-consents',async req=>{const {phone}=z.object({phone:z.string().max(30)}).strict().parse(req.query);return smsConsents.history(phone);});
+  secured.post('/api/admin/v1/sms-consents/revoke',async req=>{const {phone,reason}=z.object({phone:z.string().max(30),reason:z.string().trim().min(1).max(500)}).strict().parse(req.body);return smsConsents.revoke(phone,await actor(req.cookies[staffCookie]),reason);});
   secured.get('/api/admin/v1/site-pages/:page',async req=>siteContent.get(pageId(req.params)));
   secured.put('/api/admin/v1/site-pages/:page',{bodyLimit:512*1024},async req=>siteContent.save(await actor(req.cookies[staffCookie]),pageId(req.params),req.body));
   secured.post('/api/admin/v1/site-pages/:page/publish',async req=>siteContent.publish(await actor(req.cookies[staffCookie]),pageId(req.params),req.body));
@@ -297,9 +301,10 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
    return reply.redirect('/account/?login='+reason,303);
   }
  });
+ app.post('/api/store/v1/auth/sms-consent/status',async req=>{const {destination}=z.object({destination:z.string().max(30)}).strict().parse(req.body);return auth.consentStatus(destination,req.ip);});
  app.post('/api/store/v1/auth/otp/request',async req=>{
-  const body=z.object({channel:z.enum(['email','sms']),destination:z.string().max(254)}).strict().parse(req.body);
-  return auth.request(body.channel,body.destination,req.ip);
+  const body=z.object({channel:z.enum(['email','sms']),destination:z.string().max(254),consent:smsConsentInput.optional()}).strict().parse(req.body);
+  return auth.request(body.channel,body.destination,req.ip,body.consent);
  });
  app.post('/api/store/v1/auth/otp/verify',async(req,reply)=>{
   const body=z.object({challengeId:z.uuid(),code:z.string().regex(/^\d{6}$/)}).strict().parse(req.body);

@@ -8,6 +8,7 @@ export function parseCustomerProfile(raw:unknown):CustomerProfile{
 }
 
 const messages:Record<string,string>={
+ SMS_CONSENT_REQUIRED:'Подтвердите согласие на SMS, чтобы получить код.',
  VERIFIED_PURCHASE_REQUIRED:'Отзыв доступен после подтверждённой покупки товара.',
  REFERRAL_NEW_CUSTOMER_ONLY:'Приглашение действует только для нового покупателя до первого заказа.',
  SELF_REFERRAL:'Нельзя использовать собственное приглашение.',
@@ -104,8 +105,9 @@ export function createAuthClient(base:string,fetcher:typeof fetch=fetch) {
    try {const data=object(await request('me','GET'));return parseSession({user:{id:data.id,role:data.role},csrfToken:data.csrfToken});}
    catch(error){if(error instanceof AuthClientError&&error.code==='UNAUTHENTICATED')return null;throw error;}
   },
-  async sendCode(channel:AuthChannel,destination:string):Promise<OtpChallenge> {
-   const data=object(await request('otp/request','POST',{channel,destination:destination.trim()}));
+  async smsConsentStatus(destination:string):Promise<{active:boolean;version:string}>{const data=object(await request('sms-consent/status','POST',{destination}));if(typeof data.active!=='boolean'||typeof data.version!=='string')throw new AuthClientError('INVALID_RESPONSE');return {active:data.active,version:data.version};},
+  async sendCode(channel:AuthChannel,destination:string,consent?:{accepted:true;version:string}):Promise<OtpChallenge> {
+   const data=object(await request('otp/request','POST',{channel,destination:destination.trim(),...(consent?{consent}:{})}));
    if(typeof data.challengeId!=='string'||!uuid.test(data.challengeId)||
     !Number.isInteger(data.expiresInSeconds)||Number(data.expiresInSeconds)<=0||Number(data.expiresInSeconds)>3600||
     !Number.isInteger(data.retryAfterSeconds)||Number(data.retryAfterSeconds)<1||Number(data.retryAfterSeconds)>3600)

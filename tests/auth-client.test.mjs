@@ -6,6 +6,16 @@ const id='00000000-0000-4000-8000-000000000001';
 const session={user:{id,role:'customer'},csrfToken:'a'.repeat(64)};
 const reply=(payload,status=200)=>new Response(JSON.stringify(payload),{status,headers:{'Content-Type':'application/json'}});
 
+test('SMS consent uses POST status and explicit versioned acceptance only when supplied',async()=>{
+ const calls=[];const client=createAuthClient('/api',async(url,options)=>{calls.push({url,...options});return reply(url.endsWith('/status')?{active:true,version:'2026-09-23-v1'}:{challengeId:id,expiresInSeconds:900,retryAfterSeconds:60});});
+ assert.deepEqual(await client.smsConsentStatus('+79991234567'),{active:true,version:'2026-09-23-v1'});
+ assert.equal(calls[0].method,'POST');assert.equal(calls[0].url,'/api/auth/sms-consent/status');
+ const consent={accepted:true,version:'2026-09-23-v1'};
+ await client.sendCode('sms','+79991234567',consent);assert.deepEqual(JSON.parse(calls[1].body).consent,consent);
+ await client.sendCode('sms','+79991234567');assert.equal('consent' in JSON.parse(calls[2].body),false);
+ await assert.rejects(createAuthClient('/api',async()=>reply({error:'SMS_CONSENT_REQUIRED'},403)).sendCode('sms','+79991234567'),e=>e.code==='SMS_CONSENT_REQUIRED');
+});
+
 test('session restore uses the cookie transport and returns a validated customer session',async()=>{
  const client=createAuthClient('/shop/api/store/v1',async(url,options)=>{
   assert.equal(url,'/shop/api/store/v1/auth/me');assert.equal(options.method,'GET');

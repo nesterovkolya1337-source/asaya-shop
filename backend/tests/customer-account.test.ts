@@ -1,3 +1,5 @@
+import {SMS_CONSENT_VERSION} from '../src/sms-consent-policy.js';
+const smsConsent={accepted:true as const,version:SMS_CONSENT_VERSION} as const;
 import {test,before,after,beforeEach} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -25,7 +27,7 @@ test('SMS normalization in database matches login, including invalid values',asy
 test('OTP registers a customer before any purchase, reuses normalized identity and associates a future order',async()=>{
  let now=new Date(),code='';const sender:OtpSender={sendOtp:async input=>{code=input.code;}};
  const auth=new AuthService(ctx.db,'s'.repeat(32),sender,()=>now,{},true),account=new CustomerAccount(ctx.db);
- const first=await auth.request('sms','8 (999) 123-45-67','ip');
+ const first=await auth.request('sms','8 (999) 123-45-67','ip',smsConsent);
  assert.equal((await ctx.db.pool.query('SELECT 1 FROM customer_profiles')).rowCount,0);
  const session=await auth.verify(first.challengeId,code,'ip');
  assert.deepEqual(await account.profile(session.user.id),{name:'',email:'',phone:'+79991234567'});
@@ -33,7 +35,7 @@ test('OTP registers a customer before any purchase, reuses normalized identity a
  assert.equal((await auth.session(session.token)).id,session.user.id);
  await auth.logout(session.token);await assert.rejects(auth.session(session.token),/UNAUTHENTICATED/);
  now=new Date(+now+61000);
- const again=await auth.request('sms','9991234567','ip');
+ const again=await auth.request('sms','9991234567','ip',smsConsent);
  const second=await auth.verify(again.challengeId,code,'ip');assert.equal(second.user.id,session.user.id);
  assert.equal((await ctx.db.pool.query('SELECT 1 FROM customer_profiles')).rowCount,1);
  assert.equal((await ctx.db.pool.query('SELECT 1 FROM users')).rowCount,1);
@@ -52,7 +54,7 @@ test('only completed SMS verification claims past guest YCP orders, idempotently
  const protectedOrder=await guestOrder('+79991234567',protectedUser);
  let code='';const sender:OtpSender={sendOtp:async input=>{code=input.code;}};
  const auth=new AuthService(ctx.db,'s'.repeat(32),sender,undefined,{},true),account=new CustomerAccount(ctx.db),commerce=new CommerceService(ctx.db);
- const challenge=await auth.request('sms','+79991234567','test');
+ const challenge=await auth.request('sms','+79991234567','test',smsConsent);
  assert.equal((await ctx.db.pool.query('SELECT user_id FROM orders WHERE id=$1',[past.id])).rows[0].user_id,past.guest);
  const session=await auth.verify(challenge.challengeId,code,'test');
  assert.equal((await commerce.orders(session.user.id)).items.length,1);

@@ -1,3 +1,4 @@
+import {requireSmsConsent,SmsConsent,type SmsConsentInput} from './sms-consent.js';
 import { randomInt,randomBytes,randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { Database,lock,type Tx } from './db.js';
@@ -33,7 +34,11 @@ export class AuthService {
   if(secret.length<32) throw new Error('OTP secret must be at least 32 characters');
   this.policy=otpPolicy(policy);
  }
- async request(channel:Channel,raw:string,ip:string) {
+ async consentStatus(raw:string,ip:string){
+  await this.db.transaction(tx=>limit(tx,`sms-consent-ip:${mac(this.secret,ip)}`,120,3600,this.clock()));
+  return new SmsConsent(this.db).status(raw);
+ }
+ async request(channel:Channel,raw:string,ip:string,consent?:SmsConsentInput) {
   if(this.smsOnly&&channel!=='sms')throw new DomainError('SMS_REQUIRED',400);
   const target=destination(channel,raw); const now=this.clock(); const id=randomUUID();
   const code=randomInt(0,1_000_000).toString().padStart(6,'0');
@@ -45,6 +50,7 @@ export class AuthService {
    if(latest&&now.getTime()-new Date(latest.created_at).getTime()<this.policy.resendSeconds*1000) throw new DomainError('OTP_COOLDOWN',429);
    await limit(tx,`otp-target:${mac(this.secret,channel+':'+target)}`,this.policy.sendPerPhonePerHour,3600,now);
    if(channel==='sms')await limit(tx,`otp-target-day:${mac(this.secret,channel+':'+target)}`,this.policy.sendPerPhonePerDay,86400,now);
+   if(channel==='sms')await requireSmsConsent(tx,target,now,consent);
    await tx.query('UPDATE otp_challenges SET consumed_at=$3 WHERE channel=$1 AND destination=$2 AND consumed_at IS NULL',[channel,target,now]);
    await tx.query(`INSERT INTO otp_challenges(id,channel,destination,code_mac,expires_at,delivery_status,created_at)
     VALUES($1,$2,$3,$4,$5,'pending',$6)`,[id,channel,target,mac(this.secret,`${id}:${code}`),new Date(now.getTime()+this.policy.ttlSeconds*1000),now]);
@@ -80,6 +86,7 @@ export class AuthService {
    const user=(await tx.query('SELECT id,role,disabled FROM users WHERE id=$1',[identity.user_id])).rows[0];
    // Staff accounts require a separate second-factor flow; customer OTP never grants staff access.
    if(user.disabled||user.role!=='customer') return null;
+   if(ch.channel==='sms')await tx.query('UPDATE sms_consents SET customer_id=$2,verified_at=COALESCE(verified_at,$3) WHERE phone=$1 AND revoked_at IS NULL',[ch.destination,user.id,now]);
    if(this.smsOnly&&ch.channel==='sms')await claimPhoneOrders(tx,user.id);
    const token=randomBytes(32).toString('base64url'); const csrf=this.csrfToken(token);
    await tx.query('INSERT INTO auth_sessions(token_hash,user_id,csrf_hash,created_at,expires_at) VALUES($1,$2,$3,$4,$5)',[hash(token),user.id,hash(csrf),now,new Date(now.getTime()+7*86400_000)]);
