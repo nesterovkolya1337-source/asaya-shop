@@ -83,12 +83,19 @@ export class AdminCatalog{
   try{return await this.db.transaction(async tx=>{
    await admin(tx,actor);await lock(tx,'catalog:admin');
    await checkMedia(tx,draft.content);
-   const p=(await tx.query('SELECT sku,active,archived_at FROM products WHERE id=$1 FOR UPDATE',[id])).rows[0];
-   const editor=(await tx.query('SELECT revision,published_at,published FROM product_editor WHERE product_id=$1 FOR UPDATE',[id])).rows[0];
+   const p=(await tx.query('SELECT sku,active,ever_published,archived_at FROM products WHERE id=$1 FOR UPDATE',[id])).rows[0];
+   const editor=(await tx.query('SELECT revision,draft,published_at,published FROM product_editor WHERE product_id=$1 FOR UPDATE',[id])).rows[0];
    if((editor?.revision??0)!==revision)throw new DomainError('EDIT_CONFLICT');
    if(p?.archived_at)throw new DomainError('PRODUCT_ARCHIVED');
    draft.sku ||= p?.sku ?? 'ASAYA-'+id;
    draft.slug ||= editor?.published?.slug ?? 'product-'+id;
+   // Product Editor does not own prices. Preserve the canonical Prices values,
+   // including never-published prices stored in the editor draft.
+   if(p){
+    const price=p.ever_published?(await tx.query('SELECT regular_minor,final_minor FROM product_prices WHERE product_id=$1',[id])).rows[0]:null;
+    draft.regularMinor=price?money(price.regular_minor):editor?.draft?.regularMinor??null;
+    draft.finalMinor=price?money(price.final_minor):editor?.draft?.finalMinor??null;
+   }
    draft.regularMinor ??= draft.finalMinor; draft.finalMinor ??= draft.regularMinor;
    draft.content.image ||= draft.content.gallery.find(v=>v.trim()) ?? '';
    if(p&&p.sku!==draft.sku){
@@ -102,7 +109,15 @@ export class AdminCatalog{
    }
    await tx.query(`INSERT INTO product_editor(product_id,revision,draft,updated_by) VALUES($1,1,$2,$3)
     ON CONFLICT(product_id) DO UPDATE SET revision=product_editor.revision+1,draft=excluded.draft,updated_by=excluded.updated_by,updated_at=now()`,[id,JSON.stringify(draft),actor]);
-   await audit(tx,actor,'product.draft_saved',id,{revision:revision+1});
+   if(p?.active){
+    if(!editor?.published)throw new DomainError('PUBLISH_INCOMPLETE');
+    if(editor.published.slug!==draft.slug)throw new DomainError('SLUG_IMMUTABLE');
+    if(publicationIssues(draft).length)throw new DomainError('PUBLISH_INCOMPLETE');
+    // Saving a visible card updates its content, not visibility, stock or price.
+    await tx.query('UPDATE products SET name=$2,weight_g=$3,width_mm=$4,height_mm=$5,depth_mm=$6,updated_at=now() WHERE id=$1',[id,draft.name,draft.weightG,draft.widthMm,draft.heightMm,draft.depthMm]);
+    await tx.query('UPDATE product_editor SET published=draft WHERE product_id=$1',[id]);
+   }
+   await audit(tx,actor,p?.active?'product.content_saved':'product.draft_saved',id,{revision:revision+1});
    return {id,revision:revision+1};
   });}catch(e){if((e as {code?:string}).code==='23505')throw new DomainError('SKU_IN_USE');throw e;}
  }

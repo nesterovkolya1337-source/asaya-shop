@@ -25,3 +25,11 @@ test('Rich Content is explicit opt-in and preserves disabled data without changi
  const c=contentSchema.parse({...emptyContent,description:'Canonical description',ingredients:'Canonical ingredients',pdp:rich});
  assert.equal(c.description,'Canonical description');assert.equal(c.ingredients,'Canonical ingredients');
 });
+
+test('block visibility is optional for legacy data and preserves hidden content and asset ownership',()=>{
+ const hidden={...pdp,enabled:true,sections:[{...section,visible:false}]};
+ assert.deepEqual(parsePdpContent(hidden),hidden);
+ assert.deepEqual(pdpMediaSources(parsePdpContent(hidden)),pdpMediaSources(parsePdpContent(pdp)));
+ assert.deepEqual(parsePdpContent({...hidden,enabled:false}).sections,hidden.sections);
+ assert.throws(()=>parsePdpContent({...hidden,sections:[{...section,visible:'false'}]}));
+});

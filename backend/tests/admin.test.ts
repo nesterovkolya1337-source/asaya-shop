@@ -45,16 +45,16 @@ test('staff failures remain rate limited and disabled users lose existing access
  clock=new Date(clock.getTime()+901000);const s=await a.login({email:'admin@example.test',password,code:code()},'ip');
  await ctx.db.pool.query('UPDATE users SET disabled=true WHERE id=$1',[id]);await assert.rejects(a.session(s.token),/UNAUTHENTICATED/);
 });
-test('draft publication is explicit; published edits stay draft until explicit publication; stale revisions and duplicate SKUs are rejected',async()=>{
+test('first visibility is explicit; published edits update immediately without changing price; revisions and SKUs stay protected',async()=>{
  const actor=await staff(),catalog=new AdminCatalog(ctx.db),commerce=new CommerceService(ctx.db),id=randomUUID(),d=draft();
  await catalog.save(actor,id,d);assert.deepEqual(await commerce.catalog(),[]);
  await catalog.publish(actor,id,{revision:1});let items=await commerce.catalog();
  assert.equal(items[0]!.name,d.name);assert.equal(items[0]!.content.description,d.content.description);
  await catalog.save(actor,id,{...d,revision:2,name:'Обновлённое имя',finalMinor:20000});
- assert.equal((await commerce.catalog())[0]!.name,d.name);assert.equal((await commerce.catalog())[0]!.finalMinor,d.finalMinor);assert.equal((await catalog.detail(id)).hasUnpublishedChanges,true);
+ assert.equal((await commerce.catalog())[0]!.name,'Обновлённое имя');assert.equal((await commerce.catalog())[0]!.finalMinor,d.finalMinor);assert.equal((await catalog.detail(id)).hasUnpublishedChanges,false);
  await assert.rejects(catalog.save(actor,id,{...d,revision:2}),/EDIT_CONFLICT/);
  await assert.rejects(catalog.publish(actor,id,{revision:2}),/EDIT_CONFLICT/);
- await catalog.publish(actor,id,{revision:3});items=await commerce.catalog();assert.equal(items[0]!.name,'Обновлённое имя');assert.equal(items[0]!.finalMinor,20000);
+ await catalog.publish(actor,id,{revision:3});items=await commerce.catalog();assert.equal(items[0]!.name,'Обновлённое имя');assert.equal(items[0]!.finalMinor,d.finalMinor);
  await assert.rejects(catalog.save(actor,randomUUID(),d),/SKU_IN_USE/);
  await catalog.unpublish(actor,id,{revision:4});assert.deepEqual(await commerce.catalog(),[]);
  const actions=(await catalog.history(id)).items;assert.ok(actions.every(r=>r.actor_id===actor));assert.equal(actions.length,5);
@@ -78,6 +78,7 @@ test('simultaneous editors cannot silently overwrite each other',async()=>{
  assert.equal((await catalog.detail(id)).revision,2);
 });
 test('stock changes respect reservations, stale quantities and immutable order snapshots',async()=>{
+ await ctx.db.pool.query('UPDATE storefront_banner SET sales_enabled=true');
  const actor=await staff(),catalog=new AdminCatalog(ctx.db),id=randomUUID(),d=draft(),warehouse=randomUUID(),buyer=randomUUID(),quote=randomUUID();
  await catalog.save(actor,id,d);await catalog.publish(actor,id,{revision:1});
  await ctx.db.pool.query("INSERT INTO warehouses(id,code,name,active) VALUES($1,'TEST','Test',true)",[warehouse]);
@@ -140,11 +141,11 @@ test('unused hidden SKU can be corrected with audit; published and integrated id
  await ctx.db.pool.query("INSERT INTO product_external_ids(provider,environment,account_id,external_id,product_id) VALUES('ycp','test','test','offer',$1)",[id]);
  await assert.rejects(catalog.save(actor,id,{...d,revision:4}),/SKU_IMMUTABLE/);
 });
-test('placement is private until publication and validates order values',async()=>{
+test('draft placement stays private; visible placement saves immediately and validates values',async()=>{
  const actor=await staff(),catalog=new AdminCatalog(ctx.db),commerce=new CommerceService(ctx.db),id=randomUUID(),d=draft();
  const placement={catalogOrder:4,bestsellerOrder:2,newOrder:null};await catalog.save(actor,id,{...d,content:{...d.content,placement}});
  assert.deepEqual(await commerce.catalog(),[]);await catalog.publish(actor,id,{revision:1});assert.deepEqual((await commerce.catalog())[0]!.content.placement,placement);
- await catalog.save(actor,id,{...d,revision:2,content:{...d.content,placement:{catalogOrder:1,bestsellerOrder:null,newOrder:3}}});assert.deepEqual((await commerce.catalog())[0]!.content.placement,placement);
+ await catalog.save(actor,id,{...d,revision:2,content:{...d.content,placement:{catalogOrder:1,bestsellerOrder:null,newOrder:3}}});assert.deepEqual((await commerce.catalog())[0]!.content.placement,{catalogOrder:1,bestsellerOrder:null,newOrder:3});
  for(const catalogOrder of [-1,1.5,100001])await assert.rejects(catalog.save(actor,id,{...d,revision:3,content:{...d.content,placement:{...placement,catalogOrder}}}));
  await catalog.publish(actor,id,{revision:3});assert.deepEqual((await commerce.catalog())[0]!.content.placement,{catalogOrder:1,bestsellerOrder:null,newOrder:3});
 });
@@ -173,20 +174,22 @@ test('soft deletion requires confirmation and revision; purge of unused draft is
 });
 
 
-test('incomplete drafts never affect an existing publication; publish validates the saved version',async()=>{
+test('visible saves reject incomplete content atomically; hidden saves retain hidden state',async()=>{
  const actor=await staff(),catalog=new AdminCatalog(ctx.db),id=randomUUID(),d=draft();
- await catalog.save(actor,id,d);await catalog.publish(actor,id,{revision:1});
- const live=await new CommerceService(ctx.db).catalog();let revision=2;
- for(const patch of [{name:''},{content:{...d.content,description:''}},{content:{...d.content,ingredients:''}},{content:{...d.content,image:'',gallery:[]}},{regularMinor:null,finalMinor:null}]){
-  await catalog.save(actor,id,{...d,...patch,revision});revision++;
+ await catalog.save(actor,id,d);assert.equal((await catalog.detail(id)).everPublished,false);
+ await catalog.publish(actor,id,{revision:1});
+ const live=await new CommerceService(ctx.db).catalog();
+ for(const patch of [{name:''},{content:{...d.content,description:''}},{content:{...d.content,ingredients:''}},{content:{...d.content,image:'',gallery:[]}}]){
+  await assert.rejects(catalog.save(actor,id,{...d,...patch,revision:2}),/PUBLISH_INCOMPLETE/);
   assert.deepEqual(await new CommerceService(ctx.db).catalog(),live);
-  await assert.rejects(catalog.publish(actor,id,{revision}),/PUBLISH_INCOMPLETE/);
-  assert.equal((await catalog.detail(id)).active,true);
+  assert.equal((await catalog.detail(id)).revision,2);
  }
- await catalog.save(actor,id,{...d,revision,name:'Saved draft'});revision++;
- assert.deepEqual(await new CommerceService(ctx.db).catalog(),live);
- await catalog.publish(actor,id,{revision});revision++;
- assert.equal((await new CommerceService(ctx.db).catalog())[0]!.name,'Saved draft');
- assert.equal((await catalog.detail(id)).hasUnpublishedChanges,false);
- await catalog.unpublish(actor,id,{revision});assert.deepEqual(await new CommerceService(ctx.db).catalog(),[]);
+ await catalog.save(actor,id,{...d,revision:2,name:'Visible edit'});
+ assert.equal((await new CommerceService(ctx.db).catalog())[0]!.name,'Visible edit');
+ await catalog.unpublish(actor,id,{revision:3});
+ await catalog.save(actor,id,{...d,revision:4,name:'Hidden edit',content:{...d.content,ingredients:''}});
+ assert.deepEqual(await new CommerceService(ctx.db).catalog(),[]);
+ assert.equal((await catalog.detail(id)).lifecycle,'unpublished');
+ assert.equal((await catalog.detail(id)).everPublished,true);
+ await assert.rejects(catalog.publish(actor,id,{revision:5}),/PUBLISH_INCOMPLETE/);
 });

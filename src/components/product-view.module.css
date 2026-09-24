@@ -1149,3 +1149,5 @@
 
 .stickySecondary>*{width:100%}
 @media(max-width:900px){.stickyBuy>.stickySecondary{display:none}}
+
+@media(min-width:901px){.recommendationGrid{grid-auto-columns:calc((100% - 3 * var(--product-gap))/4)}}

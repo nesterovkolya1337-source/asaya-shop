@@ -86,6 +86,7 @@ export class YandexFeed {
  }
  async checkoutLink(raw:unknown,idempotencyKey:string=randomUUID()){
   z.uuid().parse(idempotencyKey);
+  if(raw&&typeof raw==='object'&&'promoCode' in raw)throw new DomainError('PROMO_CHECKOUT_UNAVAILABLE',409);
   const s=this.settings;
   const body=z.object({items:z.array(z.object({sku:z.string().min(1).max(200),quantity:z.number().int().min(1).max(100)}).strict()).min(1).max(50)}).strict()
    .refine(v=>new Set(v.items.map(i=>i.sku)).size===v.items.length).parse(raw);

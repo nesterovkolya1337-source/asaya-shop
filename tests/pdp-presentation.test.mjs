@@ -7,10 +7,19 @@ test('rich content is optional, explicitly enabled and suppresses empty sections
  assert.deepEqual(richSections(),[]);assert.deepEqual(richSections(pdp),[]);assert.deepEqual(richSections({...pdp,enabled:false}),[]);assert.deepEqual(richSections({...pdp,enabled:true}),[]);
  assert.equal(richSections({...pdp,enabled:true,sections:[{...empty,body:'Text'}]}).length,1);
 });
-test('recommendations use published public candidates, exclude current, deduplicate and fill four; cart excludes cart items',()=>{
- const ps=Array.from({length:6},(_,i)=>({id:'p'+i,sku:'SKU'+i,active:true,recommendations:[]}));
+test('recommendations use published public candidates, exclude current, deduplicate and fill a scrollable rail; cart excludes cart items',()=>{
+ const ps=Array.from({length:6},(_,i)=>({id:'p'+i,sku:'SKU'+i,active:true,stock:10,category:'body',recommendations:[]}));
  const current={...ps[0],pdp:{recommendations:['SKU2','SKU2','missing','SKU0']}};
- assert.deepEqual(pdpRecommendations([...ps,{id:'hidden',sku:'H',active:false}],current).map(p=>p.id),['p2','p1','p3','p4']);
+ assert.deepEqual(pdpRecommendations([...ps,{id:'hidden',sku:'H',active:false}],current).map(p=>p.id),['p1','p2','p3','p4','p5']);
  assert.equal(pdpRecommendations(ps.slice(0,2),current).length,1);
  assert.equal(cartRecommendations(ps,{p0:1,p1:1}).length,4);
+});
+
+test('hidden blocks are omitted and restored in canonical order without erasing data',()=>{
+ const sections=[{...empty,body:'First'},{...empty,kind:'feature',body:'Second',visible:false},{...empty,kind:'faq',items:[{title:'Q',body:'A'}]}];
+ const pdp={version:1,node:'418:2286',enabled:true,sections,recommendations:[]};
+ assert.deepEqual(richSections(pdp).map(s=>s.kind),['result','faq']);
+ assert.deepEqual(richSections({...pdp,enabled:false}),[]);
+ assert.equal(pdp.sections[1].body,'Second');
+ assert.deepEqual(richSections({...pdp,sections:sections.map(s=>({...s,visible:true}))}).map(s=>s.kind),['result','feature','faq']);
 });

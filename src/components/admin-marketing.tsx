@@ -1,5 +1,5 @@
 'use client';
-import {AdminSales} from './admin-sales';
+import {AdminPromocodes} from './admin-promocodes';
 import {AdminReviews,ReplenishmentSettings} from './admin-engagement';
 import {useEffect,useState} from 'react';
 import {assetPath} from '@/lib/asset-path';
@@ -11,6 +11,7 @@ const request=createStoreRequest(assetPath('/api/admin/v1'),fetch);
 const fields=[['twoPercent','Скидка на 2 товара, %'],['threePercent','Скидка на 3 и более товаров, %'],['freeShippingMinor','Бесплатная доставка в ПВЗ СДЭК от, ₽']] as const;
 const equal=(a:Config,b:Config)=>fields.every(([key])=>a[key]===b[key])&&JSON.stringify(a.replenishment)===JSON.stringify(b.replenishment)&&JSON.stringify(a.loyalty)===JSON.stringify(b.loyalty);
 export function AdminMarketing({session,onExpired}:{session:StaffSession;onExpired:()=>void}){
+ const [tab,setTab]=useState<'settings'|'promocodes'>('settings');
  const [state,setState]=useState<State|null>(null),[edit,setEdit]=useState<Config|null>(null),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[confirm,setConfirm]=useState(false);
  function accept(v:State){setState(v);setEdit(v.draft);}
  function fail(e:unknown){if(e instanceof AuthClientError&&e.code==='UNAUTHENTICATED')onExpired();setNotice(e instanceof AuthClientError&&e.code==='REVISION_CONFLICT'?'Настройки уже изменены другим сотрудником. Перезагрузите страницу перед сохранением.':adminError(e));}
@@ -21,7 +22,7 @@ export function AdminMarketing({session,onExpired}:{session:StaffSession;onExpir
   const result=await request('marketing/'+action,'POST',{revision:state.revision,...(['save','defaults'].includes(action)?{settings:edit}:{}),...(action==='defaults'?{confirmed:true}:{})},session.csrfToken) as State;
   setState(result);if(action!=='defaults')setEdit(result.draft);setConfirm(false);setNotice(action==='publish'?'Настройки опубликованы.':action==='defaults'?'Стандартные значения обновлены. Черновик и сайт не изменены.':'Черновик сохранён. Сайт не изменён.');
  }catch(e){fail(e);}finally{setBusy(false);}}
- return <section aria-label="Маркетинг"><h1>Маркетинг</h1><AdminSales session={session} onExpired={onExpired}/><p>Сохраните черновик, затем опубликуйте его, чтобы применить настройки на сайте.</p><p>Порог бесплатной доставки в кабинете Яндекса должен совпадать с опубликованным здесь. Эти настройки обновляют сайт; условия доставки в Яндексе сохраняются отдельно.</p>{notice&&<p role="status">{notice}</p>}{state&&edit&&<>
+ return <section aria-label="Маркетинг"><h1>Маркетинг</h1><nav aria-label="Разделы маркетинга"><button type="button" aria-pressed={tab==='settings'} onClick={()=>setTab('settings')}>Настройки скидок</button><button type="button" aria-pressed={tab==='promocodes'} onClick={()=>setTab('promocodes')}>Промокоды</button></nav>{tab==='promocodes'&&<AdminPromocodes session={session}/>}<div hidden={tab!=='settings'}><p>Сохраните черновик, затем опубликуйте его, чтобы применить настройки на сайте.</p><p>Порог бесплатной доставки в кабинете Яндекса должен совпадать с опубликованным здесь. Эти настройки обновляют сайт; условия доставки в Яндексе сохраняются отдельно.</p>{notice&&<p role="status">{notice}</p>}{state&&edit&&<>
  <p role="status">{equal(edit,state.defaults)?'Стандартное значение ASAYA':'Отличается от стандартных настроек'}</p>
  <form onSubmit={e=>{e.preventDefault();void act('save');}}><fieldset disabled={busy}>{fields.map(([key,label])=><label key={key}>{label}<input required type="number" min="0" max={key==='freeShippingMinor'?1000000:100} step={key==='freeShippingMinor'?'0.01':'1'} value={edit[key]/(key==='freeShippingMinor'?100:1)} onChange={e=>setEdit({...edit,[key]:Math.round(Number(e.target.value)*(key==='freeShippingMinor'?100:1))})}/><small>Стандарт: {state.defaults[key]/(key==='freeShippingMinor'?100:1)} · На сайте: {state.live[key]/(key==='freeShippingMinor'?100:1)}</small></label>)}
  <h2>Лояльность</h2><p>1 балл = 1 ₽. Списание в Яндекс ожидает подтверждения интеграции.</p>{(['cashbackPercent','maxRedemptionPercent'] as const).map(key=><label key={key}>{key==='cashbackPercent'?'Начисление баллов, %':'Максимальное списание, %'}<input type="number" required min={0} max={100} step={1} value={edit.loyalty?.[key]??(key==='cashbackPercent'?3:20)} onChange={e=>setEdit({...edit,loyalty:{cashbackPercent:3,maxRedemptionPercent:20,...edit.loyalty,[key]:Number(e.target.value)}})}/><small>Стандарт: {state.defaults.loyalty?.[key]??(key==='cashbackPercent'?3:20)} · На сайте: {state.live.loyalty?.[key]??(key==='cashbackPercent'?3:20)}</small></label>)}
@@ -29,5 +30,5 @@ export function AdminMarketing({session,onExpired}:{session:StaffSession;onExpir
  {dirty&&<p>Есть несохранённые изменения. Сначала сохраните черновик.</p>}
  {session.user.staffRole!=='manager'&&<button type="button" onClick={()=>setConfirm(true)}>Сохранить текущие как новые стандартные</button>}
  {confirm&&<div role="alert"><p>Заменить стандартные значения текущими? Сохранённый черновик и опубликованные настройки останутся прежними.</p><button type="button" onClick={()=>void act('defaults')}>Подтвердить замену стандартных</button><button type="button" onClick={()=>setConfirm(false)}>Отмена</button></div>}
- </fieldset></form></>}<AdminReviews session={session}/></section>;
+ </fieldset></form></>}<AdminReviews session={session}/></div></section>;
 }
