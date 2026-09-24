@@ -14,8 +14,8 @@ export async function ycpWarehouses(db:Queryable,settings:YcpSettings,orderableO
  if(settings.warehouseSource!=='database')return settings.warehouses;
  const {rows}=await db.query(`SELECT w.id,w.name,p.address_line,p.phone,p.description,p.served_localities
   FROM warehouses w JOIN warehouse_profiles p ON p.warehouse_id=w.id
-  WHERE w.active AND p.ycp_export_enabled
-  ORDER BY w.id${holdLock?' FOR SHARE OF w,p':''}`);
+  WHERE w.active AND p.ycp_export_enabled AND (NOT $1 OR p.can_fulfill)
+  ORDER BY w.id${holdLock?' FOR SHARE OF w,p':''}`,[orderableOnly]);
  return rows.map(r=>({warehouseId:r.id,title:r.name,address:r.address_line,phone:r.phone,description:r.description,
   servedLocalities:r.served_localities,ycpDeliveryEnabled:false}));
 }
