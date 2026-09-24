@@ -4,7 +4,8 @@ import {useEffect,useState} from 'react';
 import {assetPath} from '@/lib/asset-path';
 import {createStoreRequest} from '@/lib/auth-client';
 import {adminError,type StaffSession} from '@/lib/admin-client';
-import type {PromoSettings} from '../../backend/src/promocodes';
+// API DTO only: importing the server schema pulls database dependencies into web builds.
+type PromoSettings={kind:'percent'|'fixed';value:number;active:boolean;startsAt:string|null;endsAt:string|null;minimumMinor:number;usageLimit:number|null};
 const request=createStoreRequest(assetPath('/api/admin/v1'),fetch);
 type Row={id:string;code:string;revision:number;settings:PromoSettings;uses:number};
 const defaults:PromoSettings={kind:'percent',value:10,active:true,startsAt:null,endsAt:null,minimumMinor:0,usageLimit:null};
