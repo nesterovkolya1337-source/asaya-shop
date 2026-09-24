@@ -19,7 +19,7 @@ export function priceCart(lines:Line[],settings:MarketingConfig){
  const items=lines.map(i=>({...i,unitMinor:i.eligible&&percent?Math.floor(i.finalMinor*(100-percent)/10000)*100:i.finalMinor}));
  const subtotalMinor=money(items.reduce((n,i)=>n+i.unitMinor*i.quantity,0));
  const beforeMinor=money(lines.reduce((n,i)=>n+i.finalMinor*i.quantity,0));
- return {items,eligibleUnits,percent,subtotalMinor,discountMinor:beforeMinor-subtotalMinor,settings,shippingRemainingMinor:Math.max(0,settings.freeShippingMinor-subtotalMinor)};
+ return {items,eligibleUnits,percent,subtotalMinor,discountMinor:beforeMinor-subtotalMinor,settings,shippingRemainingMinor:Math.max(0,settings.freeShippingMinor-beforeMinor)};
 }
 // Only published canonical classification participates; unpublished editor drafts do not.
 export const eligibleSql=`COALESCE(e.published->'content'->>'category','')<>'sets'
@@ -38,5 +38,5 @@ export async function cartPricing(db:Pick<Tx,'query'>,raw:unknown){
  const settings=rows[0]?.live??await liveMarketing(db);
  const quote=priceCart(body.items.map(i=>{const p=products.find(p=>p.sku===i.sku)!;return {...i,finalMinor:money(p.final_minor),eligible:p.eligible};}),settings);
  const promo=body.promoCode?await applyPromo(db,body.promoCode,quote.items):null;
- return {...quote,promo,subtotalMinor:promo?.subtotalMinor??quote.subtotalMinor,shippingRemainingMinor:Math.max(0,settings.freeShippingMinor-(promo?.subtotalMinor??quote.subtotalMinor))};
+ return {...quote,promo,subtotalMinor:promo?.subtotalMinor??quote.subtotalMinor};
 }

@@ -93,3 +93,11 @@ test('canonical published classification and price shared by cart, button, baske
  const line=(await db.pool.query('SELECT unit_minor,line_minor FROM order_items WHERE order_id=$1',[order.id])).rows[0];
  assert.equal(Number(line.unit_minor),71900);assert.equal(Number(line.line_minor),215700);
  });
+
+test('free shipping uses canonical merchandise before quantity discount',()=>{
+ const line={sku:'A',quantity:2,finalMinor:50000,eligible:true};
+ const q=priceCart([line],defaults);
+ assert.equal(q.subtotalMinor,95000);assert.equal(q.discountMinor,5000);assert.equal(q.shippingRemainingMinor,0);
+ assert.equal(priceCart([{...line,quantity:1}],defaults).shippingRemainingMinor,50000);
+ assert.equal(priceCart([{...line,finalMinor:49900}],defaults).shippingRemainingMinor,200);
+});

@@ -10,7 +10,8 @@ import {CarouselArrow} from './carousel-arrow';
 import {CartProductImage} from './cart-product-image';
 import cartStyles from './server-cart-view.module.css';
 import {YandexCheckoutButton} from './yandex-buy-button';
-export const rubles=(minor:number)=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(minor/100);
+import {formatMinorRubles as rubles} from '@/lib/money-format';
+export {rubles};
 const purchaseSignature=(basket:ReturnType<typeof checkoutCart>)=>JSON.stringify([basket.items,basket.subtotalMinor]);
 export function ServerCartView(){
  const {cart,products,clearCart,changeQuantity,addToCart,favorites,toggleFavorite,checkoutEnabled,catalogStatus,refreshCatalog,yandexCheckoutEnabled}=useShop();
@@ -75,10 +76,12 @@ export function ServerCartView(){
  <div className={cartStyles.clearAction}><button type="button" onClick={()=>setClearConfirm(true)}>Очистить корзину</button>{clearConfirm&&<div role="alert"><p>Удалить все товары из корзины?</p><button type="button" onClick={()=>{clearCart();setClearConfirm(false);}}>Очистить</button><button type="button" onClick={()=>setClearConfirm(false)}>Отмена</button></div>}</div>
  </section>
  <div className={cartStyles.summaryCard}>
-{quote&&valid&&<div className={cartStyles.delivery} aria-live="polite"><h2>Бесплатная доставка</h2><progress aria-label="До бесплатной доставки" value={progress} max={100}/><div className={cartStyles.progressLabels}><span>{rubles(quote.subtotalMinor)}</span><span>{rubles(quote.settings.freeShippingMinor)}</span></div><p>{quote.shippingRemainingMinor===0?'Бесплатная доставка':'До бесплатной доставки осталось '+rubles(quote.shippingRemainingMinor)}</p></div>}
+{quote&&valid&&<div className={cartStyles.delivery} aria-live="polite"><h2>{quote.shippingRemainingMinor===0?'Бесплатная доставка':'До бесплатной доставки осталось '+rubles(quote.shippingRemainingMinor)}</h2><progress aria-label="До бесплатной доставки" value={progress} max={100}/><div className={cartStyles.progressLabels}><span>{rubles(quote.subtotalMinor+quote.discountMinor+(quote.promo?.discountMinor??0))}</span><span>{rubles(quote.settings.freeShippingMinor)}</span></div></div>}
  <section className={cartStyles.summary} aria-label="Итоги заказа">
- {quote&&quote.discountMinor>0&&<p className={cartStyles.discountBadge}><span aria-hidden="true">% · </span>Скидка {quote.percent}% применена</p>}
- {quote?.promoApplicationEnabled&&<section className={cartStyles.promo} aria-label="Промокод"><div><span>{quote?.promo?quote.promo.code+' · −'+rubles(quote.promo.discountMinor):'Промокод'}</span><button type="button" onClick={()=>{setPromoInput(promoCode);setPromoOpen(true);}}>{promoCode?'Изменить':'Добавить'}</button>{promoCode&&<button type="button" onClick={()=>{setPromoCode('');setPromoInput('');setPromoError('');}}>Удалить</button>}</div>{promoOpen&&<form onSubmit={e=>{e.preventDefault();void applyPromo();}}><input aria-label="Код промокода" value={promoInput} maxLength={100} onChange={e=>setPromoInput(e.target.value)}/><button disabled={promoBusy||!promoInput.trim()}>Применить</button><button type="button" onClick={()=>setPromoOpen(false)}>Отмена</button></form>}{promoError&&<p role="alert">{promoError}</p>}{quote?.promo&&<p role="status">Промокод рассчитан. Оформление с промокодом пока недоступно. Удалите его, чтобы оформить заказ без промокода.</p>}</section>}
+ {quote?.promoApplicationEnabled&&<section className={cartStyles.promo} aria-label="Промокод">
+ {promoOpen?<form onSubmit={e=>{e.preventDefault();void applyPromo();}}><input autoFocus aria-label="Код промокода" placeholder="Введите промокод" value={promoInput} maxLength={100} onChange={e=>setPromoInput(e.target.value)}/><button disabled={promoBusy||!promoInput.trim()}>Применить</button></form>:quote.promo?<div className={cartStyles.promoApplied}><div><span>{quote.promo.code}</span><span>−{rubles(quote.promo.discountMinor)}</span></div><button type="button" onClick={()=>{setPromoInput(promoCode);setPromoOpen(true);}}>Изменить</button><button type="button" onClick={()=>{setPromoCode('');setPromoInput('');setPromoError('');}}>Удалить</button></div>:<button className={cartStyles.promoPrompt} type="button" onClick={()=>{setPromoInput('');setPromoOpen(true);}}><span>Введите промокод</span><span aria-hidden="true">→</span></button>}
+ {promoError&&<p role="alert">{promoError}</p>}
+ </section>}
 
 
  {quote&&(quote.loyalty?<div className={cartStyles.loyalty} aria-label="Бонусы в корзине"><span><span aria-hidden="true">✦ </span>Ваши баллы ASAYA<small>Начислим {quote.loyalty.cashbackPoints} бонусов за покупку</small></span><strong>{quote.loyalty.balance}</strong></div>:<div className={cartStyles.loyalty}><span>Войдите, чтобы использовать бонусы</span><Link className={cartStyles.guestLink} href="/account/">Войти</Link></div>)}

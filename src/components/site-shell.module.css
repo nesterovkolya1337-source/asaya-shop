@@ -880,3 +880,6 @@
 .navigationStart .navigationSide>a{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 
 @media(max-width:760px){:global(body:has([data-cart-sticky=true])) .supportBubble{bottom:calc(90px + env(safe-area-inset-bottom))}}
+
+/* Cart help remains available in the footer without covering cart controls. */
+:global(body:has([data-cart-sticky])) .supportBubble{position:relative;right:auto;bottom:auto;width:max-content;margin:16px 0 0 auto}

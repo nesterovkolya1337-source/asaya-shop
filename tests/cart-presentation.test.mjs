@@ -13,3 +13,9 @@ test('delivery progress uses server remainder and threshold, clamps below/at/abo
  for(const [remainder,expected] of [[100000,0],[75000,25],[0,100],[-100,100],[110000,0]])assert.equal(deliveryProgress({...q,shippingRemainingMinor:remainder}),expected);
  assert.equal(deliveryProgress({settings:{freeShippingMinor:0},shippingRemainingMinor:0}),100);
 });
+
+import {formatMinorRubles} from '../src/lib/money-format.ts';
+test('customer money hides only zero kopecks without changing the value',()=>{
+ const fmt=n=>formatMinorRubles(n).replace(/\s/g,' ');
+ assert.equal(fmt(95000),'950 ₽');assert.equal(fmt(100000),'1 000 ₽');assert.equal(fmt(71910),'719,10 ₽');assert.equal(fmt(71901),'719,01 ₽');
+});

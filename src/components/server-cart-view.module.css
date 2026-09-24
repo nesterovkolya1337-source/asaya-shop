@@ -34,3 +34,20 @@
 .railControls img{width:40px;height:40px}.railControls button:last-child img{filter:invert(1)}
 
 .checkoutAnchor{min-height:52px}.checkoutAnchor>div>div{margin:0}
+
+/* Visual proportions follow-up: same layout and business state. */
+.layout{grid-template-columns:minmax(0,1.15fr) minmax(360px,.85fr)}
+.summaryCard{padding:24px}.delivery h2{font-size:20px}.progressLabels{font-size:14px}.delivery p{font-size:16px}
+.discountBadge{font-size:16px}.promo{font-size:17px;padding:12px 18px}.promo button{font-size:14px}
+.loyalty{min-height:86px;padding:18px 20px;gap:16px;font-size:17px;margin-bottom:20px}.loyalty strong{font-size:28px;line-height:1}.loyalty small{font-size:13px;margin-top:7px}.loyalty span[aria-hidden]{font-size:22px;vertical-align:-1px;margin-right:4px;color:#202020}
+.totals>div{font-size:18px;padding:12px 0;line-height:1.4}.totals .total{border-top:1px solid #aaa;margin-top:18px;padding:22px 0;font-size:25px}.total dd{font-size:29px}.checkoutAnchor button{font-size:21px;min-height:56px}.checkoutAnchor{min-height:56px}
+.recommendationGrid{grid-auto-columns:calc((100% - 40px)/3.5)}.recommendation .image{aspect-ratio:1/.95}.recommendation h3{margin-top:14px;margin-bottom:10px}.badge,.favorite[aria-pressed=true]{background:#e2e2e2}
+@media(max-width:760px){
+ .layout{grid-template-columns:1fr}.summary{padding:18px 16px}.delivery h2{font-size:18px}.delivery p{font-size:14px}
+ .promo{font-size:16px;padding:12px 14px}.loyalty{min-height:84px;padding:16px;font-size:16px;gap:12px}.loyalty strong{font-size:25px}.loyalty small{font-size:12px;line-height:1.45}.loyalty span[aria-hidden]{font-size:20px;margin-right:2px}
+ .totals>div{font-size:16px;padding:12px 0}.totals .total{font-size:21px;padding:20px 0;margin-top:16px}.total dd{font-size:23px}.checkoutAnchor button{font-size:18px;padding-left:10px;padding-right:10px}
+ .recommendationGrid{grid-auto-columns:64%}.recommendation .image{aspect-ratio:1/.95}.recommendation h3{font-size:15px}.recommendation .prices strong{font-size:16px}
+}
+
+/* The promo control changes in place; it never adds a second panel. */
+.promo{padding:0;overflow:hidden}.promo .promoPrompt{display:flex;width:100%;justify-content:space-between;align-items:center;padding:16px 18px;border:0;background:transparent;font:inherit;text-decoration:none;text-align:left}.promo form{display:flex;align-items:center;gap:10px;margin:0;padding:10px 14px;flex-wrap:nowrap}.promo input{min-width:0;width:100%;flex:1;border:0;padding:6px 0;background:transparent;font:inherit}.promo form button{flex:none}.promo>p{padding:0 14px;font-size:13px}.promoApplied{padding:12px 18px}.promo .promoApplied{display:block}.promoApplied>div{display:flex;justify-content:space-between;margin-bottom:6px}.promoApplied>button{margin-right:14px}
