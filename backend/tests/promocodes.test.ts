@@ -37,6 +37,9 @@ test('canonical cart recalculates promo, audits management, preserves prices and
  await ctx.db.pool.query(`UPDATE marketing_settings SET live=jsonb_set(live,'{twoPercent}','10')`);
  const body={items:[{sku:'PROMO-A',quantity:2}],promoCode:'save10'};
  const quote=await cartPricing(ctx.db.pool,body);assert.equal(quote.subtotalMinor,129420);assert.equal(quote.promo!.checkoutAvailable,false);
+ await ctx.db.pool.query(`UPDATE marketing_settings SET live=jsonb_set(live,'{freeShippingMinor}','150000')`);
+ const shipping=await cartPricing(ctx.db.pool,body);assert.equal(shipping.subtotalMinor,129420);assert.equal(shipping.shippingRemainingMinor,0);
+
  await assert.rejects(cartPricing(ctx.db.pool,{...body,items:[{sku:'PROMO-A',quantity:1}]}),/PROMO_MINIMUM/);
  assert.equal(Number((await ctx.db.pool.query('SELECT final_minor FROM product_prices WHERE product_id=$1',[product])).rows[0].final_minor),79900);
  await admin.save(actor,id,{revision:1,code:'SAVE10',settings:{...settings,active:false}});
