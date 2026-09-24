@@ -21,7 +21,7 @@ export const ycpSettingsSchema=z.object({
  feed:z.object({name:z.string().trim().min(1).max(20),company:z.string().trim().min(1).max(500)}).strict().optional(),
  warehouses:z.array(z.object({
   warehouseId:z.uuid(),address:nonempty,phone:nonempty,
-  servedLocalities:z.array(nonempty).min(1).max(1000),
+  servedLocalities:z.array(nonempty).max(1000).default([]),
   ycpDeliveryEnabled:z.boolean()
  }).strict()).max(1000)
 }).strict().refine(s=>new Set(s.warehouses.map(w=>w.warehouseId)).size===s.warehouses.length,{message:'Duplicate warehouse'});
@@ -35,7 +35,6 @@ const basketSchema=z.object({
  items:z.array(z.object({id:z.string().min(1).max(200),quantity:z.number().int().min(1).max(100)}).strict()).min(1).max(50),
  offers_id_from_merchant_center:z.boolean(),locality:nonempty,is_health_check:z.boolean()
 }).strict().refine(b=>new Set(b.items.map(i=>i.id)).size===b.items.length,{message:'Duplicate item'});
-const localityKey=(value:string)=>value.trim().toLocaleLowerCase('ru-RU');
 
 export class YcpCatalog {
  private settings:YcpSettings;
@@ -59,7 +58,7 @@ export class YcpCatalog {
  }
  async basket(raw:unknown){
   const input=basketSchema.parse(raw),settings=this.settings;
-  const warehouseIds=(await ycpWarehouses(this.db.pool,settings,true)).filter(w=>w.servedLocalities.some(l=>l==='*'||localityKey(l)===localityKey(input.locality))).map(w=>w.warehouseId);
+  const warehouseIds=(await ycpWarehouses(this.db.pool,settings,true)).map(w=>w.warehouseId);
   // One statement gives all prices and warehouse balances from the same DB snapshot.
   // YCP available_quantity is the current purchase ceiling, not measured provider stock.
   // Shared asaya_stock_limit fails closed for missing/stale/failed production sources;
