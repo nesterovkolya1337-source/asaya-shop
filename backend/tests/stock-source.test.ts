@@ -27,6 +27,7 @@ const feedUrl='https://static.integrations.ffcdek.ru/export_products/yml/'+ '0'.
 const xml=(at:Date,n:number,extra='')=>`<?xml version="1.0"?><yml_catalog date="${at.toISOString().replace(/\.\d{3}Z$/,'Z')}"><shop><offers><offer id="SKU-1"><param code="article">SKU-1</param><count>${n}</count></offer>${extra}</offers></shop></yml_catalog>`;
 const content={description:'Description',volume:'300 ml',category:'body',setKind:'none',usage:'',ingredients:'',aroma:'',features:[],image:'/images/test.webp',gallery:[],badge:'',instruction:{steps:[],amount:'',tip:''},safety:'',recommendations:[],sensory:[]};
 async function fixture(){
+ await ctx.db.pool.query("UPDATE storefront_banner SET sales_enabled=true");
  const db=ctx.db,warehouse=randomUUID(),product=randomUUID(),actor=randomUUID();
  // Stock-contract tests keep unit prices fixed; quantity discounts have their own suite.
  await db.pool.query(`UPDATE marketing_settings SET live=live || '{"twoPercent":0,"threePercent":0}'::jsonb`);
@@ -80,7 +81,7 @@ test('admin stock report reads shared quantities and canonical metadata; never s
  assert.deepEqual(await new AdminStocks(f.db).read(f.actor,{}),{configured:false,source:null,items:[]});
 });
 
-for(const problem of ['unknown','draft','unpublished','deleted','sku_mismatch','no_storefront_mapping'])test('API coverage warns without blocking valid stock for '+problem,async()=>{
+for(const problem of ['unknown','previously_published','unpublished','archived','sku_mismatch','no_storefront_mapping'])test('API coverage preserves canonical historical identity for '+problem,async()=>{
  const f=await fixture(),valid=randomUUID();let now=new Date();let items=[{sku:'SKU-1',quantity:24},{sku:'VALID',quantity:10}];
  await f.db.pool.query("INSERT INTO products(id,sku,name,active,sale_approved) VALUES($1,'VALID','Valid product',true,true)",[valid]);
  await f.db.pool.query("INSERT INTO product_prices(product_id,currency,regular_minor,final_minor,approved) VALUES($1,'RUB',50000,50000,true)",[valid]);
@@ -91,18 +92,18 @@ for(const problem of ['unknown','draft','unpublished','deleted','sku_mismatch','
  await sync.refresh();assert.equal(await f.available(),24);
  items=[{sku:'SKU-1',quantity:99},{sku:'VALID',quantity:40}];
  if(problem==='unknown')items.push({sku:'UNKNOWN',quantity:5});
- if(problem==='draft')await f.db.pool.query('UPDATE product_editor SET published=NULL WHERE product_id=$1',[f.product]);
+ if(problem==='previously_published')await f.db.pool.query('UPDATE product_editor SET published=NULL WHERE product_id=$1',[f.product]);
  if(problem==='unpublished')await f.db.pool.query('UPDATE products SET active=false WHERE id=$1',[f.product]);
- if(problem==='deleted')await f.db.pool.query('UPDATE products SET archived_at=now() WHERE id=$1',[f.product]);
+ if(problem==='archived')await f.db.pool.query('UPDATE products SET archived_at=now() WHERE id=$1',[f.product]);
  if(problem==='sku_mismatch')await f.db.pool.query(`UPDATE product_editor SET published=jsonb_set(published,'{sku}','"WRONG"') WHERE product_id=$1`,[f.product]);
  if(problem==='no_storefront_mapping')await f.db.pool.query('UPDATE storefront_mappings SET approved=false WHERE product_id=$1',[f.product]);
  await f.db.pool.query("UPDATE stock_sources SET next_attempt_at=now()-interval '1 second'");
  now=new Date(+now+1000);
- const result=await sync.refresh();assert.ok('matched' in result);assert.equal(result.matched,problem==='unknown'?2:1);
+ const result=await sync.refresh();assert.ok('matched' in result);assert.equal(result.matched,2);
  const state=await new StockState(f.db,source.settings,()=>now).read();assert.equal(state.source.syncStatus,'fresh');assert.equal(state.source.lastError,null);
- assert.deepEqual(state.source.mappingWarnings,[problem==='unknown'?'UNKNOWN':'SKU-1']);
+ assert.deepEqual(state.source.mappingWarnings,problem==='unknown'?['UNKNOWN']:[]);
  assert.equal((await f.db.pool.query('SELECT asaya_stock_limit($1,$2,true) AS n',[valid,f.warehouse])).rows[0].n,40);
- assert.equal((await f.db.pool.query('SELECT provider_quantity FROM stock_source_items WHERE product_id=$1',[f.product])).rows[0].provider_quantity,problem==='unknown'?99:0);
+ assert.equal((await f.db.pool.query('SELECT provider_quantity FROM stock_source_items WHERE product_id=$1',[f.product])).rows[0].provider_quantity,99);
  assert.equal((await f.db.pool.query("SELECT count(*)::integer n FROM products WHERE sku='UNKNOWN'")).rows[0].n,0);
  if(problem!=='unknown'){
   await f.db.pool.query('UPDATE products SET active=true,archived_at=NULL WHERE id=$1',[f.product]);
@@ -369,7 +370,7 @@ test('Yandex feed and checkout link share external availability and stock sync r
  await f.db.pool.query("CREATE FUNCTION reject_stock_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.action='stock.source_synced' THEN RAISE EXCEPTION 'test'; END IF; RETURN NEW; END; $$; CREATE TRIGGER reject_stock_audit BEFORE INSERT ON audit_log FOR EACH ROW EXECUTE FUNCTION reject_stock_audit()");
  try{await assert.rejects(f.sync.apply(parseStockFeed(xml(new Date(+f.at+1000),10))));assert.equal(await f.available(),2);}
  finally{await f.db.pool.query('DROP TRIGGER reject_stock_audit ON audit_log; DROP FUNCTION reject_stock_audit()');}
- await f.db.pool.query("UPDATE stock_sources SET expires_at=now()-interval '1 second'");assert.equal((await yandex.render()).included,0);await assert.rejects(yandex.checkoutLink({items:[{sku:'SKU-1',quantity:1}]}),/PRODUCT_UNAVAILABLE/);
+ await f.db.pool.query("UPDATE stock_sources SET expires_at=now()-interval '1 second'");assert.equal((await yandex.render()).included,1);assert.match((await yandex.render()).xml,/available="false"/);await assert.rejects(yandex.checkoutLink({items:[{sku:'SKU-1',quantity:1}]}),/PRODUCT_UNAVAILABLE/);
 });
 
 
@@ -459,4 +460,54 @@ test('production YCP HTTP basket follows the official contract and preserves unk
   for(const table of ['orders','checkout_sessions','integration_inbox','integration_outbox','inventory_reservations'])assert.equal((await f.db.pool.query(`SELECT count(*)::int n FROM ${table}`)).rows[0].n,0);
   assert.equal(outbound,0);
  }finally{globalThis.fetch=originalFetch;await app.close();}
+});
+
+test('production database eligibility ignores legacy warehouse fields across feed, redirect, basket and checkout',async()=>{
+ const f=await fixture();await f.db.pool.query('UPDATE storefront_banner SET sales_enabled=true');
+ await f.db.pool.query("INSERT INTO warehouse_profiles(warehouse_id,address_line,phone,ycp_export_enabled) VALUES($1,'Verified address','+79990000000',true)",[f.warehouse]);
+ const settings={...f.settings,warehouseSource:'database' as const,warehouses:[],feed:{name:'ASAYA',company:'ASAYA'}};
+ const feed=new YandexFeed(f.db,settings,undefined,true),basket=new YcpCatalog(f.db,token,settings,true),checkout=new YcpCheckout(f.db,settings,undefined,true);
+ await f.sync.apply(parseStockFeed(xml(f.at,24)));
+ await f.db.pool.query('UPDATE inventory_balances SET reserved=2');
+ await f.db.pool.query('INSERT INTO product_test_stock(product_id,enabled,quantity) VALUES($1,true,999)',[f.product]);
+ const available=async()=>{const r=await basket.basket({...f.request,locality:'Неизвестный город'});return r.items[0]!.warehouses[0]?.available_quantity??0;};
+ assert.equal(await available(),22);assert.match((await feed.render()).xml,/available="true"/);
+ const link=await feed.checkoutLink({items:[{sku:'SKU-1',quantity:1}]});assert.equal(new URL(link.url).hostname,'checkout.kit.yandex.ru');
+ const app=await buildApp({db:f.db,deploymentMode:'ycp',staffSecret:'warehouse-fix-staff-secret-at-least-32-chars',otpSecret:'warehouse-fix-otp-secret-at-least-32-chars',otpSender:new DisabledOtpSender(),origin:settings.publicOrigin,secureCookies:true,ycp:{token,settings}});
+ try{const catalog=(await app.inject('/api/store/v1/products')).json();assert.equal(catalog.globalSalesEnabled,true);assert.equal(catalog.items[0].available,22);}finally{await app.close();}
+ for(const change of ["UPDATE warehouses SET active=false","UPDATE warehouse_profiles SET ycp_export_enabled=false","UPDATE stock_sources SET healthy=false","UPDATE stock_sources SET expires_at=now()-interval '1 second'","UPDATE inventory_balances SET on_hand=2"]){
+  await f.db.pool.query(change);assert.equal(await available(),0);assert.match((await feed.render()).xml,/available="false"/);
+  await assert.rejects(feed.checkoutLink({items:[{sku:'SKU-1',quantity:1}]}),/PRODUCT_UNAVAILABLE/);
+  await f.db.pool.query("UPDATE warehouses SET active=true");await f.db.pool.query("UPDATE warehouse_profiles SET ycp_export_enabled=true");
+  await f.db.pool.query("UPDATE stock_sources SET healthy=true,expires_at=now()+interval '10 minutes'");await f.db.pool.query('UPDATE inventory_balances SET on_hand=24');
+ }
+ await f.db.pool.query('DELETE FROM stock_source_items');assert.equal(await available(),0);assert.match((await feed.render()).xml,/available="false"/);
+ await f.sync.apply(parseStockFeed(xml(new Date(+f.at+1000),24)));
+ for(const change of ["UPDATE products SET active=false","UPDATE products SET archived_at=now()","UPDATE product_editor SET published=NULL"]){
+  const saved=(await f.db.pool.query('SELECT published FROM product_editor')).rows[0].published;
+  await f.db.pool.query(change);assert.equal((await feed.render()).included,0);
+  await assert.rejects(feed.checkoutLink({items:[{sku:'SKU-1',quantity:1}]}),/PRODUCT_UNAVAILABLE/);
+  await f.db.pool.query('UPDATE products SET active=true,archived_at=NULL');await f.db.pool.query('UPDATE product_editor SET published=$1',[saved]);
+ }
+ // A pickup point may have no locality; Yandex owns coverage. No wildcard is fabricated.
+ const body={...f.body,delivery:{...f.body.delivery,delivery_method:'pickup_point',address:{pickup_point_id:'TEST-PVZ'}}};
+ const order=await checkout.create(body);assert.ok(order.order_number);
+ await f.db.pool.query('UPDATE storefront_banner SET sales_enabled=false');
+ assert.deepEqual(await checkout.create(body),order); // Existing idempotent callback remains accepted.
+ await assert.rejects(checkout.create({...body,session_id:'new-session'}),/WAREHOUSE_UNAVAILABLE/);
+ assert.match((await feed.render()).xml,/available="false"/);await assert.rejects(feed.checkoutLink({items:[{sku:'SKU-1',quantity:1}]}),/SALES_CLOSED/);
+ assert.deepEqual((await f.db.pool.query('SELECT can_fulfill,served_localities FROM warehouse_profiles')).rows,[{can_fulfill:false,served_localities:[]}]);
+});
+
+test('never-published draft without stock is normal, provider draft is a warning and never becomes catalog',async()=>{
+ const f=await fixture(),draft=randomUUID();
+ await f.db.pool.query("INSERT INTO products(id,sku,name,active) VALUES($1,'DRAFT','Never published',false)",[draft]);
+ await f.db.pool.query("INSERT INTO product_editor(product_id,revision,draft) VALUES($1,1,$2)",[draft,{sku:'DRAFT',content}]);
+ const source=new CdekStockApi({kind:'cdek_ff_api',warehouseId:f.warehouse,accountId:'asaya',externalWarehouseId:'23401',shopId:220216,environment:'production',login:'fixture',password:'secret'}),sync=new StockSync(f.db,source);
+ const at=new Date();const result=await sync.apply({generatedAt:at,items:[{sku:'SKU-1',quantity:24}],digest:'first'});
+ assert.deepEqual(result.unknownSkus,[]);assert.equal(await f.available(),24);
+ const next=await sync.apply({generatedAt:new Date(+at+1000),items:[{sku:'SKU-1',quantity:25},{sku:'DRAFT',quantity:8},{sku:'UNKNOWN',quantity:3}],digest:'second'});
+ assert.deepEqual(next.unknownSkus,['DRAFT','UNKNOWN']);assert.equal(await f.available(),25);
+ const feed=await new YandexFeed(f.db,{...f.settings,feed:{name:'ASAYA',company:'ASAYA'}},undefined,true).render();assert.equal(feed.included,1);assert.ok(!feed.xml.includes('DRAFT'));
+ assert.deepEqual((await f.db.pool.query('SELECT active,ever_published FROM products WHERE id=$1',[draft])).rows,[{active:false,ever_published:false}]);
 });

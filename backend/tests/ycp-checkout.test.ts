@@ -127,7 +127,7 @@ test('YCP rejects changed inventory atomically and only one session gets the fin
 });
 test('YCP checkout validates delivery mode, address, fractional money, configuration and warehouse before reserving',async()=>{
  const f=await fixture();
- for(const body of [{...f.body,warehouse_id:randomUUID()},{...f.body,items:[...f.body.items,...f.body.items]},{...f.body,items:[...f.body.items,{id:'UNKNOWN',quantity:1,regular_price:1,final_price:1}]},{...f.body,delivery:{...f.body.delivery,price:1.001}},{...f.body,delivery:{...f.body.delivery,service_type:'ycp'}},{...f.body,delivery:{...f.body.delivery,address:{locality:'Москва'}}},{...f.body,delivery:{...f.body.delivery,address:{locality:'Казань',address:'Адрес'}}}])await assert.rejects(f.service.create(body));
+ for(const body of [{...f.body,warehouse_id:randomUUID()},{...f.body,items:[...f.body.items,...f.body.items]},{...f.body,items:[...f.body.items,{id:'UNKNOWN',quantity:1,regular_price:1,final_price:1}]},{...f.body,delivery:{...f.body.delivery,price:1.001}},{...f.body,delivery:{...f.body.delivery,service_type:'ycp'}},{...f.body,delivery:{...f.body.delivery,address:{locality:'Москва'}}}])await assert.rejects(f.service.create(body));
  assert.equal(await count('orders'),0);assert.equal(await count('inventory_movements'),0);
  const rubles=new YcpCheckout(f.db,{...f.settings,priceUnit:null,vat:null,checkout:undefined});
  await rubles.create({...f.body,items:[{id:'SKU-1',quantity:1,regular_price:600,final_price:500}]});assert.equal((await order()).total_minor,'60029');

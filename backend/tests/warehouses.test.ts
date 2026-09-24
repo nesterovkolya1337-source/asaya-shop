@@ -57,7 +57,7 @@ test('database YCP warehouse export has all required fields, stable pagination a
  assert.equal((await legacy.warehouses({limit:10,offset:0})).total_count,0);
 });
 
-test('sales permission and warehouse eligibility are independent and both required',async()=>{
+test('sales and operational warehouse flags gate YCP, legacy fulfilment and locality do not',async()=>{
  const f=await fixture();await ctx.db.pool.query('INSERT INTO inventory_balances(product_id,warehouse_id,on_hand,reserved) VALUES($1,$2,10,3)',[f.product,f.id]);
  const basket={items:[{id:'TEST-GEL',quantity:1}],offers_id_from_merchant_center:false,locality:'Москва',is_health_check:true};
  assert.deepEqual((await f.catalog.basket(basket)).items[0]!.warehouses,[]);
@@ -67,14 +67,15 @@ test('sales permission and warehouse eligibility are independent and both requir
    address:{locality:'Москва',address:'Тестовый адрес'},delivery_date_interval:{start_interval:{date:'2026-09-10'},end_interval:{date:'2026-09-11'},time_zone:3}}}),/WAREHOUSE_UNAVAILABLE/);
  assert.equal((await ctx.db.pool.query('SELECT count(*)::int n FROM orders')).rows[0].n,0);
  assert.equal((await ctx.db.pool.query('SELECT reserved FROM inventory_balances')).rows[0].reserved,3);
- await assert.rejects(f.registry.save(f.actor,f.id,{...f.edit,canFulfill:true}));
- await f.registry.save(f.actor,f.id,{...f.edit,canFulfill:true,address:'Тестовый подтверждённый адрес',phone:'+79990000000',servedLocalities:['*']});
  await ctx.db.pool.query("UPDATE storefront_banner SET sales_enabled=true");
- await ctx.db.pool.query("UPDATE warehouse_profiles SET can_fulfill=false");
- assert.deepEqual((await f.catalog.basket(basket)).items[0]!.warehouses,[]);
- await ctx.db.pool.query("UPDATE warehouse_profiles SET can_fulfill=true");
- assert.deepEqual((await f.catalog.basket(basket)).items[0]!.warehouses,[{id:f.id,available_quantity:7}]);
+ assert.deepEqual((await f.catalog.basket({...basket,locality:'Владивосток'})).items[0]!.warehouses,[{id:f.id,available_quantity:7}]);
  assert.equal((await ycpWarehouses(ctx.db.pool,settings,true)).length,1);
+ for(const update of ["UPDATE warehouses SET active=false","UPDATE warehouse_profiles SET ycp_export_enabled=false"]){
+  await ctx.db.pool.query(update);assert.deepEqual((await f.catalog.basket(basket)).items[0]!.warehouses,[]);
+  await ctx.db.pool.query("UPDATE warehouses SET active=true");await ctx.db.pool.query("UPDATE warehouse_profiles SET ycp_export_enabled=true");
+ }
+ assert.equal((await f.registry.list()).items[0]!.canFulfill,false);
+ assert.deepEqual((await f.registry.list()).items[0]!.servedLocalities,[]);
 });
 
 test('warehouse edits require admin, detect stale revisions and keep external bindings stable',async()=>{

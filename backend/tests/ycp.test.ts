@@ -13,6 +13,7 @@ before(async()=>{ctx=await testDatabase();});
 after(async()=>{await ctx?.stop();});
 beforeEach(async()=>{await ctx.db.pool.query('TRUNCATE products,warehouses,users,checkout_sessions,integration_inbox,integration_outbox CASCADE');});
 async function fixture(){
+ await ctx.db.pool.query("UPDATE storefront_banner SET sales_enabled=true");
  const db=ctx.db,product=randomUUID(),warehouse=randomUUID(),other=randomUUID(),inactive=randomUUID();
  await db.pool.query("INSERT INTO products(id,sku,name,active,sale_approved,weight_g,width_mm,height_mm,depth_mm) VALUES($1,'SKU-001','Тестовый гель',true,true,500,60,190,40)",[product]);
  await db.pool.query("INSERT INTO product_prices(product_id,currency,regular_minor,final_minor,approved) VALUES($1,'RUB',60000,50000,true)",[product]);
@@ -27,16 +28,16 @@ async function fixture(){
  const request={items:[{id:'feed-001',quantity:2}],offers_id_from_merchant_center:true,locality:'Москва',is_health_check:false};
  return {db,product,warehouse,other,inactive,settings,request,service:new YcpCatalog(db,token,settings)};
 }
-test('YCP basket resolves scoped offer IDs and exposes exact prices, dimensions and available regional stock',async()=>{
+test('YCP basket resolves scoped offer IDs and exposes exact prices, dimensions and available stock without a local delivery whitelist',async()=>{
  const f=await fixture(),result=await f.service.basket(f.request);
- assert.deepEqual(result,{items:[{id:'SKU-001',name:'Тестовый гель',regular_price:600,final_price:475,vat:0,url:'https://asaya.example.test/product/test-gel/',warehouses:[{id:f.warehouse,available_quantity:7}],dimensions:{width:60,height:190,depth:40,weight:500},characteristics:[],variations:[]}]});
+ assert.deepEqual(result,{items:[{id:'SKU-001',name:'Тестовый гель',regular_price:600,final_price:475,vat:0,url:'https://asaya.example.test/product/test-gel/',warehouses:[f.warehouse,f.other].sort().map(id=>({id,available_quantity:7})),dimensions:{width:60,height:190,depth:40,weight:500},characteristics:[],variations:[]}]});
  assert.deepEqual(await f.service.basket({...f.request,items:[{id:'SKU-001',quantity:100}],offers_id_from_merchant_center:false,is_health_check:true,locality:'  мОсКвА  '}),{items:result.items.map(i=>({...i,final_price:450}))});
- assert.equal((await f.service.basket({...f.request,locality:'Казань'})).items[0]!.warehouses[0].id,f.other);
- assert.deepEqual((await f.service.basket({...f.request,locality:'Неизвестный город'})).items[0]!.warehouses,[]);
+ assert.deepEqual((await f.service.basket({...f.request,locality:'Казань'})).items[0]!.warehouses,result.items[0]!.warehouses);
+ assert.deepEqual((await f.service.basket({...f.request,locality:'Неизвестный город'})).items[0]!.warehouses,result.items[0]!.warehouses);
  for(const table of ['orders','integration_inbox','integration_outbox'])assert.equal((await f.db.pool.query(`SELECT count(*)::int n FROM ${table}`)).rows[0].n,0);
  assert.equal((await f.db.pool.query('SELECT sum(reserved)::int n FROM inventory_balances')).rows[0].n,9);
  await f.db.pool.query('UPDATE inventory_balances SET reserved=on_hand WHERE warehouse_id=$1',[f.warehouse]);
- assert.equal((await f.service.basket(f.request)).items[0]!.warehouses[0].available_quantity,0);
+ assert.equal((await f.service.basket(f.request)).items[0]!.warehouses.find((w:{id:string})=>w.id===f.warehouse)!.available_quantity,0);
 });
 test('YCP keeps scoped legacy aliases and never exposes unpublished or component-based products',async()=>{
  const f=await fixture();

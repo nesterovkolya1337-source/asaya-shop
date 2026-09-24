@@ -65,8 +65,8 @@ export class YcpCheckout {
    }
    if(['self_pickup','merchant_ship','ycp'].includes(body.delivery.service_type)||body.delivery.delivery_method==='self_pickup'||body.delivery.ycp_delivery_option_id)throw new DomainError('YCP_DELIVERY_MODE_NOT_SUPPORTED',400);
    const profile=(await ycpWarehouses(tx,s,true,true)).find(w=>w.warehouseId===body.warehouse_id);
-   const locality=body.delivery.address.locality?.trim().toLocaleLowerCase('ru-RU');
-   if(!profile||!profile.servedLocalities.some(l=>l==='*'||l.trim().toLocaleLowerCase('ru-RU')===locality))throw new YcpConflict('WAREHOUSE_UNAVAILABLE');
+   // Yandex/CDEK determine delivery coverage; retain the supplied address in the order.
+   if(!profile)throw new YcpConflict('WAREHOUSE_UNAVAILABLE');
    if(!(await tx.query('SELECT 1 FROM warehouses WHERE id=$1 AND active FOR SHARE',[body.warehouse_id])).rowCount)throw new YcpConflict('WAREHOUSE_UNAVAILABLE');
    const {rows}=await tx.query(`SELECT p.id,p.sku,p.name,pr.regular_minor,pr.final_minor,GREATEST(0,LEAST(b.on_hand,asaya_stock_limit(p.id,b.warehouse_id,$3))-b.reserved) AS available
     FROM products p JOIN product_prices pr ON pr.product_id=p.id AND pr.approved AND pr.currency='RUB'
