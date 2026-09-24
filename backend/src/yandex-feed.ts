@@ -43,24 +43,23 @@ export class YandexFeed {
   });
  }
  async render(forCheckout=false){
-  const s=this.settings;if(!s.feed)throw new DomainError('YANDEX_FEED_UNAVAILABLE',503);
-  if(!xmlText(s.feed.name).trim()||!xmlText(s.feed.company).trim())throw new DomainError('YANDEX_FEED_SETTINGS_INVALID',503);
-  const {rows}=await this.db.pool.query(`SELECT p.id,p.sku,p.name,p.weight_g,p.width_mm,p.height_mm,p.depth_mm,pr.regular_minor,pr.final_minor,e.published->'content' AS content,m.slug,
-   COALESCE((SELECT jsonb_agg(x.external_id ORDER BY x.external_id) FROM product_external_ids x WHERE x.provider='ycp' AND x.account_id=$1 AND x.environment=$2 AND x.product_id=p.id),'[]'::jsonb) AS offer_ids,
-   COALESCE((SELECT sum(GREATEST(0,LEAST(b.on_hand,asaya_stock_limit(p.id,w.id,$2='production'))-b.reserved)) FROM inventory_balances b JOIN warehouses w ON w.id=b.warehouse_id WHERE b.product_id=p.id AND w.active AND w.id=ANY($3::uuid[])),0) AS available,
+  const s=this.settings,feed=s.feed??{name:'ASAYA',company:'ООО «Глобал Косметикс»'};
+  if(!xmlText(feed.name).trim()||!xmlText(feed.company).trim())throw new DomainError('YANDEX_FEED_SETTINGS_INVALID',503);
+  const {rows}=await this.db.pool.query(`SELECT p.id,p.sku,p.name,(p.sale_approved AND NOT EXISTS(SELECT 1 FROM product_components pc WHERE pc.product_id=p.id)) AS checkout_eligible,p.weight_g,p.width_mm,p.height_mm,p.depth_mm,pr.regular_minor,pr.final_minor,e.published->'content' AS content,m.slug,
+
+   COALESCE((SELECT sum(GREATEST(0,LEAST(b.on_hand,asaya_stock_limit(p.id,w.id,true))-b.reserved)) FROM inventory_balances b JOIN warehouses w ON w.id=b.warehouse_id WHERE b.product_id=p.id AND w.active AND w.id=ANY($1::uuid[])),0) AS available,
    COALESCE((SELECT jsonb_agg(barcode ORDER BY barcode) FROM product_barcodes WHERE product_id=p.id),'[]'::jsonb) AS barcodes
    FROM products p JOIN product_prices pr ON pr.product_id=p.id AND pr.approved AND pr.currency='RUB'
    JOIN product_editor e ON e.product_id=p.id AND e.published IS NOT NULL
    JOIN LATERAL(SELECT slug FROM storefront_mappings WHERE product_id=p.id AND approved ORDER BY slug LIMIT 1) m ON true
-   WHERE p.active AND p.sale_approved AND NOT EXISTS(SELECT 1 FROM product_components c WHERE c.product_id=p.id) ORDER BY p.sku`,[s.accountId,s.environment,(await ycpWarehouses(this.db.pool,s,true)).map(w=>w.warehouseId)]);
+   WHERE p.active AND p.archived_at IS NULL ORDER BY p.sku`,[(await ycpWarehouses(this.db.pool,s,true)).map(w=>w.warehouseId)]);
   const offers:string[]=[],skipped:Array<{sku:string;reason:string}>=[];
   const items:Array<{sku:string;offerId:string;available:number;regularMinor:number;finalMinor:number}>=[];
   for(const row of rows){
    const skip=(reason:string)=>skipped.push({sku:row.sku,reason});
-   if(row.offer_ids.length!==1){skip(row.offer_ids.length?'AMBIGUOUS_OFFER_ID':'MISSING_OFFER_ID');continue;}
-   const offerId=row.offer_ids[0] as string;
+   const offerId=row.sku as string;
    if(!validOfferId.test(offerId)){skip('INVALID_OFFER_ID');continue;}
-   if(!forCheckout&&Number(row.available)<1){skip('OUT_OF_STOCK');continue;}
+   if(items.some(i=>i.offerId===offerId))throw new DomainError('DUPLICATE_OFFER_ID',503);
    if(money(row.final_minor)===0){skip('PRICE_NOT_READY');continue;}
    const c=row.content,category=categories[c?.category];
    if(!category||typeof c?.description!=='string'||!xmlText(c.description).trim()||typeof row.name!=='string'||!xmlText(row.name).trim()||Array.from(row.name).length>150){skip('CONTENT_NOT_READY');continue;}
@@ -70,17 +69,17 @@ export class YandexFeed {
      return [u.href];}catch{return [];}
    }).slice(0,10);
    if(!images.length){skip('IMAGE_NOT_READY');continue;}
-   if(!row.weight_g||!row.width_mm||!row.height_mm||!row.depth_mm){skip('DIMENSIONS_NOT_READY');continue;}
    const url=new URL('/product/'+encodeURIComponent(row.slug)+'/',s.publicOrigin).href;
    if(url.length>512){skip('URL_TOO_LONG');continue;}
    const regular=money(row.regular_minor),final=money(row.final_minor),discount=regular?100*(regular-final)/regular:0;
    const old=regular%100===0&&discount>=5&&discount<=75?tag('oldprice',String(regular/100)):'';
-   const barcodes=(row.barcodes as string[]).filter(b=>!b.startsWith('2')&&!b.startsWith('02'));
+   const barcodes=(row.barcodes as string[]).filter(b=>/^(?:\d{8}|\d{12}|\d{13}|\d{14})$/.test(b)&&!b.startsWith('2')&&!b.startsWith('02'));
    items.push({sku:row.sku,offerId,available:Number(row.available),regularMinor:regular,finalMinor:final});
-   offers.push(`<offer id="${xmlText(offerId)}" available="true">${tag('url',url)}${tag('price',rubles(final))}${old}${tag('currencyId','RUR')}${tag('categoryId',String(category.id))}${images.map(i=>tag('picture',i)).join('')}${tag('name',row.name)}${tag('vendor','ASAYA')}${tag('vendorCode',row.sku)}${tag('description',Array.from(c.description).slice(0,3000).join(''))}${barcodes.length?tag('barcode',barcodes.join(',')):''}${tag('weight',String(row.weight_g/1000))}${tag('dimensions',[row.depth_mm,row.width_mm,row.height_mm].map(n=>n/10).join('/'))}<param name="is_checkout_enabled">false</param></offer>`);
+   offers.push(`<offer id="${xmlText(offerId)}" available="${Number(row.available)>0}">${tag('url',url)}${tag('price',rubles(final))}${old}${tag('currencyId','RUR')}${tag('categoryId',String(category.id))}${images.map(i=>tag('picture',i)).join('')}${tag('name',row.name)}${tag('vendor','ASAYA')}${tag('vendorCode',row.sku)}${tag('description',Array.from(c.description).slice(0,3000).join(''))}${barcodes.length?tag('barcode',barcodes.join(',')):''}${row.weight_g?tag('weight',String(row.weight_g/1000)):''}${row.depth_mm&&row.width_mm&&row.height_mm?tag('dimensions',[row.depth_mm,row.width_mm,row.height_mm].map(n=>n/10).join('/')):''}<param name="is_checkout_enabled">${!!row.checkout_eligible}</param></offer>`);
   }
-  const xml=`<?xml version="1.0" encoding="UTF-8"?>\n<yml_catalog date="${this.clock().toISOString()}"><shop>${tag('name',s.feed.name)}${tag('company',s.feed.company)}${tag('url',s.publicOrigin)}<currencies><currency id="RUR" rate="1"/></currencies><categories>${Object.values(categories).map(c=>`<category id="${c.id}">${xmlText(c.name)}</category>`).join('')}</categories><offers>${offers.join('\n')}</offers></shop></yml_catalog>`;
-  return {xml,included:offers.length,skipped,items};
+  const xml=`<?xml version="1.0" encoding="UTF-8"?>\n<yml_catalog date="${this.clock().toISOString()}"><shop>${tag('name',feed.name)}${tag('company',feed.company)}${tag('url',s.publicOrigin)}<currencies><currency id="RUR" rate="1"/></currencies><categories>${Object.values(categories).map(c=>`<category id="${c.id}">${xmlText(c.name)}</category>`).join('')}</categories><offers>${offers.join('\n')}</offers></shop></yml_catalog>`;
+  if(skipped.length)throw Object.assign(new DomainError('YANDEX_FEED_VALIDATION_FAILED',503),{issues:skipped});
+  return {xml,included:offers.length,skipped,items,generatedAt:this.clock().toISOString()};
  }
  async checkoutLink(raw:unknown,idempotencyKey:string=randomUUID()){
   z.uuid().parse(idempotencyKey);

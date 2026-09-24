@@ -10,6 +10,7 @@ const categories:Record<string,string>={hair:'Волосы',body:'Тело',face
 const time=(v:string|null|undefined)=>v?new Date(v).toLocaleString('ru-RU',{timeZone:'Europe/Moscow'}):'Ещё не обновлялось';
 export function AdminStocks({csrf,onExpired}:{csrf:string;onExpired:()=>void}){
  const [data,setData]=useState<StockReport|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[search,setSearch]=useState(''),[now,setNow]=useState(()=>Date.now());
+ const [stockFilter,setStockFilter]=useState(''),[category,setCategory]=useState(''),[sort,setSort]=useState('name');
  const locked=useRef(false),active=useRef(false);
  useEffect(()=>{active.current=true;let live=true;
   void api.get().then(r=>{if(live)setData(r);}).catch(e=>{if(live){setError('Не удалось загрузить остатки. Повторите проверку.');if(e instanceof AuthClientError&&['UNAUTHENTICATED','FORBIDDEN'].includes(e.code))onExpired();}});
@@ -24,7 +25,7 @@ export function AdminStocks({csrf,onExpired}:{csrf:string;onExpired:()=>void}){
  };
  const source=data?.source,status=source?.syncStatus==='fresh'&&(!source.expiresAt||Date.parse(source.expiresAt)<=now)?'stale':source?.syncStatus;
  const statusLabel=status==='fresh'?'Актуально':status==='stale'?'Устарело':status==='error'?'Ошибка обновления':'Нет синхронизации';
- const rows=data?.items.filter(i=>`${i.name} ${i.sku}`.toLocaleLowerCase('ru').includes(search.toLocaleLowerCase('ru')))??[];
+ const rows=data?.items.filter(i=>(!category||i.category===category)&&(!stockFilter||(stockFilter==='positive'?i.quantity!==null&&i.quantity>0:stockFilter==='zero'?i.quantity===0:i.quantityState==='missing'))).filter(i=>`${i.name} ${i.sku}`.toLocaleLowerCase('ru').includes(search.toLocaleLowerCase('ru'))).sort((a,b)=>sort==='quantity'?(a.quantity??-1)-(b.quantity??-1):sort==='quantity-desc'?(b.quantity??-1)-(a.quantity??-1):sort==='category'?(a.category??'').localeCompare(b.category??''):sort==='name-desc'?b.name.localeCompare(a.name,'ru'):a.name.localeCompare(b.name,'ru'))??[];
  return <section className={styles.section} aria-label="Остатки товаров"><header className={styles.header}><div><h2>Остатки</h2><p>СДЭК Фулфилмент · московское время</p></div><button disabled={busy} onClick={()=>void refresh()}>{busy?'Обновляем…':data?.configured?'Обновить остатки':'Проверить подключение'}</button></header>
  {error&&<p role="alert" className={styles.notice}>{error}</p>}{notice&&<p role="status">{notice}</p>}
  {!data&&!error&&<p role="status">Загружаем остатки…</p>}
@@ -36,7 +37,7 @@ export function AdminStocks({csrf,onExpired}:{csrf:string;onExpired:()=>void}){
  {status==='error'&&<p className={styles.notice}>Не удалось обновить источник. Показаны последние успешно полученные значения.</p>}
  {status==='stale'&&<p className={styles.notice}>Срок свежести данных истёк. Значения требуют обновления.</p>}
  <p className={styles.note}>Количество — из выгрузки СДЭК. Источник не передаёт отдельные значения «доступно» и «резерв». Ручное редактирование остатков здесь недоступно.</p>
- <div className={styles.filters}><label>Товар или SKU<input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Название или артикул"/></label></div>
+ <div className={styles.filters}><label>Товар или SKU<input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Название или артикул"/></label><label>Остаток<select value={stockFilter} onChange={e=>setStockFilter(e.target.value)}><option value="">Все</option><option value="positive">Есть остаток</option><option value="zero">Нет остатка</option><option value="missing">Нет записи СДЭК</option></select></label><label>Категория<select value={category} onChange={e=>setCategory(e.target.value)}><option value="">Все</option>{Object.entries(categories).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label><label>Сортировка<select value={sort} onChange={e=>setSort(e.target.value)}><option value="name">Название А–Я</option><option value="name-desc">Название Я–А</option><option value="quantity">Количество ↑</option><option value="quantity-desc">Количество ↓</option><option value="category">Категория</option></select></label></div>
  {!rows.length?<p>Товары не найдены.</p>:<div className={styles.table}><table><thead><tr><th>Фото</th><th>Товар</th><th>SKU</th><th>Категория</th><th>Остаток / обновлено</th><th>Статус</th></tr></thead><tbody>{rows.map(i=><tr key={i.productId}><td>{i.image?<Image unoptimized src={i.image.startsWith('/')?assetPath(i.image):i.image} alt="" width={48} height={64} style={{objectFit:'contain'}}/>:'—'}</td><td>{i.name}</td><td>{i.sku}</td><td>{categories[i.category??'']??'Не задана'}</td><td><strong>{i.quantity===null?'Нет данных':`${i.quantity} шт.`}</strong><small className={styles.sku}>Получено: {time(source.syncedAt)}</small><small className={styles.sku}>Выгрузка: {time(source.sourceUpdatedAt)}</small></td><td>{i.quantityState==='missing'?'SKU отсутствует в выгрузке':i.quantityState==='not_synced'?'Ещё не синхронизировано':statusLabel}</td></tr>)}</tbody></table></div>}
  </>}
  </section>;

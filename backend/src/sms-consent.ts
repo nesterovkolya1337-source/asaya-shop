@@ -13,8 +13,8 @@ export async function requireSmsConsent(tx:Tx,phone:string,now:Date,input?:SmsCo
  if(active)return;
  if(!input)throw new DomainError('SMS_CONSENT_REQUIRED',403);
  smsConsentInput.parse(input);
- await tx.query(`INSERT INTO sms_consents(id,phone,customer_id,text_version,document_url,text_snapshot,granted_at)
- VALUES($1,$2,(SELECT user_id FROM user_identities WHERE channel='sms' AND destination=$2),$3,$4,$5,$6)`,
+ await tx.query(`INSERT INTO sms_consents(id,phone,customer_id,text_version,document_url,text_snapshot,granted_at,action)
+ VALUES($1,$2,(SELECT user_id FROM user_identities WHERE channel='sms' AND destination=$2),$3,$4,$5,$6,'request_otp')`,
  [randomUUID(),phone,SMS_CONSENT_VERSION,SMS_CONSENT_URL,JSON.stringify({label:SMS_CONSENT_LABEL,paragraphs:SMS_CONSENT_TEXT}),now]);
 }
 export class SmsConsent {
