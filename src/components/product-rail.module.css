@@ -103,7 +103,7 @@
   background: transparent;
   cursor: pointer;
   font-size: 13px;
-  font-family: var(--font-involve);
+  font-family: var(--font-gramatika);
   transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 

@@ -9,3 +9,28 @@
 @media(max-width:760px){.layout{grid-template-columns:1fr}.products{max-height:none;overflow:visible;padding:14px}.summary{position:static;padding:16px}.row{grid-template-columns:68px minmax(0,1fr) 20px;gap:10px;padding:12px 0;min-height:112px}.image{width:68px;height:88px}.details h3{font-size:14px;line-height:1.3;margin:0 0 5px}.prices{margin:0 0 5px;gap:6px}.prices strong{font-size:14px}.prices del{font-size:12px}.quantity{margin:0}.quantity button{min-width:30px;min-height:28px;font-size:16px}.quantity span{font-size:12px}.remove{width:20px;height:28px;min-height:28px}.remove img{width:16px;height:16px}.totals>div{padding:10px 0}.main[data-cart-sticky=true]{padding-bottom:110px}.stickyCheckout{position:fixed;bottom:0;left:0;right:0;z-index:45;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #ddd}.main>.delivery{margin-bottom:16px}.delivery p{font-size:13px}.recommendationGrid{grid-auto-columns:calc((100% - 12px)/1.8)}}
 
 .promo{padding:12px 0;border-bottom:1px solid #ccc;margin-bottom:12px;font-size:14px}.promo>div{display:flex;align-items:center;gap:12px}.promo>div>span{margin-right:auto}.promo button{font:inherit;font-size:13px;min-height:32px;background:transparent;border:0;text-decoration:underline;cursor:pointer}.promo form{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.promo input{font:inherit;width:140px;flex:1;min-width:80px;border:1px solid #999;border-radius:6px;padding:8px}.promo p{font-size:12px;line-height:1.5}
+
+/* Approved Cart prototype: one summary card, distinct interactive and financial groups. */
+.summaryCard{position:sticky;top:100px;background:#f0f0f0;border-radius:20px;padding:24px;min-width:0}
+.summary{position:static;padding:0;background:transparent;border-radius:0}
+.delivery{margin-bottom:18px}.delivery h2{font-size:18px;font-weight:400;margin:0 0 14px}
+.delivery progress::-webkit-progress-value{background:#f396cf}.delivery progress::-moz-progress-bar{background:#f396cf}
+.delivery p{font-size:14px;margin-top:8px}.discountBadge{padding:12px 14px;margin-bottom:12px;background:#fff;border-color:#d5d5d5;color:#202020}
+.promo{padding:12px 14px;border:1px solid #d5d5d5;background:#fff;border-radius:12px;min-height:54px;margin-bottom:12px}
+.loyalty{padding:16px;background:#ffcfeb;border:0;border-radius:12px;margin:0 0 18px;gap:12px}.loyalty strong{font-size:28px;flex:none}.loyalty small{line-height:1.4}.guestLink{margin:0;flex:none}
+.totals>div{border:0;padding:10px 0}.totals .total{border-top:1px solid #bcbcbc;margin-top:12px;padding:18px 0;font-size:22px}.total dd{font-size:26px;white-space:nowrap}
+.clearAction{padding-top:14px}.clearAction>button{font:inherit;font-size:12px;background:none;border:0;text-decoration:underline;cursor:pointer;color:#555}
+.row{grid-template-columns:96px minmax(0,1fr) 28px;gap:18px;padding:14px 0;align-items:center}.image{width:96px;height:120px}.image img{padding:12%;object-fit:contain!important}.details h3{font-size:16px;margin:0 0 8px}.prices{margin-bottom:8px}.quantity button{min-height:32px;min-width:34px}.quantity{margin-top:0}
+.recommendationHeading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}.recommendationHeading h2{font-size:clamp(23px,2.3vw,32px);font-weight:500}.railControls{display:flex;gap:10px}.railControls button{border:0;border-radius:50%;background:#202020;color:white;width:40px;height:40px;display:grid;place-items:center;cursor:pointer}.railControls button:first-child{background:#eee;color:#202020}
+.recommendationGrid{grid-auto-columns:calc((100% - 32px)/3);scrollbar-width:none}.recommendationGrid::-webkit-scrollbar{display:none}
+.recommendation h3{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.8em}.recommendationMedia{position:relative}.recommendation .image{aspect-ratio:1/1.05}.recommendation>button{background:#202020;color:white}
+.recommendation .favorite{position:absolute;right:0;top:0;min-height:36px;width:36px;border:0;border-radius:50%;padding:6px;background:white}.favorite[aria-pressed=true]{background:#ffcfeb}.badge{position:absolute;left:0;top:0;background:#ffcfeb;border-radius:8px;padding:5px 10px;font-size:13px}
+@media(max-width:760px){
+ .summaryCard{display:contents}.layout>.summaryCard>.delivery{order:-1;background:#f0f0f0;border-radius:16px;padding:16px;margin:0}.products{order:0}.summary{order:1;background:#f0f0f0;padding:16px;border-radius:16px}.discountBadge{display:none}
+ .row{grid-template-columns:68px minmax(0,1fr) 20px;gap:10px;padding:12px 0}.image{width:68px;height:88px}.details h3{font-size:14px;margin:0 0 5px}.prices{margin-bottom:5px}.quantity button{min-height:28px;min-width:30px}.delivery h2{font-size:16px;margin-bottom:12px}.delivery p{font-size:13px}
+ .loyalty{padding:14px;font-size:14px}.loyalty strong{font-size:24px}.totals .total{font-size:18px}.total dd{font-size:21px}.railControls{display:none}.recommendationGrid{grid-auto-columns:72%}.recommendationHeading h2{font-size:23px}.recommendation .image{width:100%;height:auto}
+}
+
+.railControls img{width:40px;height:40px}.railControls button:last-child img{filter:invert(1)}
+
+.checkoutAnchor{min-height:52px}.checkoutAnchor>div>div{margin:0}

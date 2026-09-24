@@ -8,7 +8,7 @@
   --page-gutter: clamp(16px, 2vw, 30px);
   --content-width: 1440px;
   --font-involve: var(--font-involve-loaded), Arial, Helvetica, sans-serif;
-  --font-gramatika: var(--font-gramatika-loaded), var(--font-involve-loaded), Arial, sans-serif;
+  --font-gramatika: var(--font-gramatika-loaded), Arial, sans-serif;
   --section-gap: clamp(28px, 2.5vw, 38px);
 }
 
@@ -27,7 +27,7 @@ body {
   min-height: 100%;
   color: var(--color-foreground);
   background: var(--color-background);
-  font-family: var(--font-involve);
+  font-family: var(--font-gramatika);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

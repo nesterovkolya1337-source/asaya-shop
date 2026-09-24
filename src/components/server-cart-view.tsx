@@ -6,16 +6,18 @@ import {checkoutCart} from '@/lib/checkout-cart';
 import {requestCartPricing,type CartPricing} from '@/lib/cart-pricing';
 import {assetPath} from '@/lib/asset-path';
 import {cartRecommendations,deliveryProgress} from '@/lib/cart-presentation';
+import {CarouselArrow} from './carousel-arrow';
 import {CartProductImage} from './cart-product-image';
 import cartStyles from './server-cart-view.module.css';
 import {YandexCheckoutButton} from './yandex-buy-button';
 export const rubles=(minor:number)=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(minor/100);
 const purchaseSignature=(basket:ReturnType<typeof checkoutCart>)=>JSON.stringify([basket.items,basket.subtotalMinor]);
 export function ServerCartView(){
- const {cart,products,clearCart,changeQuantity,addToCart,checkoutEnabled,catalogStatus,refreshCatalog,yandexCheckoutEnabled}=useShop();
+ const {cart,products,clearCart,changeQuantity,addToCart,favorites,toggleFavorite,checkoutEnabled,catalogStatus,refreshCatalog,yandexCheckoutEnabled}=useShop();
  const [notice,setNotice]=useState(''),[clearConfirm,setClearConfirm]=useState(false),[sticky,setSticky]=useState(false);
+ const recommendationRail=useRef<HTMLDivElement>(null);
  const checkoutAnchor=useRef<HTMLDivElement>(null);
- useEffect(()=>{const node=checkoutAnchor.current;if(!node)return;const observer=new IntersectionObserver(([entry])=>setSticky(!entry.isIntersecting&&entry.boundingClientRect.bottom<0));observer.observe(node);return()=>observer.disconnect();},[Object.keys(cart).length>0]);
+ useEffect(()=>{const node=checkoutAnchor.current;if(!node)return;const observer=new IntersectionObserver(([entry])=>setSticky(!entry.isIntersecting),{rootMargin:'-80px 0px 0px 0px'});observer.observe(node);return()=>observer.disconnect();},[Object.keys(cart).length>0]);
  const [promoCode,setPromoCode]=useState(''),[promoInput,setPromoInput]=useState(''),[promoOpen,setPromoOpen]=useState(false),[promoError,setPromoError]=useState(''),[promoBusy,setPromoBusy]=useState(false);
  const [priced,setPriced]=useState<{key:string;quote:CartPricing}|null>(null),[pricingError,setPricingError]=useState('');
  const basket=checkoutCart(cart,catalogStatus==='error'?products.map(p=>({...p,stockState:'unknown' as const})):products,true);
@@ -52,9 +54,10 @@ export function ServerCartView(){
  {catalogStatus==='error'&&<p className={cartStyles.notice} role="alert">Каталог недоступен. Оформление временно отключено.</p>}
  {notice&&<p className={cartStyles.notice} role="alert">{notice}</p>}
  {pricingError&&<p className={cartStyles.notice} role="alert">{pricingError}</p>}
- {quote&&valid&&<div className={cartStyles.delivery} aria-live="polite"><progress aria-label="До бесплатной доставки" value={progress} max={100}/><div className={cartStyles.progressLabels}><span>{rubles(quote.subtotalMinor)}</span><span>{rubles(quote.settings.freeShippingMinor)}</span></div><p>{quote.shippingRemainingMinor===0?'Бесплатная доставка':'До бесплатной доставки осталось '+rubles(quote.shippingRemainingMinor)}</p></div>}
  {rows.length?<div className={cartStyles.layout}>
- <section className={cartStyles.products} aria-label="Товары в заказе"><div className={cartStyles.listHeading}><h2>Товары в заказе</h2><button type="button" onClick={()=>setClearConfirm(true)}>Очистить корзину</button></div>{clearConfirm&&<div role="alert"><p>Удалить все товары из корзины?</p><button type="button" onClick={()=>{clearCart();setClearConfirm(false);}}>Очистить</button><button type="button" onClick={()=>setClearConfirm(false)}>Отмена</button></div>}
+
+
+ <section className={cartStyles.products} aria-label="Товары в заказе"><div className={cartStyles.listHeading}><h2>Товары в заказе ({rows.length})</h2></div>
  {rows.map(({id,quantity,product:p,purchasableQuantity,state})=>{
  const line=quote?.items.find(i=>i.sku===p?.sku);
  return <article className={cartStyles.row+' '+(purchasableQuantity===0?cartStyles.unavailable:'')} key={id} data-cart-id={id}>
@@ -69,12 +72,16 @@ export function ServerCartView(){
  <button type="button" aria-label={'Увеличить количество '+(p?.name??'товара')} disabled={catalogStatus!=='ready'||!purchasableQuantity||!p||quantity>=p.stock||quantity>=100} onClick={()=>changeQuantity(id,quantity+1)}>+</button>
  </div></div><button type="button" className={cartStyles.remove} aria-label={'Удалить '+(p?.name??'товар')} onClick={()=>changeQuantity(id,0)}><img src={assetPath('/images/figma/cart/remove.svg')} alt="" width={24} height={24}/></button>
  </article>;})}
+ <div className={cartStyles.clearAction}><button type="button" onClick={()=>setClearConfirm(true)}>Очистить корзину</button>{clearConfirm&&<div role="alert"><p>Удалить все товары из корзины?</p><button type="button" onClick={()=>{clearCart();setClearConfirm(false);}}>Очистить</button><button type="button" onClick={()=>setClearConfirm(false)}>Отмена</button></div>}</div>
  </section>
+ <div className={cartStyles.summaryCard}>
+{quote&&valid&&<div className={cartStyles.delivery} aria-live="polite"><h2>Бесплатная доставка</h2><progress aria-label="До бесплатной доставки" value={progress} max={100}/><div className={cartStyles.progressLabels}><span>{rubles(quote.subtotalMinor)}</span><span>{rubles(quote.settings.freeShippingMinor)}</span></div><p>{quote.shippingRemainingMinor===0?'Бесплатная доставка':'До бесплатной доставки осталось '+rubles(quote.shippingRemainingMinor)}</p></div>}
  <section className={cartStyles.summary} aria-label="Итоги заказа">
+ {quote&&quote.discountMinor>0&&<p className={cartStyles.discountBadge}><span aria-hidden="true">% · </span>Скидка {quote.percent}% применена</p>}
  {quote?.promoApplicationEnabled&&<section className={cartStyles.promo} aria-label="Промокод"><div><span>{quote?.promo?quote.promo.code+' · −'+rubles(quote.promo.discountMinor):'Промокод'}</span><button type="button" onClick={()=>{setPromoInput(promoCode);setPromoOpen(true);}}>{promoCode?'Изменить':'Добавить'}</button>{promoCode&&<button type="button" onClick={()=>{setPromoCode('');setPromoInput('');setPromoError('');}}>Удалить</button>}</div>{promoOpen&&<form onSubmit={e=>{e.preventDefault();void applyPromo();}}><input aria-label="Код промокода" value={promoInput} maxLength={100} onChange={e=>setPromoInput(e.target.value)}/><button disabled={promoBusy||!promoInput.trim()}>Применить</button><button type="button" onClick={()=>setPromoOpen(false)}>Отмена</button></form>}{promoError&&<p role="alert">{promoError}</p>}{quote?.promo&&<p role="status">Промокод рассчитан. Оформление с промокодом пока недоступно. Удалите его, чтобы оформить заказ без промокода.</p>}</section>}
 
 
- {quote&&(quote.loyalty?<div className={cartStyles.loyalty} aria-label="Бонусы в корзине"><span>Ваши баллы ASAYA<small>Начислим {quote.loyalty.cashbackPoints} баллов за покупку</small></span><strong>{quote.loyalty.balance}</strong></div>:<Link className={cartStyles.guestLink} href="/account/">Войти, чтобы увидеть баллы</Link>)}
+ {quote&&(quote.loyalty?<div className={cartStyles.loyalty} aria-label="Бонусы в корзине"><span><span aria-hidden="true">✦ </span>Ваши баллы ASAYA<small>Начислим {quote.loyalty.cashbackPoints} бонусов за покупку</small></span><strong>{quote.loyalty.balance}</strong></div>:<div className={cartStyles.loyalty}><span>Войдите, чтобы использовать бонусы</span><Link className={cartStyles.guestLink} href="/account/">Войти</Link></div>)}
  <dl className={cartStyles.totals}><div><dt>Товары</dt><dd>{quote?rubles(quote.subtotalMinor+quote.discountMinor+(quote.promo?.discountMinor??0)):'Рассчитываем…'}</dd></div>
  {quote&&quote.discountMinor>0&&<div><dt>Скидка за количество ({quote.percent}%)</dt><dd>−{rubles(quote.discountMinor)}</dd></div>}
  {quote?.promo&&<div><dt>Промокод {quote.promo.code}</dt><dd>−{rubles(quote.promo.discountMinor)}</dd></div>}
@@ -82,10 +89,10 @@ export function ServerCartView(){
  <div className={cartStyles.total}><dt>Итого за товары</dt><dd>{quote?rubles(quote.subtotalMinor):'Рассчитываем…'}</dd></div></dl>
  {!valid&&catalogStatus==='ready'&&<p role="status">Сейчас в корзине нет товаров, доступных к оформлению.</p>}
  <div ref={checkoutAnchor} className={cartStyles.checkoutAnchor}><div className={sticky?cartStyles.stickyCheckout:undefined}>{yandexCheckoutEnabled&&<YandexCheckoutButton key={basket.signature} items={items} disabled={!!promoCode||!checkoutEnabled||catalogStatus!=='ready'||!valid||rows.some(r=>r.purchasableQuantity!==r.quantity)||!quote||!!pricingError} prepareItems={prepareItems} onConflict={conflict} label={quote?'Оформить заказ · '+rubles(quote.subtotalMinor):'Оформить заказ'} showNote={false} />}</div></div>
- {!yandexCheckoutEnabled&&<p role="status">Оформление заказов пока недоступно. Корзина сохранена.</p>}
- </section></div>:<section className={cartStyles.empty}><h2>Корзина пока пуста</h2><Link href="/catalog/">Выбрать товары</Link></section>}
- {recommendations.length>0&&<section className={cartStyles.recommendations} aria-label="Рекомендуем добавить"><h2>Рекомендуем добавить</h2><div className={cartStyles.recommendationGrid}>
- {recommendations.map(p=><article key={p.id} className={cartStyles.recommendation} data-recommendation-id={p.id}><CartProductImage product={p} sizes="(max-width: 760px) 42vw, (max-width: 1000px) 45vw, 22vw"/><h3><Link href={'/product/'+p.id+'/'}>{p.name}</Link></h3><div className={cartStyles.prices}><strong>{rubles(Math.round(p.price*100))}</strong>{p.oldPrice>p.price&&<del>{rubles(Math.round(p.oldPrice*100))}</del>}</div><button type="button" disabled={!!promoCode||!checkoutEnabled||p.stockState==='unknown'||p.stock<1} onClick={()=>addToCart(p.id)} aria-label={'Добавить в корзину '+p.name}>{p.stockState==='unknown'?'Наличие уточняется':p.stock<1?'Нет в наличии':'В корзину'}</button></article>)}
+ {(!yandexCheckoutEnabled||!checkoutEnabled)&&<p role="status">Оформление заказов пока недоступно. Корзина сохранена.</p>}
+ </section></div></div>:<section className={cartStyles.empty}><h2>Корзина пока пуста</h2><Link href="/catalog/">Выбрать товары</Link></section>}
+ {recommendations.length>0&&<section className={cartStyles.recommendations} aria-label="Рекомендуем добавить"><div className={cartStyles.recommendationHeading}><h2>Рекомендуем добавить</h2><div className={cartStyles.railControls}><button type="button" aria-label="Предыдущие рекомендации" onClick={()=>recommendationRail.current?.scrollBy({left:-recommendationRail.current.clientWidth,behavior:"smooth"})}><CarouselArrow previous/></button><button type="button" aria-label="Следующие рекомендации" onClick={()=>recommendationRail.current?.scrollBy({left:recommendationRail.current.clientWidth,behavior:"smooth"})}><CarouselArrow/></button></div></div><div ref={recommendationRail} className={cartStyles.recommendationGrid}>
+ {recommendations.map(p=><article key={p.id} className={cartStyles.recommendation} data-recommendation-id={p.id}><div className={cartStyles.recommendationMedia}><CartProductImage product={p} sizes="(max-width: 760px) 70vw, 32vw"/>{p.discount>0&&<span className={cartStyles.badge}>−{p.discount}%</span>}<button type="button" className={cartStyles.favorite} aria-label={(favorites.includes(p.id)?"Убрать из избранного ":"В избранное ")+p.name} aria-pressed={favorites.includes(p.id)} onClick={()=>toggleFavorite(p.id)}><img src={assetPath("/images/figma/heart.svg")} alt="" width={23} height={21}/></button></div><h3><Link href={'/product/'+p.id+'/'}>{p.name}</Link></h3><div className={cartStyles.prices}><strong>{rubles(Math.round(p.price*100))}</strong>{p.oldPrice>p.price&&<del>{rubles(Math.round(p.oldPrice*100))}</del>}</div><button type="button" disabled={!!promoCode||!checkoutEnabled||p.stockState==='unknown'||p.stock<1} onClick={()=>addToCart(p.id)} aria-label={'Добавить в корзину '+p.name}>{p.stockState==='unknown'?'Наличие уточняется':p.stock<1?'Нет в наличии':'В корзину'}</button></article>)}
  </div></section>}
  </main>;
 }
