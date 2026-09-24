@@ -26,7 +26,7 @@ test('readiness distinguishes publication from delivery and never changes the ca
  assert.deepEqual((await s.get(actor,{})).items[0].deliveryIssues,['dimensions']);
  await ctx.db.pool.query('UPDATE warehouses SET active=false');
  assert.ok((await s.get(actor,{})).items[0].deliveryIssues.includes('stock'));
- await assert.rejects(c.save(actor,id,{...draft,content:{...draft.content,ingredients:''},revision:2}),/PUBLISHED_REQUIRED_ingredients/);
+ await assert.rejects(c.save(actor,id,{...draft,content:{...draft.content,ingredients:''},revision:2}),/PUBLISH_INCOMPLETE/);
  await c.unpublish(actor,id,{revision:2});
  await c.save(actor,id,{...draft,content:{...draft.content,ingredients:''},revision:3});
  assert.ok((await s.get(actor,{})).items[0].publicationIssues.includes('ingredients'));

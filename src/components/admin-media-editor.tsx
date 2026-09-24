@@ -48,7 +48,7 @@ export function AdminMediaEditor(props:Props){
  }
  const picture=(url:string,label:string)=>previewUrl(url)?<span style={{display:"block",position:"relative",width:150,height:150,overflow:"hidden"}}><CroppedImage crop={props.crops?.[url]} unoptimized src={previewUrl(url)} alt={label} width={150} height={150} className={styles.mediaImage}/></span>:<p>Фото не выбрано</p>;
  const move=(index:number,delta:number)=>{const urls=[...props.gallery];[urls[index],urls[index+delta]]=[urls[index+delta],urls[index]];props.onGallery(urls);};
- return <section aria-label="Загрузка фотографий"><p>JPG, PNG или WebP до 20 МБ. Основное фото и до {maxGallery} фото в галерее. После загрузки сохраните и опубликуйте карточку.</p>
+ return <section aria-label="Загрузка фотографий"><p>JPG, PNG или WebP до 20 МБ. Основное фото и до {maxGallery} фото в галерее. После загрузки сохраните изменения карточки.</p>
  <div className={styles.mediaCard}>{picture(props.image,'Основное фото товара')}{props.image&&<ProductCropEditor source={props.image} value={props.crops?.[props.image]} disabled={busy||props.disabled} onSave={v=>props.onCrop(props.image,v)}/>}
  <label>Загрузить основное фото<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy||props.disabled} onChange={e=>{select(e.target.files,'main');e.target.value='';}}/></label>
  {props.image&&<button type="button" disabled={busy||props.disabled} onClick={()=>props.onMain('')}>Убрать основное фото</button>}</div>

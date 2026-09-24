@@ -1,3 +1,4 @@
+import {Promocodes} from './promocodes.js';
 import {AdminMerchandising} from './admin-merchandising.js';
 import {SmsConsent,smsConsentInput} from './sms-consent.js';
 import {Trash} from './trash.js';
@@ -41,8 +42,10 @@ import {authorizeCdekWebhook,type OrderTracking} from './order-tracking.js';
 import type {FulfillmentDispatch} from './fulfillment-dispatch.js';
 declare module 'fastify' {interface FastifyContextConfig {cdekWebhook?:boolean}}
 
-export async function buildApp(options:{stock?:StockSync;deploymentMode?:'foundation'|'catalog'|'ycp';db:Database;otpSecret:string;otpSender:OtpSender;otpPolicy?:Partial<OtpPolicy>;customerSmsEnabled?:boolean;origin:string;secureCookies:boolean;logger?:boolean;deliveryProvider?:DeliveryProvider;staffSecret?:string;ycp?:{token:string;settings:unknown};yandexIdClientId?:string;yandexIdentityProvider?:YandexIdentityProvider;cdekTracking?:{service:OrderTracking;secret:string};fulfillment?:FulfillmentDispatch}) {
+export async function buildApp(options:{promoLocalPreview?:boolean;stock?:StockSync;deploymentMode?:'foundation'|'catalog'|'ycp';db:Database;otpSecret:string;otpSender:OtpSender;otpPolicy?:Partial<OtpPolicy>;customerSmsEnabled?:boolean;origin:string;secureCookies:boolean;logger?:boolean;deliveryProvider?:DeliveryProvider;staffSecret?:string;ycp?:{token:string;settings:unknown};yandexIdClientId?:string;yandexIdentityProvider?:YandexIdentityProvider;cdekTracking?:{service:OrderTracking;secret:string};fulfillment?:FulfillmentDispatch}) {
  if(options.fulfillment)throw new Error('ASAYA fulfillment dispatch is disabled: Yandex Checkout owns shipment creation');
+ // Preview is opt-in and loopback-only; production has no promo application switch yet.
+ const promoApplicationEnabled=options.promoLocalPreview===true&&options.deploymentMode!=='ycp'&&['127.0.0.1','localhost','[::1]'].includes(new URL(options.origin).hostname);
  const smsEnabled=options.customerSmsEnabled===true;
  if(options.cdekTracking&&(options.cdekTracking.secret.length<32||[options.otpSecret,options.staffSecret,options.ycp?.token].includes(options.cdekTracking.secret)))throw new Error('CDEK callback requires an independent secret');
  if(smsEnabled&&options.otpSender instanceof DisabledOtpSender)throw new Error('Customer SMS requires a configured sender');
@@ -104,11 +107,11 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   if(options.deploymentMode==='catalog'&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/sms-consent/status','/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!cartQuote&&!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!engagementEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|sales|products(?:\/.*)?|prices(?:\/.*)?|merchandising|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
+   if(!cartQuote&&!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!engagementEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|promocodes(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|sales|products(?:\/.*)?|prices(?:\/.*)?|merchandising|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
   }
   if(liveYcp&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
-   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|sales|products(?:\/.*)?|prices(?:\/.*)?|merchandising|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
+   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|promocodes(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|sales|products(?:\/.*)?|prices(?:\/.*)?|merchandising|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
    const checkoutLink=req.method==='POST'&&route==='/api/store/v1/yandex/checkout-link';
    // Yandex owns checkout/payments; CDEK callbacks have their own boundary. Do not enable the
    // local checkout or local-only order changes with customer SMS sign-in.
@@ -170,7 +173,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
    const session=await staff.session(req.cookies[staffCookie]);
    reply.setCookie(staffCookie,req.cookies[staffCookie]!,staffCookieOptions);
    const route=req.routeOptions.url??'';
-   if(session.user.staffRole==='manager'&&(!/^\/api\/admin\/v1\/(auth\/(me|logout)|products(?:\/.*)?|prices(?:\/.*)?|merchandising|orders(?:\/.*)?|analytics(?:\/.*)?|statistics|marketing(?:\/.*)?|site-pages(?:\/.*)?|banner|sales|media(?:\/.*)?|trash(?:\/.*)?)$/.test(route)||route.endsWith('/privacy')))throw new DomainError('FORBIDDEN',403);
+   if(session.user.staffRole==='manager'&&(!/^\/api\/admin\/v1\/(auth\/(me|logout)|products(?:\/.*)?|prices(?:\/.*)?|merchandising|orders(?:\/.*)?|analytics(?:\/.*)?|statistics|marketing(?:\/.*)?|promocodes(?:\/.*)?|site-pages(?:\/.*)?|banner|sales|media(?:\/.*)?|trash(?:\/.*)?)$/.test(route)||route.endsWith('/privacy')))throw new DomainError('FORBIDDEN',403);
    if(req.method!=='GET'&&(typeof req.headers['x-csrf-token']!=='string'||!equal(req.headers['x-csrf-token'],session.csrfToken)))throw new DomainError('CSRF_REJECTED',403);
   });
   const actor=async(token:string|undefined)=>(await staff!.session(token)).user.id;
@@ -234,6 +237,9 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   secured.get('/api/admin/v1/media',async req=>trash.assets(await actor(req.cookies[staffCookie])));
   secured.post('/api/admin/v1/media/:id/delete',async req=>trash.deleteMedia(await actor(req.cookies[staffCookie]),id(req.params)));
   secured.post('/api/admin/v1/trash/:kind/:id/restore',async req=>{const p=z.object({kind:z.enum(['product','media']),id:z.uuid()}).parse(req.params);return trash.restore(await actor(req.cookies[staffCookie]),p.kind,p.id);});
+  const promos=new Promocodes(options.db);
+  secured.get('/api/admin/v1/promocodes',async()=>promos.list());
+  secured.put('/api/admin/v1/promocodes/:id',async req=>promos.save(await actor(req.cookies[staffCookie]),id(req.params),req.body));
   const marketing=new Marketing(options.db);
   secured.get('/api/admin/v1/marketing',async()=>marketing.read());
   for(const action of ['save','publish','restore','defaults'] as const)secured.post('/api/admin/v1/marketing/'+action,async req=>marketing.change(await actor(req.cookies[staffCookie]),action,req.body));
@@ -253,11 +259,12 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
  });
  app.post('/api/store/v1/analytics/events',{bodyLimit:8192},async req=>new ProductAnalytics(options.db).ingest(req.body));
  app.post('/api/store/v1/cart/pricing',async req=>{
-  const quote=await cartPricing(options.db.pool,req.body);
+  if(!promoApplicationEnabled&&req.body&&typeof req.body==='object'&&'promoCode' in req.body&&req.body.promoCode)throw new DomainError('PROMO_APPLICATION_DISABLED',409);
+  const quote={...await cartPricing(options.db.pool,req.body),promoApplicationEnabled};
   try{
    const user=await auth.session(req.cookies[cookieName]);
    const loyalty=await new Loyalty(options.db).account(user.id);
-   return {...quote,loyalty:{balance:loyalty.balance,maximum:loyaltyAmounts(quote.subtotalMinor,loyalty.balance,0,quote.settings.loyalty).maximum,redemptionAvailable:false}};
+   return {...quote,loyalty:{cashbackPoints:loyaltyAmounts(quote.subtotalMinor,loyalty.balance,0,quote.settings.loyalty).cashbackPoints,balance:loyalty.balance,maximum:loyaltyAmounts(quote.subtotalMinor,loyalty.balance,0,quote.settings.loyalty).maximum,redemptionAvailable:false}};
   }catch(e){if(e instanceof DomainError&&e.code==='UNAUTHENTICATED')return {...quote,loyalty:null};throw e;}
  });
  app.get('/api/store/v1/banner',async()=>{const {revision,...banner}=await controls.banner();return banner;});

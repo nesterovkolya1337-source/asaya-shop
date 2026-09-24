@@ -44,6 +44,7 @@ test('draft/live/default separation, manager permissions, conflict and audit',as
 });
 test('canonical published classification and price shared by cart, button, basket and order, without stock or shipment changes',async()=>{
  const db=ctx.db,product=randomUUID(),bundle=randomUUID(),warehouse=randomUUID();
+ await db.pool.query('UPDATE storefront_banner SET sales_enabled=true');
  await db.pool.query("INSERT INTO warehouses(id,code,name,active) VALUES($1,'MARKETING','Test',true)",[warehouse]);
  for(const [id,sku,category] of [[product,'M-SKU','body'],[bundle,'M-SET','sets']]){
   await db.pool.query('INSERT INTO products(id,sku,name,active,sale_approved) VALUES($1,$2,$3,true,true)',[id,sku,'Name is not classification']);

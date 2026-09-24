@@ -878,3 +878,5 @@
 .footerNav>div,.legalRow{overflow-wrap:anywhere}
 .navigationStart .navigationSide{min-width:0}
 .navigationStart .navigationSide>a{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+
+@media(max-width:760px){:global(body:has([data-cart-sticky=true])) .supportBubble{bottom:calc(90px + env(safe-area-inset-bottom))}}
