@@ -51,7 +51,7 @@ export function ProductView({ productId }: { productId: string }) {
 
   const quantity = cart[product.id] ?? 0;
   const isFavorite = favorites.includes(product.id);
-  const recommendations = pdpRecommendations(products,product);
+  const recommendations = pdpRecommendations(products,product,Object.keys(cart).filter(id=>cart[id]>0));
   const gallery = [...new Set([product.image, ...product.gallery].filter(Boolean))];
   const buyNow = () => {
     if (!quantity && product.stock) addToCart(product.id);

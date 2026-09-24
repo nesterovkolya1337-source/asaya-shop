@@ -1,4 +1,7 @@
 "use client";
+import {AdminPrices} from './admin-prices';
+import {AdminMerchandising} from './admin-merchandising';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import {useEffect,useRef,useState,useCallback,type FormEvent} from 'react';
@@ -38,7 +41,8 @@ function PriceField({label,value,onChange}:{label:string;value:number|null;onCha
  return <label>{label}<input inputMode="decimal" value={raw} onChange={e=>{const v=e.target.value;if(/^\d*(?:[.,]\d{0,2})?$/.test(v)){setRaw(v);onChange(v===''||v==='.'||v===','?null:Math.round(Number(v.replace(',','.'))*100));}}}/></label>;
 }
 export function ServerAdmin(){
- const [section,setSection]=useState<'content'|'catalog'|'orders'|'statistics'|'integration'|'employees'|'marketing'|'trash'>('content');
+ const [section,setSection]=useState<'content'|'catalog'|'orders'|'statistics'|'integration'|'employees'|'marketing'|'trash'|'prices'|'merchandising'>('content');
+ const [operationsDirty,setOperationsDirty]=useState(false);
  const [contentDirty,setContentDirty]=useState(false),[logoutConfirm,setLogoutConfirm]=useState(false);
  const [selectedOrder,setSelectedOrder]=useState<string|undefined>();
  const [session,setSession]=useState<StaffSession|null>(null),[checking,setChecking]=useState(true),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
@@ -58,8 +62,8 @@ export function ServerAdmin(){
   try{await api.logout(session.csrfToken);setSession(null);setNotice('');}catch(e){setNotice(adminError(e));}finally{pending.current=false;setBusy(false);}}
  return <div className={shell.shell}>
  <header className={shell.header}><div className={shell.brand}><strong>ASAYA</strong><small>Управление магазином</small></div>
- {session&&<nav className={shell.nav} aria-label="Разделы админки">{([['content','Редактор сайта'],['catalog','Товары'],['orders','Заказы'],['statistics','Аналитика'],['marketing','Маркетинг'],['trash','Корзина и архив'],['integration','Настройки'],['employees','Сотрудники']] as const).filter(([key])=>session.user.staffRole!=='manager'||!['employees','integration'].includes(key)).map(([key,label])=><button key={key} aria-current={section===key?'page':undefined} onClick={()=>setSection(key)}>{label}{key==='content'&&contentDirty?' •':''}</button>)}</nav>}
- <div className={shell.headerActions}><Link href="/">Открыть сайт ↗</Link>{session&&<button disabled={busy} onClick={()=>contentDirty?setLogoutConfirm(true):void logout()}>Выйти</button>}</div></header>
+ {session&&<nav className={shell.nav} aria-label="Разделы админки">{([['content','Редактор сайта'],['catalog','Товары'],['prices','Цены'],['merchandising','Выдача'],['orders','Заказы'],['statistics','Аналитика'],['marketing','Маркетинг'],['trash','Корзина и архив'],['integration','Настройки'],['employees','Сотрудники']] as const).filter(([key])=>session.user.staffRole!=='manager'||!['employees','integration'].includes(key)).map(([key,label])=><button key={key} aria-current={section===key?'page':undefined} onClick={()=>{if(operationsDirty&&!window.confirm('Есть несохранённые изменения. Перейти без сохранения?'))return;setSection(key);}}>{label}{key==='content'&&contentDirty?' •':''}</button>)}</nav>}
+ <div className={shell.headerActions}><Link href="/">Открыть сайт ↗</Link>{session&&<button disabled={busy} onClick={()=>contentDirty||operationsDirty?setLogoutConfirm(true):void logout()}>Выйти</button>}</div></header>
  {process.env.NEXT_PUBLIC_EDITOR_PREVIEW==='true'&&<p className={shell.notice}>Предпросмотр редактора · тестовые данные на этом компьютере. Изменения не затрагивают сайт ASAYA.</p>}
  {notice&&<p role="alert" className={shell.notice}>{notice}</p>}
  {logoutConfirm&&<div role="alert" className={shell.notice}><p>В редакторе сайта есть несохранённые правки. Выйти без сохранения?</p><button disabled={busy} onClick={()=>{setLogoutConfirm(false);void logout();}}>Выйти без сохранения</button><button onClick={()=>{setLogoutConfirm(false);setSection('content');}}>Вернуться к редактору</button></div>}
@@ -71,6 +75,8 @@ export function ServerAdmin(){
  {section==='integration'&&session.user.staffRole!=='manager'&&<AdminIntegration onExpired={onExpired} onOrder={id=>{setSelectedOrder(id);setSection('orders');}}/>}
  <div hidden={section!=='trash'}><AdminTrash session={session}/></div>
  <div hidden={section!=='marketing'}><AdminMarketing session={session} onExpired={onExpired}/></div>
+ {section==='prices'&&<AdminPrices session={session} onDirty={setOperationsDirty}/>}
+ {section==='merchandising'&&<AdminMerchandising session={session} onDirty={setOperationsDirty}/>}
  {section==='statistics'&&<AdminStatistics onExpired={onExpired} csrf={session.csrfToken}/>}
  {section==='orders'&&<AdminOrders key={selectedOrder} initialOrderId={selectedOrder} session={session} onExpired={onExpired}/>}
  {section==='employees'&&session.user.staffRole!=='manager'&&<AdminEmployees session={session} onExpired={onExpired}/>}
@@ -81,6 +87,7 @@ export function ServerAdmin(){
  <button className={styles.primary}>Войти</button><button type="button" onClick={()=>setActivationMode(true)}>Первый вход / восстановление доступа</button></fieldset></form>}</div>}</main></div>;
 }
 function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>void}){
+ const editorRef=useRef<HTMLElement>(null);
  const {reloadCatalog}=useShop();
  const [tab,setTab]=useState('main');
  const [saveFailed,setSaveFailed]=useState(false);
@@ -108,7 +115,7 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  async function list(offset=0){const filter=offset?appliedFilter:{search,category};const r=await api.list(filter.search,offset,filter.category);setAppliedFilter(filter);setRows(previous=>offset?[...previous,...r.items]:r.items);setNext(r.nextOffset);}
  async function open(id:string){
   const p=await api.detail(id);setProduct(p);setDraft(initialDraft(p));setDirty(false);setSaveFailed(false);setConfirm(null);
-  setHistory((await api.history(id)));
+  setHistory((await api.history(id)));requestAnimationFrame(()=>editorRef.current?.scrollIntoView({block:'start'}));
  }
  function choose(action:()=>Promise<void>){
   if(dirty){nextAction.current=action;setConfirm('discard');return;}
@@ -143,7 +150,7 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  <button className={styles.primary} disabled={busy} onClick={newProduct}>Добавить товар</button>
  <ul>{rows.map(row=><li key={row.id}><button disabled={busy} aria-current={product?.id===row.id?'true':undefined} onClick={()=>choose(()=>open(row.id))}><span className={styles.productRow}>{row.image?<Image unoptimized width={56} height={64} className={styles.thumbnail} src={row.image.startsWith('/')?assetPath(row.image):row.image} alt=""/>:<span className={styles.thumbnail}>Нет фото</span>}<span><strong>{row.name||'Без названия'}</strong><span>{row.sku}</span><span>{({hair:'Волосы',body:'Тело',face:'Лицо',sets:'Наборы','':'Без категории'})[row.category]} · {lifecycleLabels[row.lifecycle??(row.active?'published':'draft')]}</span></span></span></button></li>)}</ul>
  {!rows.length&&<p>Товары не найдены.</p>}{next!==null&&<button disabled={busy} onClick={()=>void run(()=>list(next))}>Показать ещё</button>}</aside>
- <section className={styles.editor}>{!product?<p>Выберите товар или добавьте новый.</p>:<><header className={styles.productToolbar}><h2>{draft.name||'Новый товар'}</h2><p>{lifecycleLabels[product.lifecycle??(product.active?'published':product.publishedAt?'unpublished':'draft')]} · {saveFailed?'Ошибка сохранения':dirty?'Есть несохранённые изменения':product.active&&!product.hasUnpublishedChanges?'Опубликовано':'Сохранено · Не опубликовано'}</p>
+ <section ref={editorRef} className={styles.editor}>{!product?<p>Выберите товар или добавьте новый.</p>:<><header className={styles.productToolbar}><h2>{draft.name||'Новый товар'}</h2><p>{lifecycleLabels[product.lifecycle??(product.active?'published':product.publishedAt?'unpublished':'draft')]} · {saveFailed?'Ошибка сохранения':dirty?'Есть несохранённые изменения':product.active&&!product.hasUnpublishedChanges?'Опубликовано':'Сохранено · Не опубликовано'}</p>
  <div className={styles.actions}><button type="submit" form="product-edit" disabled={busy||deleted||!dirty}>Сохранить</button><button disabled={busy||deleted||!product.hasDraft||dirty||issues.length>0} onClick={()=>setConfirm('publish')}>Опубликовать</button><button disabled={busy||dirty||!product.active} onClick={()=>setConfirm('unpublish')}>Снять с публикации</button>
  
  {product.revision>0&&<button disabled={busy} onClick={()=>choose(()=>open(product.id))}>Загрузить с сервера</button>}
@@ -151,7 +158,7 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  {(confirm==='publish'||confirm==='unpublish')&&<div className={styles.notice}><p>{confirm==='publish'?'Опубликовать сохранённые данные и цены?':'Скрыть товар с витрины? Существующие заказы сохранятся.'}</p><button disabled={busy} onClick={()=>void publication()}>Подтвердить</button><button disabled={busy} onClick={()=>setConfirm(null)}>Назад</button></div>}
  {confirm==='remove'&&<div className={styles.confirmModal} role="dialog" aria-modal="true" aria-label="Удаление товара"><p>Убрать товар «{product.draft.name}» ({product.draft.sku})? {product.everPublished?'Товар будет перемещён в архив без удаления истории.':'Черновик будет храниться в Корзине 30 дней.'}</p><button disabled={busy} onClick={()=>void remove()}>{product.everPublished?'В архив':'Переместить в Корзину'}</button><button disabled={busy} onClick={()=>setConfirm(null)}>Назад</button></div>}
  {issues.length>0&&<p role="status">Обязательные поля: {issues.map(key=>publicationLabels[key]).join('; ')}.</p>}
- <nav className={styles.productTabs} aria-label="Разделы карточки">{([['main','Основное'],['pdp','Rich Content'],['placement','Размещение'],['technical','Технические данные'],['stock','Остатки']] as const).map(([key,label])=><button key={key} type="button" aria-pressed={tab===key} onClick={()=>setTab(key)}>{label}</button>)}</nav><form id="product-edit" onSubmit={save} key={product.id+':'+product.revision}><fieldset disabled={busy||deleted}>
+ <nav className={styles.productTabs} aria-label="Разделы карточки">{([['main','Основное'],['pdp','Rich Content'],['technical','Технические данные'],['stock','Остатки']] as const).map(([key,label])=><button key={key} type="button" aria-pressed={tab===key} onClick={()=>setTab(key)}>{label}</button>)}</nav><form id="product-edit" onSubmit={save} key={product.id+':'+product.revision}><fieldset disabled={busy||deleted}>
  <div hidden={tab!=='main'}><h3>Основное</h3>{textField('Название','name')}
  <div className={styles.columns}><label>Категория<select value={draft.content.category} onChange={e=>content({category:e.target.value as ProductContent['category']})}><option value="hair">Волосы</option><option value="body">Тело</option><option value="face">Лицо</option><option value="sets">Наборы</option></select></label>
  <label>Тип товара<select value={draft.content.setKind} onChange={e=>content({setKind:e.target.value as ProductContent['setKind']})}><option value="none">Отдельный товар</option><option value="combo">Комбо-набор</option><option value="gift">Подарочный набор</option></select></label></div>
@@ -168,11 +175,8 @@ function CatalogEditor({session,onExpired}:{session:StaffSession;onExpired:()=>v
  <label>Количество средства<textarea value={draft.content.instruction.amount} onChange={e=>content({instruction:{...draft.content.instruction,amount:e.target.value}})}/></label>
  <label>Совет<textarea value={draft.content.instruction.tip} onChange={e=>content({instruction:{...draft.content.instruction,tip:e.target.value}})}/></label>
  {contentField('Указания и предостережения с упаковки','safety',true)}
- {!draft.content.pdp&&lines('Адреса рекомендуемых карточек — по одному на строке','recommendations')}
-</details></div><div hidden={tab!=='placement'}> <fieldset><legend>Размещение на сайте</legend><p>Меньшее число — ближе к началу. Категория определяет раздел каталога. Подборки на главной включаются отдельно от метки на карточке.</p>
- <label>Порядок в каталоге<input type="number" min={0} max={100000} required value={draft.content.placement?.catalogOrder??0} onChange={e=>content({placement:{catalogOrder:Number(e.target.value),bestsellerOrder:draft.content.placement?draft.content.placement.bestsellerOrder:(draft.content.badge==='Бестселлер'?0:null),newOrder:draft.content.placement?draft.content.placement.newOrder:(draft.content.badge==='Новинка'?0:null)}})}/></label>
- {(['bestsellerOrder','newOrder'] as const).map((key,index)=>{const p=draft.content.placement??{catalogOrder:0,bestsellerOrder:draft.content.badge==='Бестселлер'?0:null,newOrder:draft.content.badge==='Новинка'?0:null};return <div key={key}><label><input type="checkbox" checked={p[key]!==null} onChange={e=>content({placement:{...p,[key]:e.target.checked?0:null}})}/>{index===0?'Показывать в бестселлерах':'Показывать в новинках'}</label>{p[key]!==null&&<label>Позиция в подборке<input type="number" min={0} max={100000} required value={p[key]!} onChange={e=>content({placement:{...p,[key]:Number(e.target.value)}})}/></label>}</div>;})}</fieldset>
-</div><div hidden={tab!=='technical'}><p>Служебные параметры. Меняйте их только при необходимости настройки карточки.</p> <h3>Основная информация</h3><p>Пустые артикул и адрес карточки будут созданы автоматически. Артикул можно исправить только до первой публикации и использования в заказах или интеграциях. Архивирование не снимает это ограничение.</p><label>Артикул<input placeholder="Будет создан автоматически" maxLength={100} readOnly={product.active||!!product.publishedAt} value={draft.sku} onChange={e=>change({sku:e.target.value})}/></label>
+
+</details></div><div hidden={tab!=='technical'}><p>Служебные параметры. Меняйте их только при необходимости настройки карточки.</p> <h3>Основная информация</h3><p>Пустые артикул и адрес карточки будут созданы автоматически. Артикул можно исправить только до первой публикации и использования в заказах или интеграциях. Архивирование не снимает это ограничение.</p><label>Артикул<input placeholder="Будет создан автоматически" maxLength={100} readOnly={product.active||!!product.publishedAt} value={draft.sku} onChange={e=>change({sku:e.target.value})}/></label>
  {textField('Адрес карточки: латинские буквы, цифры и дефисы','slug')}
  <h3>Параметры отправки</h3><div className={styles.columns}>{([['Вес, г','weightG'],['Ширина, мм','widthMm'],['Высота, мм','heightMm'],['Глубина, мм','depthMm']] as const).map(([label,key])=><label key={key}>{label}<input type="number" min={1} value={draft[key]??''} onChange={e=>change({[key]:e.target.value===''?null:Number(e.target.value)})}/></label>)}</div>
  </div></fieldset></form>

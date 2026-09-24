@@ -42,7 +42,9 @@ export class CommerceService {
    JOIN LATERAL(SELECT slug FROM storefront_mappings WHERE product_id=p.id AND approved ORDER BY slug LIMIT 1) m ON true
    LEFT JOIN product_editor e ON e.product_id=p.id LEFT JOIN product_test_stock t ON t.product_id=p.id
    WHERE p.active AND p.archived_at IS NULL AND ($1=false OR e.published IS NOT NULL) ORDER BY p.sku`,[this.environment==='production']);
-  return rows.map(r=>({sku:r.sku,name:r.name,slug:r.slug,currency:r.currency,regularMinor:money(r.regular_minor),finalMinor:money(r.final_minor),available:storefront&&r.test_mode?r.test_quantity:r.available,stockState:storefront&&r.test_mode||r.available>0||r.stock_known?'known':'unknown',...(storefront?{testMode:!!r.test_mode}:{}),...(r.content?{content:r.content}:{})}));
+  const merch=storefront?Object.fromEntries((await this.db.pool.query('SELECT scope,value FROM merchandising')).rows.map(r=>[r.scope,r.value])):{};
+  const sales=storefront?new Map((await this.db.pool.query(`SELECT i.sku,sum(i.quantity)::integer AS units FROM order_items i JOIN orders o ON o.id=i.order_id WHERE o.payment_status='paid' AND o.status IN ('placed','processing','completed') AND COALESCE(i.refused_count,0)=0 GROUP BY i.sku`)).rows.map(r=>[r.sku,r.units])):new Map();
+  return rows.map(r=>({... (storefront?{merchandising:{catalogOrder:(merch.catalog??[]).indexOf(r.sku),categoryOrder:(merch[r.content?.category]??[]).indexOf(r.sku),prioritySku:merch.recommendations?.[r.sku]??null,soldUnits:sales.get(r.sku)??0}}:{}),sku:r.sku,name:r.name,slug:r.slug,currency:r.currency,regularMinor:money(r.regular_minor),finalMinor:money(r.final_minor),available:storefront&&r.test_mode?r.test_quantity:r.available,stockState:storefront&&r.test_mode||r.available>0||r.stock_known?'known':'unknown',...(storefront?{testMode:!!r.test_mode}:{}),...(r.content?{content:r.content}:{})}));
  }
  async createCheckout(userId:string,key:string,raw:unknown) {
   z.string().min(16).max(128).regex(/^[A-Za-z0-9_-]+$/).parse(key);
