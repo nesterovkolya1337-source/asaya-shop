@@ -419,7 +419,7 @@
 .sensoryCopy > p,
 .ugc .sectionHeading p,
 .reviewSummary > p {
-  font-family: var(--font-involve);
+  font-family: var(--font-gramatika);
   font-weight: 500;
   font-size: 12px;
   letter-spacing: 0.04em;
