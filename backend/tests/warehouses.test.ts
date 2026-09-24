@@ -17,6 +17,7 @@ const settings:YcpSettings={accountId:'asaya-test',environment:'test',publicOrig
 before(async()=>{ctx=await testDatabase();});after(async()=>{await ctx?.stop();});
 beforeEach(async()=>{await ctx.db.pool.query('TRUNCATE products,warehouses,users,integration_inbox,integration_outbox CASCADE');});
 async function fixture(){
+ await ctx.db.pool.query("UPDATE storefront_banner SET sales_enabled=false");
  await ensureOnboardingWarehouses(ctx.db);const actor=randomUUID(),product=randomUUID();
  await ctx.db.pool.query("INSERT INTO users(id,role) VALUES($1,'admin')",[actor]);
  await ctx.db.pool.query("INSERT INTO products(id,sku,name,active,sale_approved,weight_g,width_mm,height_mm,depth_mm) VALUES($1,'TEST-GEL','Тестовый гель',true,true,500,60,190,40)",[product]);
@@ -56,7 +57,7 @@ test('database YCP warehouse export has all required fields, stable pagination a
  assert.equal((await legacy.warehouses({limit:10,offset:0})).total_count,0);
 });
 
-test('draft warehouses cannot sell stock or reserve a YCP order even if a balance exists',async()=>{
+test('closed global sales cannot sell or reserve; opening enables configured warehouses independently of legacy can_fulfill',async()=>{
  const f=await fixture();await ctx.db.pool.query('INSERT INTO inventory_balances(product_id,warehouse_id,on_hand,reserved) VALUES($1,$2,10,3)',[f.product,f.id]);
  const basket={items:[{id:'TEST-GEL',quantity:1}],offers_id_from_merchant_center:false,locality:'Москва',is_health_check:true};
  assert.deepEqual((await f.catalog.basket(basket)).items[0]!.warehouses,[]);
@@ -68,6 +69,8 @@ test('draft warehouses cannot sell stock or reserve a YCP order even if a balanc
  assert.equal((await ctx.db.pool.query('SELECT reserved FROM inventory_balances')).rows[0].reserved,3);
  await assert.rejects(f.registry.save(f.actor,f.id,{...f.edit,canFulfill:true}));
  await f.registry.save(f.actor,f.id,{...f.edit,canFulfill:true,address:'Тестовый подтверждённый адрес',phone:'+79990000000',servedLocalities:['*']});
+ await ctx.db.pool.query("UPDATE storefront_banner SET sales_enabled=true");
+ await ctx.db.pool.query("UPDATE warehouse_profiles SET can_fulfill=false");
  assert.deepEqual((await f.catalog.basket(basket)).items[0]!.warehouses,[{id:f.id,available_quantity:7}]);
  assert.equal((await ycpWarehouses(ctx.db.pool,settings,true)).length,1);
 });
@@ -104,6 +107,11 @@ test('warehouse HTTP routes retain YCP authentication and staff Origin and CSRF 
   const url='/api/admin/v1/warehouses/'+f.id,headers={cookie:'__Host-asaya_staff='+session,origin:settings.publicOrigin};
   assert.equal((await app.inject({method:'PUT',url,headers,payload:f.edit})).statusCode,403);
   const secure={...headers,'x-csrf-token':new StaffAuth(ctx.db,staffSecret).csrf(session)};
+  await ctx.db.pool.query("UPDATE staff_credentials SET staff_role='manager' WHERE user_id=$1",[f.actor]);
+  const sales=(await app.inject({url:'/api/admin/v1/sales',headers})).json();
+  assert.equal((await app.inject({method:'PUT',url:'/api/admin/v1/sales',headers,payload:{enabled:false,revision:sales.revision}})).statusCode,403);
+  assert.equal((await app.inject({method:'PUT',url:'/api/admin/v1/sales',headers:secure,payload:{enabled:false,revision:sales.revision}})).statusCode,200);
+  await ctx.db.pool.query("UPDATE staff_credentials SET staff_role='owner' WHERE user_id=$1",[f.actor]);
   assert.equal((await app.inject({method:'PUT',url,headers:{...secure,origin:'https://other.example.test'},payload:f.edit})).statusCode,403);
   assert.equal((await app.inject({method:'PUT',url,headers:secure,payload:f.edit})).statusCode,200);
  }finally{await app.close();}

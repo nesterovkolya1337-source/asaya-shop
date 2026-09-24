@@ -39,8 +39,7 @@ type ShopState = {
 const STORAGE_KEY = "asaya-shop-state-v3";
 // Demo data is an explicit local preview option, never the default storefront.
 const CATALOG_ONLY = process.env.NEXT_PUBLIC_CATALOG_SOURCE !== "demo";
-const YANDEX_CHECKOUT_ENABLED = CATALOG_ONLY && process.env.NEXT_PUBLIC_YANDEX_BUTTON === 'true';
-const CHECKOUT_ENABLED = CATALOG_ONLY && (YANDEX_CHECKOUT_ENABLED || process.env.NEXT_PUBLIC_TEST_CHECKOUT === 'true');
+
 const CART_KEY='asaya-backend-cart-v1';
 const LEGACY_STORAGE_KEYS = ["asaya-shop-state-v2", "asaya-shop-state-v1"];
 const ShopContext = createContext<ShopState | null>(null);
@@ -85,6 +84,7 @@ type SavedShopState = Partial<Pick<ShopState, "cart" | "favorites" | "promoCode"
 };
 
 export function ShopProvider({ children }: { children: React.ReactNode }) {
+  const [salesOpen,setSalesOpen]=useState(!CATALOG_ONLY);
   const [products, setProducts] = useState<Product[]>(CATALOG_ONLY ? [] : defaultProducts);
   const [catalogStatus, setCatalogStatus] = useState<ShopState["catalogStatus"]>(CATALOG_ONLY ? "loading" : "demo");
   const catalogRequest=useRef(0);
@@ -151,10 +151,10 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     try{
       const response=await fetch(assetPath('/api/store/v1/products'),{signal:AbortSignal.timeout(8000),cache:'no-store',credentials:'omit'});
       if(!response.ok)throw new Error('CATALOG_UNAVAILABLE');
-      const items=readBackendCatalog(await response.json());
+      const payload=await response.json();const items=readBackendCatalog(payload);
       if(request!==catalogRequest.current)throw new Error('CATALOG_REFRESH_SUPERSEDED');
-      setProducts(items);setCatalogStatus('ready');return items;
-    }catch(error){if(request===catalogRequest.current)setCatalogStatus('error');throw error;}
+      setSalesOpen(payload.globalSalesEnabled===true);setProducts(items);setCatalogStatus('ready');return items;
+    }catch(error){if(request===catalogRequest.current){setSalesOpen(false);setCatalogStatus('error');}throw error;}
   },[]);
   useEffect(()=>{
     if(!CATALOG_ONLY)return;
@@ -207,14 +207,14 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   }, [cart, cartReady, catalogStatus, productsWithReviews]);
 
   const value = useMemo<ShopState>(() => ({
-    checkoutEnabled: CHECKOUT_ENABLED,
-    yandexCheckoutEnabled: YANDEX_CHECKOUT_ENABLED || productsWithReviews.some(p=>p.testMode),
+    checkoutEnabled: salesOpen,
+    yandexCheckoutEnabled: CATALOG_ONLY && salesOpen,
     catalogOnly: CATALOG_ONLY,
     catalogStatus,
     reloadCatalog: () => { void refreshCatalog().catch(()=>{}); },
     refreshCatalog,
     repeatOrder: async (lines,signal)=>{
-      if(!CHECKOUT_ENABLED)throw Error('Оформление заказов пока недоступно.');
+      if(!salesOpen)throw Error('Оформление заказов пока недоступно.');
       const response=await fetch(assetPath('/api/store/v1/products'),{cache:'no-store',credentials:'omit',signal:AbortSignal.any([signal,AbortSignal.timeout(8000)])});
       if(!response.ok)throw Error('Не удалось проверить актуальные цены и остатки. Повторите позже.');
       const fresh=readBackendCatalog(await response.json()),result=repeatOrderPlan(lines,fresh,cart);
@@ -229,7 +229,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     userEmail,
     reviews,
     cartCount: Object.values(cart).reduce((sum, quantity) => sum + quantity, 0),
-    addToCart: (id) => { if (!CATALOG_ONLY || CHECKOUT_ENABLED || productsWithReviews.some(p=>p.id===id&&p.testMode)) setCart((current) => {
+    addToCart: (id) => { if (!CATALOG_ONLY || salesOpen) setCart((current) => {
       const product=productsWithReviews.find(item=>item.id===id);
       if(!product?.active||product.stock<1)return current;
       return {...current,[id]:Math.min((current[id]??0)+1,product.stock,100)};
@@ -247,7 +247,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         const product=productsWithReviews.find(item=>item.id===id);
         // Decreasing a saved unavailable row must not silently erase it at stock=0.
         if(quantity<(current[id]??0))next[id]=quantity;
-        else if(product?.active&&product.stockState!=='unknown'&&quantity<=product.stock)next[id]=quantity;
+        else if(salesOpen&&product?.active&&product.stockState!=='unknown'&&quantity<=product.stock)next[id]=quantity;
       }
       return next;
     }),
@@ -263,7 +263,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     updateProduct: (id, updates) => { if (!CATALOG_ONLY) setProducts((current) => current.map((product) => (
       product.id === id ? { ...product, ...updates } : product
     ))); },
-  }), [cart, favorites, productsWithReviews, promoCode, reviews, userEmail, catalogStatus,refreshCatalog]);
+  }), [salesOpen,cart, favorites, productsWithReviews, promoCode, reviews, userEmail, catalogStatus,refreshCatalog]);
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;
 }

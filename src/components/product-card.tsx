@@ -61,11 +61,11 @@ export function ProductCard({ product }: { product: Product }) {
       ) : (
         <button
           className={styles.addButton}
-          disabled={(catalogOnly && !checkoutEnabled && !product.testMode) || !product.stock}
+          disabled={(catalogOnly && !checkoutEnabled) || !product.stock}
           onClick={() => addToCart(product.id)}
           type="button"
         >
-          {!product.stock ? "Нет в наличии" : catalogOnly && !checkoutEnabled && !product.testMode ? "Продажи пока закрыты" : "В корзину"}
+          {!product.stock ? "Нет в наличии" : catalogOnly && !checkoutEnabled ? "Продажи пока закрыты" : "В корзину"}
         </button>
       )}
     </article>

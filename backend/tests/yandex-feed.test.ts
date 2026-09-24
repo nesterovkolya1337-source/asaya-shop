@@ -14,6 +14,7 @@ const token='yandex-feed-test-token-with-at-least-32-characters';
 before(async()=>{ctx=await testDatabase();});after(async()=>{await ctx?.stop();});
 beforeEach(async()=>{await ctx.db.pool.query('TRUNCATE yandex_checkout_attempts,products,warehouses,users,checkout_sessions,integration_inbox,integration_outbox CASCADE');});
 async function fixture(){
+ await ctx.db.pool.query("UPDATE storefront_banner SET sales_enabled=true");
  const db=ctx.db,product=randomUUID(),warehouse=randomUUID();
  await db.pool.query("INSERT INTO warehouses(id,code,name,active) VALUES($1,'FEED','Test warehouse',true)",[warehouse]);
  await db.pool.query('INSERT INTO products(id,sku,name,active,sale_approved,weight_g,width_mm,height_mm,depth_mm) VALUES($1,$2,$3,true,true,505,61,192,42)',[product,'SKU-FEED','Гель ASAYA & «Киви» <500 мл>']);
@@ -66,7 +67,7 @@ test('checkout link HTTP requires same origin and explicit settings but no local
  }finally{await app.close();}
  for(const settings of [f.settings,{...f.settings,button:{enabled:false}}]){
   const disabled=await buildApp({...options,ycp:{token,settings}});
-  try{assert.equal((await disabled.inject({method:'POST',url,payload,headers:{origin,'idempotency-key':randomUUID()}})).statusCode,503);}finally{await disabled.close();}
+  try{assert.equal((await disabled.inject({method:'POST',url,payload,headers:{origin,'idempotency-key':randomUUID()}})).statusCode,200);}finally{await disabled.close();}
  }
 });
 test('feed prepares stable offer IDs only explicitly and preserves identity through concurrent replay',async()=>{
@@ -176,22 +177,21 @@ test('redirect is withheld if attempt persistence fails and invalid keys create 
 });
 import {StorefrontControls} from '../src/storefront-controls.js';
 import {CommerceService} from '../src/commerce.js';
-test('test stock launches express only; YCP, feed, balances, reserves and orders use real stock exclusively',async()=>{
+test('test stock cannot bypass the REAL-stock sales gate or change feed, balances or orders',async()=>{
  const f=await fixture(),actor=randomUUID();await f.feed.prepare(true);await f.db.pool.query("INSERT INTO users(id,role) VALUES($1,'admin')",[actor]);await f.db.pool.query('UPDATE inventory_balances SET on_hand=0,reserved=0');
  await f.db.pool.query('UPDATE product_prices SET final_minor=50000');
  const c=new StorefrontControls(f.db,false),service=new YandexFeed(f.db,{...f.settings,checkout:{deliveryPriceUnit:'rubles'},button:{enabled:false}}),body={items:[{sku:'SKU-FEED',quantity:5}]};
- await assert.rejects(service.checkoutLink(body),/YANDEX_CHECKOUT_UNAVAILABLE/);
+ await assert.rejects(service.checkoutLink(body),/PRODUCT_UNAVAILABLE/);
  const ycp=new YcpCatalog(f.db,token,f.settings),request={items:[{id:'SKU-FEED',quantity:5}],offers_id_from_merchant_center:false,locality:'Москва',is_health_check:false};
  const real=await ycp.basket(request),balance=(await f.db.pool.query('SELECT * FROM inventory_balances')).rows;
  await c.saveStock(actor,f.product,{enabled:true,quantity:5,revision:0});
- assert.equal((await new CommerceService(f.db).catalog(true))[0]!.available,5);
- const {url}=await service.checkoutLink(body),data=JSON.parse(Buffer.from(new URL(url).searchParams.get('data')!,'base64').toString());
- assert.deepEqual(Object.keys(data.items[0]).sort(),['final_price','id','price','quantity']);assert.equal(data.items[0].quantity,5);
+ assert.equal((await new CommerceService(f.db).catalog(true))[0]!.available,0);
+ await assert.rejects(service.checkoutLink(body),/PRODUCT_UNAVAILABLE/);
  assert.deepEqual(await ycp.basket(request),real);assert.match((await f.feed.render()).xml,/available="false"/);
  assert.deepEqual((await f.db.pool.query('SELECT * FROM inventory_balances')).rows,balance);
  for(const table of ['orders','inventory_reservations','integration_outbox'])assert.equal((await f.db.pool.query('SELECT 1 FROM '+table)).rowCount,0);
  await assert.rejects(service.checkoutLink({items:[{sku:'SKU-FEED',quantity:6}]}));
- await c.saveStock(actor,f.product,{enabled:false,quantity:5,revision:1});assert.equal((await new CommerceService(f.db).catalog(true))[0]!.available,0);await assert.rejects(service.checkoutLink(body),/YANDEX_CHECKOUT_UNAVAILABLE/);
+ await c.saveStock(actor,f.product,{enabled:false,quantity:5,revision:1});assert.equal((await new CommerceService(f.db).catalog(true))[0]!.available,0);await assert.rejects(service.checkoutLink(body),/PRODUCT_UNAVAILABLE/);
 });
 
 // Production-shaped configuration: no feed, no mappings, no VAT/monetary switches.
@@ -206,7 +206,8 @@ test('custom-site SKU checkout and authenticated basket work without feed or leg
  const prices=(await f.db.pool.query('SELECT * FROM product_prices')).rows;
  const controls=new StorefrontControls(f.db,false);
  await controls.saveStock(actor,f.product,{enabled:true,quantity:3,revision:0});
- assert.equal((await new CommerceService(f.db).catalog(true))[0]!.available,3);
+ assert.equal((await new CommerceService(f.db).catalog(true))[0]!.available,0);
+ await f.db.pool.query('UPDATE inventory_balances SET on_hand=3');
  const origin='https://asaya.example.test';
  const app=await buildApp({db:f.db,otpSecret:token,otpSender:new DisabledOtpSender(),origin,secureCookies:true,ycp:{token,settings}});
  try{
@@ -218,12 +219,42 @@ test('custom-site SKU checkout and authenticated basket work without feed or leg
    const r=await app.inject({method:'POST',url:'/api/v1/checkout/basket/check',headers:{authorization:'Bearer '+token},payload:{items:[{id:'SKU-FEED',quantity:3}],offers_id_from_merchant_center,locality:'Москва',is_health_check:false}});
    assert.equal(r.statusCode,200,r.body);const item=r.json().items[0];
    assert.equal(item.id,'SKU-FEED');assert.equal(item.regular_price,600);assert.equal(item.final_price,450);
-   assert.equal(item.warehouses[0].available_quantity,0);assert.equal('vat' in item,false);assert.deepEqual(item.dimensions,{});
+   assert.equal(item.warehouses[0].available_quantity,3);assert.equal('vat' in item,false);assert.deepEqual(item.dimensions,{});
    if(process.env.ASAYA_CUSTOM_CHECKOUT_OUTPUT)await writeFile(process.env.ASAYA_CUSTOM_CHECKOUT_OUTPUT,JSON.stringify({basket:r.json(),checkoutUrl:response.json().url}),'utf8');
   }
   assert.equal((await f.db.pool.query('SELECT 1 FROM product_external_ids')).rowCount,0);
   for(const table of ['orders','inventory_reservations','integration_outbox'])assert.equal((await f.db.pool.query('SELECT 1 FROM '+table)).rowCount,0);
-  assert.deepEqual((await f.db.pool.query('SELECT * FROM inventory_balances ORDER BY warehouse_id')).rows,before);
+  assert.deepEqual((await f.db.pool.query('SELECT * FROM inventory_balances ORDER BY warehouse_id')).rows,before.map(r=>({...r,on_hand:3})));
   assert.deepEqual((await f.db.pool.query('SELECT * FROM product_prices')).rows,prices);
  }finally{await app.close();}
+});
+
+test('global sales toggle controls REAL stock YML, redirect, basket and public flag without altering stock or publication',async()=>{
+ const f=await fixture(),actor=randomUUID(),buyer=randomUUID(),c=new StorefrontControls(f.db,false);
+ await f.db.pool.query("INSERT INTO users(id,role) VALUES($1,'admin'),($2,'customer')",[actor,buyer]);
+ await f.db.pool.query('UPDATE product_prices SET final_minor=50000');
+ await f.db.pool.query("INSERT INTO stock_sources(warehouse_id,source_kind,environment,source_hash,payload_hash,generated_at,fetched_at,expires_at,healthy) VALUES($1,'cdek_ff_api','production',repeat('a',64),'fixture',now(),now(),now()+interval '10 minutes',true)",[f.warehouse]);
+ await f.db.pool.query('INSERT INTO stock_source_items(warehouse_id,product_id,provider_quantity,quantity,listed) VALUES($1,$2,10,10,true)',[f.warehouse,f.product]);
+ const before=(await f.db.pool.query('SELECT * FROM inventory_balances')).rows;
+ const content=(await f.db.pool.query('SELECT * FROM product_editor')).rows;
+ const body={items:[{sku:'SKU-FEED',quantity:1}]},basket={items:[{id:'SKU-FEED',quantity:1}],offers_id_from_merchant_center:false,locality:'Москва',is_health_check:false};
+ const revision=(await c.sales()).revision;
+ await assert.rejects(c.saveSales(buyer,{enabled:false,revision}),/FORBIDDEN/);
+ await c.saveSales(actor,{enabled:false,revision});
+ await assert.rejects(c.saveSales(actor,{enabled:true,revision}),/EDIT_CONFLICT/);
+ assert.match((await f.feed.render()).xml,/available="false"/);
+ await assert.rejects(f.feed.checkoutLink(body),/SALES_CLOSED/);
+ assert.deepEqual((await new YcpCatalog(f.db,token,f.settings).basket(basket)).items[0]!.warehouses,[]);
+ const app=await buildApp({db:f.db,staffSecret:'global-sales-staff-secret-with-32-characters',otpSecret:token,otpSender:new DisabledOtpSender(),origin:'http://localhost:3200',secureCookies:false,ycp:{token,settings:f.settings}});
+ try{
+  const catalog=(await app.inject('/api/store/v1/products')).json();assert.equal(catalog.globalSalesEnabled,false);assert.equal(catalog.items[0].available,7);
+  assert.equal((await app.inject('/api/admin/v1/sales')).statusCode,401);
+  const r=await app.inject({method:'POST',url:'/api/store/v1/yandex/checkout-link',headers:{origin:'http://localhost:3200','idempotency-key':randomUUID()},payload:body});assert.equal(r.statusCode,409);assert.match(r.body,/SALES_CLOSED/);
+ }finally{await app.close();}
+ await c.saveSales(actor,{enabled:true,revision:revision+1});
+ assert.match((await f.feed.render()).xml,/available="true"/);assert.ok((await f.feed.checkoutLink(body)).url);
+ assert.equal((await new YcpCatalog(f.db,token,f.settings).basket(basket)).items[0]!.warehouses[0]!.available_quantity,7);
+ assert.deepEqual((await f.db.pool.query('SELECT * FROM inventory_balances')).rows,before);assert.deepEqual((await f.db.pool.query('SELECT * FROM product_editor')).rows,content);
+ await f.db.pool.query('UPDATE inventory_balances SET on_hand=0,reserved=0');
+ for(const enabled of [false,true]){await c.saveSales(actor,{enabled,revision:(await c.sales()).revision});assert.match((await f.feed.render()).xml,/available="false"/);}
 });

@@ -1,3 +1,4 @@
+import {requireSales} from './storefront-controls.js';
 import {earnLoyalty} from './loyalty.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -44,9 +45,10 @@ export class CommerceService {
    WHERE p.active AND p.archived_at IS NULL AND ($1=false OR e.published IS NOT NULL) ORDER BY p.sku`,[this.environment==='production']);
   const merch=storefront?Object.fromEntries((await this.db.pool.query('SELECT scope,value FROM merchandising')).rows.map(r=>[r.scope,r.value])):{};
   const sales=storefront?new Map((await this.db.pool.query(`SELECT i.sku,sum(i.quantity)::integer AS units FROM order_items i JOIN orders o ON o.id=i.order_id WHERE o.payment_status='paid' AND o.status IN ('placed','processing','completed') AND COALESCE(i.refused_count,0)=0 GROUP BY i.sku`)).rows.map(r=>[r.sku,r.units])):new Map();
-  return rows.map(r=>({... (storefront?{merchandising:{catalogOrder:(merch.catalog??[]).indexOf(r.sku),categoryOrder:(merch[r.content?.category]??[]).indexOf(r.sku),prioritySku:merch.recommendations?.[r.sku]??null,soldUnits:sales.get(r.sku)??0}}:{}),sku:r.sku,name:r.name,slug:r.slug,currency:r.currency,regularMinor:money(r.regular_minor),finalMinor:money(r.final_minor),available:storefront&&r.test_mode?r.test_quantity:r.available,stockState:storefront&&r.test_mode||r.available>0||r.stock_known?'known':'unknown',...(storefront?{testMode:!!r.test_mode}:{}),...(r.content?{content:r.content}:{})}));
+  return rows.map(r=>({... (storefront?{merchandising:{catalogOrder:(merch.catalog??[]).indexOf(r.sku),categoryOrder:(merch[r.content?.category]??[]).indexOf(r.sku),prioritySku:merch.recommendations?.[r.sku]??null,soldUnits:sales.get(r.sku)??0}}:{}),sku:r.sku,name:r.name,slug:r.slug,currency:r.currency,regularMinor:money(r.regular_minor),finalMinor:money(r.final_minor),available:r.available,stockState:r.available>0||r.stock_known?'known':'unknown',...(storefront?{testMode:false}:{}),...(r.content?{content:r.content}:{})}));
  }
  async createCheckout(userId:string,key:string,raw:unknown) {
+  await requireSales(this.db.pool);
   z.string().min(16).max(128).regex(/^[A-Za-z0-9_-]+$/).parse(key);
   const input=checkoutSchema.parse(raw); input.items=normalizeCart(input.items);
   const fingerprint=hash(canonical(input)); const scope=`checkout:${userId}`; const now=this.clock();

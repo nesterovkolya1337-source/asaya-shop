@@ -16,6 +16,7 @@ const token='ycp-order-test-token-with-more-than-32-characters';
 before(async()=>{ctx=await testDatabase();});after(async()=>{await ctx?.stop();});
 beforeEach(async()=>{await ctx.db.pool.query('TRUNCATE products,warehouses,users,checkout_sessions,integration_inbox,integration_outbox CASCADE');});
 async function fixture(cod=false,finalPrice=90){
+ await ctx.db.pool.query("UPDATE storefront_banner SET sales_enabled=true");
  const db=ctx.db,warehouse=randomUUID();await db.pool.query("INSERT INTO warehouses(id,code,name,active) VALUES($1,'YCP','Test warehouse',true)",[warehouse]);
  for(const sku of ['YCP-A','YCP-B']){const product=randomUUID();
   await db.pool.query('INSERT INTO products(id,sku,name,active,sale_approved,weight_g,width_mm,height_mm,depth_mm) VALUES($1,$2,$2,true,true,500,50,100,50)',[product,sku]);
