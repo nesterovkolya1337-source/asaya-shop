@@ -29,7 +29,7 @@ test('existing image crop survives save/reopen/re-crop without changing source, 
  const crop2=JSON.stringify({desktop:{x:70,y:40,zoom:1.4}});await admin.save(actor,id,{...current.draft,revision:current.revision,content:{...current.draft.content,imageCrops:{'/images/old.webp':crop2}}});
  assert.equal(contentSchema.safeParse({...draft.content,imageCrops:{'/images/old.webp':'{"desktop":{"x":200,"y":0,"zoom":1}}'}}).success,false);
  const commerce=new CommerceService(ctx.db),before=await admin.detail(id);assert.equal((await c.stock(id)).enabled,false);assert.equal((await commerce.catalog(true)).find(p=>p.sku==='CROP-OLD')!.available,0);
- await c.saveStock(actor,id,{enabled:true,quantity:5,revision:0});assert.equal((await c.stock(id)).real,0);assert.equal((await commerce.catalog(true)).find(p=>p.sku==='CROP-OLD')!.available,5);assert.equal((await commerce.catalog()).find(p=>p.sku==='CROP-OLD')!.available,0);
+ await c.saveStock(actor,id,{enabled:true,quantity:5,revision:0});assert.equal((await c.stock(id)).real,0);assert.equal((await commerce.catalog(true)).find(p=>p.sku==='CROP-OLD')!.available,0);assert.equal((await commerce.catalog()).find(p=>p.sku==='CROP-OLD')!.available,0);
  assert.deepEqual(await admin.detail(id),before);await assert.rejects(c.saveStock(actor,id,{enabled:true,quantity:9,revision:0}),/EDIT_CONFLICT/);
  await c.saveStock(actor,id,{enabled:false,quantity:5,revision:1});assert.equal((await commerce.catalog(true)).find(p=>p.sku==='CROP-OLD')!.available,0);assert.equal((await c.stock(id)).quantity,5);
  assert.equal((await ctx.db.pool.query('SELECT 1 FROM inventory_reservations')).rowCount,0);

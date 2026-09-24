@@ -1,3 +1,4 @@
+import {salesEnabled} from './storefront-controls.js';
 import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
 import {Database,lock,type Tx} from './db.js';
@@ -9,11 +10,12 @@ export type WarehouseProfile={warehouseId:string;title?:string;address:string;ph
 
 // No provider network calls belong in YCP requests: use the backend's stock ledger.
 export async function ycpWarehouses(db:Queryable,settings:YcpSettings,orderableOnly=false,holdLock=false):Promise<WarehouseProfile[]>{
+ if(orderableOnly&&!await salesEnabled(db,holdLock))return [];
  if(settings.warehouseSource!=='database')return settings.warehouses;
  const {rows}=await db.query(`SELECT w.id,w.name,p.address_line,p.phone,p.description,p.served_localities
   FROM warehouses w JOIN warehouse_profiles p ON p.warehouse_id=w.id
-  WHERE w.active AND p.ycp_export_enabled AND (NOT $1 OR p.can_fulfill)
-  ORDER BY w.id${holdLock?' FOR SHARE OF w,p':''}`,[orderableOnly]);
+  WHERE w.active AND p.ycp_export_enabled
+  ORDER BY w.id${holdLock?' FOR SHARE OF w,p':''}`);
  return rows.map(r=>({warehouseId:r.id,title:r.name,address:r.address_line,phone:r.phone,description:r.description,
   servedLocalities:r.served_localities,ycpDeliveryEnabled:false}));
 }

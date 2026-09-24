@@ -104,11 +104,11 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   if(options.deploymentMode==='catalog'&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
    const customerLogin=req.method==='POST'&&(!!customerYandex&&['/api/store/v1/auth/yandex/start','/api/store/v1/auth/logout'].includes(route)||smsEnabled&&['/api/store/v1/auth/sms-consent/status','/api/store/v1/auth/otp/request','/api/store/v1/auth/otp/verify','/api/store/v1/auth/logout'].includes(route));
-   if(!cartQuote&&!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!engagementEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|products(?:\/.*)?|prices(?:\/.*)?|merchandising|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
+   if(!cartQuote&&!stockRefresh&&!analyticsEvent&&!cdekRefresh&&!privacyEdit&&!accountEdit&&!engagementEdit&&!customerLogin&&!/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|sales|products(?:\/.*)?|prices(?:\/.*)?|merchandising|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route))throw new DomainError('CATALOG_ONLY',503);
   }
   if(liveYcp&&['POST','PUT','PATCH','DELETE'].includes(req.method)){
    const route=req.routeOptions.url??'';
-   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|products(?:\/.*)?|prices(?:\/.*)?|merchandising|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
+   const adminEdit=/^\/api\/admin\/v1\/(auth\/(login|logout|activate\/(start|password|confirm))|sms-consents(?:\/revoke)?|employees(?:\/.*)?|marketing(?:\/.*)?|media(?:\/.*)?|trash(?:\/.*)?|banner|sales|products(?:\/.*)?|prices(?:\/.*)?|merchandising|warehouses(?:\/.*)?|site-pages\/:page(?:\/(?:publish|restore))?)$/.test(route);
    const checkoutLink=req.method==='POST'&&route==='/api/store/v1/yandex/checkout-link';
    // Yandex owns checkout/payments; CDEK callbacks have their own boundary. Do not enable the
    // local checkout or local-only order changes with customer SMS sign-in.
@@ -170,7 +170,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
    const session=await staff.session(req.cookies[staffCookie]);
    reply.setCookie(staffCookie,req.cookies[staffCookie]!,staffCookieOptions);
    const route=req.routeOptions.url??'';
-   if(session.user.staffRole==='manager'&&(!/^\/api\/admin\/v1\/(auth\/(me|logout)|products(?:\/.*)?|prices(?:\/.*)?|merchandising|orders(?:\/.*)?|analytics(?:\/.*)?|statistics|marketing(?:\/.*)?|site-pages(?:\/.*)?|banner|media(?:\/.*)?|trash(?:\/.*)?)$/.test(route)||route.endsWith('/privacy')))throw new DomainError('FORBIDDEN',403);
+   if(session.user.staffRole==='manager'&&(!/^\/api\/admin\/v1\/(auth\/(me|logout)|products(?:\/.*)?|prices(?:\/.*)?|merchandising|orders(?:\/.*)?|analytics(?:\/.*)?|statistics|marketing(?:\/.*)?|site-pages(?:\/.*)?|banner|sales|media(?:\/.*)?|trash(?:\/.*)?)$/.test(route)||route.endsWith('/privacy')))throw new DomainError('FORBIDDEN',403);
    if(req.method!=='GET'&&(typeof req.headers['x-csrf-token']!=='string'||!equal(req.headers['x-csrf-token'],session.csrfToken)))throw new DomainError('CSRF_REJECTED',403);
   });
   const actor=async(token:string|undefined)=>(await staff!.session(token)).user.id;
@@ -237,6 +237,8 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   const marketing=new Marketing(options.db);
   secured.get('/api/admin/v1/marketing',async()=>marketing.read());
   for(const action of ['save','publish','restore','defaults'] as const)secured.post('/api/admin/v1/marketing/'+action,async req=>marketing.change(await actor(req.cookies[staffCookie]),action,req.body));
+  secured.get('/api/admin/v1/sales',async()=>controls.sales());
+  secured.put('/api/admin/v1/sales',async req=>controls.saveSales(await actor(req.cookies[staffCookie]),req.body));
   secured.get('/api/admin/v1/banner',async()=>controls.banner());
   secured.put('/api/admin/v1/banner',async req=>controls.saveBanner(await actor(req.cookies[staffCookie]),req.body));
   secured.get('/api/admin/v1/products/:id/test-stock',async req=>controls.stock(id(req.params)));
@@ -282,7 +284,7 @@ export async function buildApp(options:{stock?:StockSync;deploymentMode?:'founda
   app.post(base+'/order/cancel',{config:{ycp:true}},async req=>{z.object({}).strict().parse(req.body??{});return ycpOrders!.cancel(req.query);});
  }
  app.get('/health/ready',async()=>{await options.db.pool.query('SELECT 1');return {status:'ok',stage:'foundation'};});
- app.get('/api/store/v1/products',async()=>({items:await commerce.catalog(true)}));
+ app.get('/api/store/v1/products',async()=>({globalSalesEnabled:(await controls.sales()).enabled,items:await commerce.catalog(true)}));
  app.get('/api/store/v1/content/:page',async req=>siteContent.publicPage(z.object({page:z.string().max(50)}).parse(req.params).page));
  app.get('/api/store/v1/reviews/:sku',async req=>engagement.publicReviews(z.object({sku:z.string()}).parse(req.params).sku));
  app.get('/api/store/v1/media/:id',async(req,reply)=>{

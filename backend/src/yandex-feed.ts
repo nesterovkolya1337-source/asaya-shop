@@ -1,3 +1,4 @@
+import {requireSales,salesEnabled} from './storefront-controls.js';
 import {priceRows} from './cart-pricing.js';
 import {ycpWarehouses} from './warehouses.js';
 import {randomUUID} from 'node:crypto';
@@ -53,6 +54,8 @@ export class YandexFeed {
    JOIN product_editor e ON e.product_id=p.id AND e.published IS NOT NULL
    JOIN LATERAL(SELECT slug FROM storefront_mappings WHERE product_id=p.id AND approved ORDER BY slug LIMIT 1) m ON true
    WHERE p.active AND p.archived_at IS NULL ORDER BY p.sku`,[(await ycpWarehouses(this.db.pool,s,true)).map(w=>w.warehouseId)]);
+  const open=await salesEnabled(this.db.pool);
+  for(const row of rows)if(!open)row.available=0;
   const offers:string[]=[],skipped:Array<{sku:string;reason:string}>=[];
   const items:Array<{sku:string;offerId:string;available:number;regularMinor:number;finalMinor:number}>=[];
   for(const row of rows){
@@ -87,8 +90,7 @@ export class YandexFeed {
   const body=z.object({items:z.array(z.object({sku:z.string().min(1).max(200),quantity:z.number().int().min(1).max(100)}).strict()).min(1).max(50)}).strict()
    .refine(v=>new Set(v.items.map(i=>i.sku)).size===v.items.length).parse(raw);
   body.items.sort((a,b)=>a.sku<b.sku?-1:a.sku>b.sku?1:0);
-  const tests=(await this.db.pool.query('SELECT p.sku,t.quantity FROM product_test_stock t JOIN products p ON p.id=t.product_id WHERE t.enabled AND p.active AND p.archived_at IS NULL')).rows;
-  if(!s.button?.enabled&&!body.items.every(i=>tests.some(t=>t.sku===i.sku&&t.quantity>=i.quantity)))throw new DomainError('YANDEX_CHECKOUT_UNAVAILABLE',503);
+  await requireSales(this.db.pool);
   // Custom-site button: canonical SKU, prices and stock. No feed metadata or mappings.
   const catalog=(await this.db.pool.query(`SELECT p.sku,pr.regular_minor,pr.final_minor,
    COALESCE((SELECT sum(GREATEST(0,LEAST(b.on_hand,asaya_stock_limit(p.id,w.id,$2))-b.reserved))
@@ -102,8 +104,8 @@ export class YandexFeed {
   const pricing=await priceRows(this.db.pool,catalog,body.items);
   const items=body.items.map(line=>{
    const item=catalog.find(p=>p.sku===line.sku);
-   if(!item||(item.available<1&&!tests.some(t=>t.sku===line.sku)))throw new DomainError('PRODUCT_UNAVAILABLE',409);
-   if(line.quantity>(tests.find(t=>t.sku===line.sku)?.quantity??item.available))throw new DomainError('INSUFFICIENT_STOCK',409);
+   if(!item||item.available<1)throw new DomainError('PRODUCT_UNAVAILABLE',409);
+   if(line.quantity>item.available)throw new DomainError('INSUFFICIENT_STOCK',409);
    // Official custom-site button amounts are rubles; identity is our stable canonical SKU.
    return {id:item.sku,quantity:line.quantity,price:money(item.regular_minor)/100,final_price:pricing.items.find(i=>i.sku===item.sku)!.unitMinor/100};
   });
@@ -112,6 +114,7 @@ export class YandexFeed {
   url.searchParams.set('data',Buffer.from(JSON.stringify({items}),'utf8').toString('base64'));
   // Persist before returning the redirect; a local attempt is not a YCP session or an order.
   return this.db.transaction(async tx=>{
+   await requireSales(tx);
    await lock(tx,canonical(['yandex-checkout-attempt',s.accountId,s.environment,idempotencyKey]));
    const prior=(await tx.query('SELECT * FROM yandex_checkout_attempts WHERE account_id=$1 AND environment=$2 AND idempotency_key=$3',[s.accountId,s.environment,idempotencyKey])).rows[0];
    const now=this.clock(),snapshot={items};
