@@ -57,7 +57,7 @@ test('database YCP warehouse export has all required fields, stable pagination a
  assert.equal((await legacy.warehouses({limit:10,offset:0})).total_count,0);
 });
 
-test('closed global sales cannot sell or reserve; opening enables configured warehouses independently of legacy can_fulfill',async()=>{
+test('sales permission and warehouse eligibility are independent and both required',async()=>{
  const f=await fixture();await ctx.db.pool.query('INSERT INTO inventory_balances(product_id,warehouse_id,on_hand,reserved) VALUES($1,$2,10,3)',[f.product,f.id]);
  const basket={items:[{id:'TEST-GEL',quantity:1}],offers_id_from_merchant_center:false,locality:'Москва',is_health_check:true};
  assert.deepEqual((await f.catalog.basket(basket)).items[0]!.warehouses,[]);
@@ -71,6 +71,8 @@ test('closed global sales cannot sell or reserve; opening enables configured war
  await f.registry.save(f.actor,f.id,{...f.edit,canFulfill:true,address:'Тестовый подтверждённый адрес',phone:'+79990000000',servedLocalities:['*']});
  await ctx.db.pool.query("UPDATE storefront_banner SET sales_enabled=true");
  await ctx.db.pool.query("UPDATE warehouse_profiles SET can_fulfill=false");
+ assert.deepEqual((await f.catalog.basket(basket)).items[0]!.warehouses,[]);
+ await ctx.db.pool.query("UPDATE warehouse_profiles SET can_fulfill=true");
  assert.deepEqual((await f.catalog.basket(basket)).items[0]!.warehouses,[{id:f.id,available_quantity:7}]);
  assert.equal((await ycpWarehouses(ctx.db.pool,settings,true)).length,1);
 });
