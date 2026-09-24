@@ -3,7 +3,7 @@ name: Deploy ASAYA to GitHub Pages
 on:
   push:
     branches:
-      - main
+      - codex/release-cart-pdp-20260923
   workflow_dispatch:
 
 permissions:
@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: codex/release-cart-pdp-20260923
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -36,9 +38,13 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Build with Next.js
-        run: npm run build
+        run: npm run build -- --webpack
         env:
+          NEXT_PUBLIC_CATALOG_SOURCE: demo
           NEXT_PUBLIC_BASE_PATH: ${{ steps.setup_pages.outputs.base_path }}
+
+      - name: Record published revision
+        run: git rev-parse HEAD > out/version.txt
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
