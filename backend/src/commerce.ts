@@ -32,7 +32,7 @@ async function event(tx:Tx,orderId:string,kind:string) {
 export class CommerceService {
  constructor(readonly db:Database,private clock=()=>new Date(),readonly environment:'test'|'production'='test') {}
  async catalog(storefront=false) {
-  const {rows}=await this.db.pool.query(`SELECT p.sku,p.name,t.enabled AS test_mode,t.quantity AS test_quantity,m.slug,pr.currency,pr.regular_minor,pr.final_minor,e.published->'content' AS content,
+  const {rows}=await this.db.pool.query(`SELECT p.sku,p.name,(SELECT count(*)::int FROM product_reviews r WHERE r.product_id=p.id AND r.status='published') review_count,(SELECT avg(r.rating)::float FROM product_reviews r WHERE r.product_id=p.id AND r.status='published') review_average,t.enabled AS test_mode,t.quantity AS test_quantity,m.slug,pr.currency,pr.regular_minor,pr.final_minor,e.published->'content' AS content,
    COALESCE((SELECT sum(GREATEST(0,LEAST(b.on_hand,asaya_stock_limit(p.id,w.id,$1))-b.reserved)) FROM inventory_balances b JOIN warehouses w ON w.id=b.warehouse_id WHERE b.product_id=p.id AND w.active),0)::integer AS available,
    COALESCE((SELECT bool_and(CASE WHEN s.warehouse_id IS NULL THEN NOT $1 ELSE
     s.healthy AND s.expires_at>statement_timestamp() AND (NOT $1 OR s.environment='production') AND COALESCE(i.listed,false) END)
@@ -45,7 +45,7 @@ export class CommerceService {
    WHERE p.active AND p.archived_at IS NULL AND ($1=false OR e.published IS NOT NULL) ORDER BY p.sku`,[this.environment==='production']);
   const merch=storefront?Object.fromEntries((await this.db.pool.query('SELECT scope,value FROM merchandising')).rows.map(r=>[r.scope,r.value])):{};
   const sales=storefront?new Map((await this.db.pool.query(`SELECT i.sku,sum(i.quantity)::integer AS units FROM order_items i JOIN orders o ON o.id=i.order_id WHERE o.payment_status='paid' AND o.status IN ('placed','processing','completed') AND COALESCE(i.refused_count,0)=0 GROUP BY i.sku`)).rows.map(r=>[r.sku,r.units])):new Map();
-  return rows.map(r=>({... (storefront?{merchandising:{bestsellerOrder:(merch.home_bestsellers??[]).indexOf(r.sku),newOrder:(merch.home_new??[]).indexOf(r.sku),catalogOrder:(merch.catalog??[]).indexOf(r.sku),categoryOrder:(merch[r.content?.category]??[]).indexOf(r.sku),prioritySku:merch.recommendations?.[r.sku]??null,soldUnits:sales.get(r.sku)??0}}:{}),sku:r.sku,name:r.name,slug:r.slug,currency:r.currency,regularMinor:money(r.regular_minor),finalMinor:money(r.final_minor),available:r.available,stockState:r.available>0||r.stock_known?'known':'unknown',...(storefront?{testMode:false}:{}),...(r.content?{content:r.content}:{})}));
+  return rows.map(r=>({... (storefront?{merchandising:{bestsellerOrder:(merch.home_bestsellers??[]).indexOf(r.sku),newOrder:(merch.home_new??[]).indexOf(r.sku),catalogOrder:(merch.catalog??[]).indexOf(r.sku),categoryOrder:(merch[r.content?.category]??[]).indexOf(r.sku),prioritySku:merch.recommendations?.[r.sku]??null,soldUnits:sales.get(r.sku)??0}}:{}),reviewCount:r.review_count,reviewAverage:r.review_average,sku:r.sku,name:r.name,slug:r.slug,currency:r.currency,regularMinor:money(r.regular_minor),finalMinor:money(r.final_minor),available:r.available,stockState:r.available>0||r.stock_known?'known':'unknown',...(storefront?{testMode:false}:{}),...(r.content?{content:r.content}:{})}));
  }
  async createCheckout(userId:string,key:string,raw:unknown) {
   await requireSales(this.db.pool);

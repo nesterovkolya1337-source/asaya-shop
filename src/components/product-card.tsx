@@ -1,4 +1,5 @@
 "use client";
+import {ProductRating} from './product-rating';
 
 import {productMediaFrames} from '@/lib/product-media-frame';
 import {ProductPurchaseActions} from './product-purchase-actions';
@@ -13,7 +14,7 @@ import { getProductAnalytics } from '@/lib/product-analytics';
 import { getMetrika } from '@/lib/metrika';
 import styles from "./product-card.module.css";
 
-export function ProductCard({ product, recommendation=false }: { product: Product; recommendation?:boolean }) {
+export function ProductCard({ product, recommendation=false,interactionsDisabled=false }: { product: Product; recommendation?:boolean;interactionsDisabled?:boolean }) {
   const { favorites, toggleFavorite } = useShop();
   const analyticsRef=useProductImpression(product.sku);
   const isFavorite = favorites.includes(product.id);
@@ -46,6 +47,7 @@ export function ProductCard({ product, recommendation=false }: { product: Produc
       <div className={styles.info}>
         <div className={styles.meta}>
           <h3>{product.name}</h3>
+          <ProductRating rating={product.rating} count={product.reviews}/>
         </div>
         <div className={styles.price}>
           <strong>{formatPrice(product.price)}</strong>
@@ -54,7 +56,7 @@ export function ProductCard({ product, recommendation=false }: { product: Produc
           </div>
         </div>
       </div>
-      <div className={styles.actions}><ProductPurchaseActions product={product} compact quickBuy={!recommendation}/></div>
+      <div className={styles.actions}><ProductPurchaseActions product={product} compact quickBuy={false} interactionsDisabled={interactionsDisabled}/></div>
     </article>
   );
 }

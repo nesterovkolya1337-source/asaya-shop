@@ -1,15 +1,15 @@
 "use client";
+import {ProductRating} from './product-rating';
 import {ProductPurchaseActions} from './product-purchase-actions';
 import {ProductRichContent} from './product-rich-content';
 import {pdpRecommendations,pdpStockLabel} from '@/lib/pdp-presentation';
 import {ProductReviews} from './customer-engagement';
-import { CarouselArrow } from "@/components/carousel-arrow";
+import {ProductRecommendations} from "./product-recommendations";
 
 import {CroppedImage} from './cropped-image';
 import Image from "next/image";
 import Link from "next/link";
-import { type MouseEvent, type PointerEvent, useEffect, useRef, useState } from "react";
-import { ProductCard } from "@/components/product-card";
+import { useEffect, useRef, useState } from "react";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
 import { categoryLabels, formatPrice } from "@/lib/store-data";
@@ -18,9 +18,6 @@ import styles from "./product-view.module.css";
 export function ProductView({ productId }: { productId: string }) {
   const { favorites, products, toggleFavorite, catalogOnly, catalogStatus } = useShop();
   const [activeImage, setActiveImage] = useState(0);
-  const [recommendationDragging, setRecommendationDragging] = useState(false);
-  const recommendationDrag = useRef({ active: false, moved: false, pointerId: -1, startX: 0, startY: 0, scrollLeft: 0 });
-  const recommendationRail = useRef<HTMLDivElement>(null);
   const product = products.find((item) => item.id === productId && item.active);
 
   const mainActions = useRef<HTMLDivElement>(null);
@@ -51,49 +48,6 @@ export function ProductView({ productId }: { productId: string }) {
   // A recommended card must remain in place after Add so its shared-cart stepper is usable.
   const recommendations = pdpRecommendations(products,product);
   const gallery = [...new Set([product.image, ...product.gallery].filter(Boolean))];
-  const startRecommendationDrag = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType !== "mouse" || !event.isPrimary || event.button !== 0) return;
-    recommendationDrag.current = {
-      active: true,
-      moved: false,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      scrollLeft: event.currentTarget.scrollLeft,
-    };
-  };
-  const moveRecommendationDrag = (event: PointerEvent<HTMLDivElement>) => {
-    if (!recommendationDrag.current.active || recommendationDrag.current.pointerId !== event.pointerId) return;
-    const distanceX = event.clientX - recommendationDrag.current.startX;
-    const distanceY = event.clientY - recommendationDrag.current.startY;
-    if (!recommendationDrag.current.moved && Math.abs(distanceX) < 6) return;
-    if (!recommendationDrag.current.moved && Math.abs(distanceY) > Math.abs(distanceX)) return;
-    if (!recommendationDrag.current.moved) {
-      recommendationDrag.current.moved = true;
-      event.currentTarget.setPointerCapture(event.pointerId);
-      setRecommendationDragging(true);
-    }
-    event.preventDefault();
-    event.currentTarget.scrollLeft = recommendationDrag.current.scrollLeft - distanceX;
-  };
-  const stopRecommendationDrag = (event: PointerEvent<HTMLDivElement>) => {
-    if (recommendationDrag.current.pointerId !== event.pointerId) return;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
-    recommendationDrag.current.active = false;
-    recommendationDrag.current.pointerId = -1;
-    setRecommendationDragging(false);
-  };
-  const blockRecommendationClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (!recommendationDrag.current.moved) return;
-    event.preventDefault();
-    event.stopPropagation();
-    recommendationDrag.current.moved = false;
-  };
-
-  const scrollRecommendations = (direction: -1 | 1) => {
-    recommendationRail.current?.scrollBy({ left: direction * Math.max(300, recommendationRail.current.clientWidth * 0.72), behavior: "smooth" });
-  };
-
   return (
     <main className={styles.main}>
       <nav aria-label="Хлебные крошки" className={styles.breadcrumbs}>
@@ -142,6 +96,7 @@ export function ProductView({ productId }: { productId: string }) {
               <Image alt="" height={23} src={assetPath("/images/figma/heart.svg")} width={25} />
             </button>
           </div>
+          <ProductRating rating={product.rating} count={product.reviews}/>
           <p className={styles.description}>{product.description}</p>
 
           <div className={styles.priceBlock}>
@@ -181,34 +136,9 @@ export function ProductView({ productId }: { productId: string }) {
       </section>
 
       {product.sku&&<ProductReviews sku={product.sku} slug={product.id}/>}
-      <ProductRichContent content={product.pdp}/>
+      <ProductRichContent content={product.pdp} sku={product.sku}/>
 
-      {recommendations.length>0&&<section className={styles.recommendations} aria-labelledby="recommendations-title">
-        <div className={styles.sectionHeading}>
-          <h2 id="recommendations-title">Рекомендуем</h2>
-          <div className={styles.recommendationActions}>
-            <Link href="/catalog">Весь каталог</Link>
-            <div className={styles.sliderArrows}>
-              <button aria-label="Предыдущие рекомендации" onClick={() => scrollRecommendations(-1)} type="button"><CarouselArrow previous /></button>
-              <button aria-label="Следующие рекомендации" onClick={() => scrollRecommendations(1)} type="button"><CarouselArrow /></button>
-            </div>
-          </div>
-        </div>
-        <div
-          className={`${styles.recommendationGrid} ${recommendationDragging ? styles.recommendationDragging : ""}`}
-          onClickCapture={blockRecommendationClick}
-          onDragStart={(event) => event.preventDefault()}
-          onLostPointerCapture={stopRecommendationDrag}
-          onPointerCancel={stopRecommendationDrag}
-          onPointerDown={startRecommendationDrag}
-          onPointerMove={moveRecommendationDrag}
-          onPointerUp={stopRecommendationDrag}
-          ref={recommendationRail}
-        >
-          {recommendations.map((item) => <ProductCard key={item.id} product={item} recommendation />)}
-        </div>
-      </section>
-      }
+      <ProductRecommendations products={recommendations}/>
       <aside data-visible={showSticky} className={styles.stickyBuy} aria-label="Быстрая покупка">
         <div><small>{product.name}</small><strong>{formatPrice(product.price)}</strong></div>
         <ProductPurchaseActions product={product} addLabel="Добавить в корзину"/>

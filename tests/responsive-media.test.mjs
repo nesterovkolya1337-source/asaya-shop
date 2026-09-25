@@ -14,6 +14,15 @@ test('responsive managed media uses six derivative widths and preserves layout s
 
 import variants from '../src/lib/rich-image-variants.json' with {type:'json'};
 import {existsSync} from 'node:fs';
+import packshots from '../src/lib/packshot-image-variants.json' with {type:'json'};
+test('packshots use dedicated master-derived responsive files and preserve base path',()=>{
+ for(const [src,images] of Object.entries(packshots)){
+  assert.ok(images.length>1);assert.ok(images.every(v=>existsSync('public'+v.src)));
+  assert.equal(responsiveMedia(src,'46vw').sizes,'46vw');
+  assert.match(responsiveMedia('/manage'+src,'46vw').src,/^\/manage\/images\//);
+  assert.ok(images[0].width<images.at(-1).width);
+ }
+});
 test('only known Figma masters use existing bounded WebP variants; originals and managed crops remain intact',()=>{
  for(const [source,images] of Object.entries(variants)){
   const result=responsiveMedia(source,'320px');assert.equal(result.sizes,'320px');assert.ok(result.src.endsWith('.webp'));

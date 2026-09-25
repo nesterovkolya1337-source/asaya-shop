@@ -293,7 +293,7 @@ export async function buildApp(options:{promoLocalPreview?:boolean;stock?:StockS
  app.get('/health/ready',async()=>{await options.db.pool.query('SELECT 1');return {status:'ok',stage:'foundation'};});
  app.get('/api/store/v1/products',async()=>({globalSalesEnabled:(await controls.sales()).enabled,items:await commerce.catalog(true)}));
  app.get('/api/store/v1/content/:page',async req=>siteContent.publicPage(z.object({page:z.string().max(50)}).parse(req.params).page));
- app.get('/api/store/v1/reviews/:sku',async req=>engagement.publicReviews(z.object({sku:z.string()}).parse(req.params).sku));
+ app.get('/api/store/v1/reviews/:sku',async req=>engagement.publicReviews(z.object({sku:z.string()}).parse(req.params).sku,z.object({offset:z.coerce.number().optional()}).parse(req.query).offset??0));
  app.get('/api/store/v1/media/:id',async(req,reply)=>{
   const {id}=z.object({id:z.uuid()}).parse(req.params);const image=await media.get(id,req.query);
   return reply.type('image/webp').header('Cache-Control','public, max-age=31536000, immutable')

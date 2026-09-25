@@ -1,11 +1,13 @@
 'use client';
 import {CroppedImage} from './cropped-image';
 import type {PdpContent,PdpMedia} from '../../backend/src/pdp-content';
-import {ingredientSegments} from '@/lib/rich-desktop-presentation';
+import {ingredientSegments,desktopSection} from '@/lib/rich-desktop-presentation';
 import {richSections} from '@/lib/pdp-presentation';
 import {assetPath} from '@/lib/asset-path';
 import styles from './product-rich-content.module.css';
-import type {CSSProperties} from 'react';
+import {useSyncExternalStore,type CSSProperties} from 'react';
+const subscribeDesktop=(notify:()=>void)=>{const m=matchMedia('(min-width:901px)');m.addEventListener('change',notify);return()=>m.removeEventListener('change',notify);};
+const isDesktop=()=>matchMedia('(min-width:901px)').matches;
 function Media({media,alt=''}:{media:PdpMedia;alt?:string}){return <div className={styles.image}><CroppedImage loading="lazy" src={media.src} crop={media.crop} alt={alt} fill sizes="(max-width: 900px) 94vw, 47vw"/></div>;}
 function Visual({media,ratio=0.9}:{media:PdpMedia[];ratio?:number}){
  if(!media.some(m=>m.layout))return <div className={styles.visual}>{media.map((m,n)=><Media key={n} media={m}/>)}</div>;
@@ -14,8 +16,9 @@ function Visual({media,ratio=0.9}:{media:PdpMedia[];ratio?:number}){
   return <div key={n} className={styles.photoLayer} style={{left:l.x+'%',top:l.y+'%',width:l.width+'%',height:l.height+'%',transform:`rotate(${l.rotation}deg) scale(${l.flipX?-1:1},${l.flipY?-1:1})`}}><CroppedImage loading="lazy" src={m.src} crop={m.crop} alt="" fill sizes={`(max-width: 900px) ${Math.min(94,(m.layout?.width??100)*0.9)}vw, ${Math.min(70,(m.layout?.width??100)*0.47)}vw`} style={m.crop?undefined:{right:'auto',bottom:'auto',left:f.x+'%',top:f.y+'%',width:f.width+'%',height:f.height+'%',objectFit:'cover'} as CSSProperties}/></div>;
  })}</div>;
 }
-export function ProductRichContent({content}:{content?:PdpContent}){
- const sections=richSections(content);if(!sections.length)return null;
+export function ProductRichContent({content,sku=""}:{content?:PdpContent;sku?:string}){
+ const desktop=useSyncExternalStore(subscribeDesktop,isDesktop,()=>false);
+ const sections=richSections(content).map(s=>desktop?desktopSection(s,sku):s);if(!sections.length)return null;
  return <div className={styles.rich} data-rich-content>{sections.map(s=>{
  const items=s.items.filter(i=>s.kind==='faq'?i.title.trim()&&i.body.trim():i.title.trim()||i.body.trim()||i.media);
  const segmented=ingredientSegments(s);

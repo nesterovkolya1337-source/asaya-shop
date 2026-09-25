@@ -1,4 +1,5 @@
 "use client";
+import {ProductRecommendations} from './product-recommendations';
 import {pdpStockLabel} from '@/lib/pdp-presentation';
 import Link from 'next/link';
 import {useEffect,useRef,useState} from 'react';
@@ -17,7 +18,7 @@ const purchaseSignature=(basket:ReturnType<typeof checkoutCart>)=>JSON.stringify
 export function ServerCartView(){
  const {cart,products,clearCart,changeQuantity,addToCart,favorites,toggleFavorite,checkoutEnabled,catalogStatus,refreshCatalog,yandexCheckoutEnabled}=useShop();
  const [notice,setNotice]=useState(''),[clearConfirm,setClearConfirm]=useState(false),[sticky,setSticky]=useState(false);
- const recommendationRail=useRef<HTMLDivElement>(null);
+
  const checkoutAnchor=useRef<HTMLDivElement>(null);
  useEffect(()=>{const node=checkoutAnchor.current;if(!node)return;const observer=new IntersectionObserver(([entry])=>setSticky(!entry.isIntersecting),{rootMargin:'-80px 0px 0px 0px'});observer.observe(node);return()=>observer.disconnect();},[Object.keys(cart).length>0]);
  const [promoCode,setPromoCode]=useState(''),[promoInput,setPromoInput]=useState(''),[promoOpen,setPromoOpen]=useState(false),[promoError,setPromoError]=useState(''),[promoBusy,setPromoBusy]=useState(false);
@@ -95,8 +96,6 @@ export function ServerCartView(){
  <div ref={checkoutAnchor} className={cartStyles.checkoutAnchor}><div className={sticky?cartStyles.stickyCheckout:undefined}>{yandexCheckoutEnabled&&<YandexCheckoutButton key={basket.signature} items={items} disabled={!!promoCode||!checkoutEnabled||catalogStatus!=='ready'||!valid||rows.some(r=>r.purchasableQuantity!==r.quantity)||!quote||!!pricingError} prepareItems={prepareItems} onConflict={conflict} label={quote?'Оформить заказ · '+rubles(quote.subtotalMinor):'Оформить заказ'} showNote={false} />}</div></div>
  {(!yandexCheckoutEnabled||!checkoutEnabled)&&<p role="status">Оформление заказов пока недоступно. Корзина сохранена.</p>}
  </section></div></div>:<section className={cartStyles.empty}><h2>Корзина пока пуста</h2><Link href="/catalog/">Выбрать товары</Link></section>}
- {recommendations.length>0&&<section className={cartStyles.recommendations} aria-label="Рекомендуем добавить"><div className={cartStyles.recommendationHeading}><h2>Рекомендуем добавить</h2><div className={cartStyles.railControls}><button type="button" aria-label="Предыдущие рекомендации" onClick={()=>recommendationRail.current?.scrollBy({left:-recommendationRail.current.clientWidth,behavior:"smooth"})}><CarouselArrow previous/></button><button type="button" aria-label="Следующие рекомендации" onClick={()=>recommendationRail.current?.scrollBy({left:recommendationRail.current.clientWidth,behavior:"smooth"})}><CarouselArrow/></button></div></div><div ref={recommendationRail} className={cartStyles.recommendationGrid}>
- {recommendations.map(p=><article key={p.id} className={cartStyles.recommendation} data-recommendation-id={p.id}><div className={cartStyles.recommendationMedia}><CartProductImage product={p} sizes="(max-width: 760px) 70vw, 32vw"/>{p.discount>0&&<span className={cartStyles.badge}>−{p.discount}%</span>}<button type="button" className={cartStyles.favorite} aria-label={(favorites.includes(p.id)?"Убрать из избранного ":"В избранное ")+p.name} aria-pressed={favorites.includes(p.id)} onClick={()=>toggleFavorite(p.id)}><img src={assetPath("/images/figma/heart.svg")} alt="" width={23} height={21}/></button></div><h3><Link href={'/product/'+p.id+'/'}>{p.name}</Link></h3><div className={cartStyles.prices}><strong>{rubles(Math.round(p.price*100))}</strong>{p.oldPrice>p.price&&<del>{rubles(Math.round(p.oldPrice*100))}</del>}</div><button type="button" disabled={!!promoCode||!checkoutEnabled||p.stockState==='unknown'||p.stock<1} onClick={()=>addToCart(p.id)} aria-label={'Добавить в корзину '+p.name}>{p.stock<1?pdpStockLabel(p):p.stockState==='unknown'?'Наличие уточняется':'В корзину'}</button></article>)}
- </div></section>}
+ <ProductRecommendations products={recommendations} interactionsDisabled={!!promoCode}/>
  </main>;
 }

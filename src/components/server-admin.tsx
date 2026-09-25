@@ -17,6 +17,7 @@ import {AdminMediaEditor} from './admin-media-editor';
 import {AdminOrders} from './admin-orders';
 import {AdminEmployees,StaffActivation} from './admin-employees';
 import {AdminTrash} from './admin-trash';
+import {AdminReviews} from './admin-engagement';
 import {AdminMarketing} from './admin-marketing';
 import {AdminSettings} from './admin-settings';
 import {AdminStatistics} from './admin-analytics';
@@ -37,7 +38,7 @@ function initialDraft(p:AdminProduct):AdminDraft {
  return {...p.draft,content:{description,volume,category,usage,ingredients,aroma,features,image:storedImage(image),gallery:gallery.map(storedImage),badge,instruction,recommendations,sensory,safety:'',setKind:'none'}};
 }
 export function ServerAdmin(){
- const [section,setSection]=useState<'content'|'catalog'|'orders'|'statistics'|'integration'|'employees'|'marketing'|'trash'|'prices'|'merchandising'>('content');
+ const [section,setSection]=useState<'content'|'catalog'|'orders'|'statistics'|'integration'|'employees'|'marketing'|'trash'|'prices'|'merchandising'|'reviews'>('content');
  const [operationsDirty,setOperationsDirty]=useState(false);
  const [contentDirty,setContentDirty]=useState(false),[logoutConfirm,setLogoutConfirm]=useState(false);
  const [selectedOrder,setSelectedOrder]=useState<string|undefined>();
@@ -58,7 +59,7 @@ export function ServerAdmin(){
   try{await api.logout(session.csrfToken);setSession(null);setNotice('');}catch(e){setNotice(adminError(e));}finally{pending.current=false;setBusy(false);}}
  return <div className={shell.shell}>
  <header className={shell.header}><div className={shell.brand}><strong>ASAYA</strong><small>Управление магазином</small></div>
- {session&&<nav className={shell.nav} aria-label="Разделы админки">{([['content','Редактор сайта'],['catalog','Товары'],['prices','Цены'],['merchandising','Выдача'],['orders','Заказы'],['statistics','Аналитика'],['marketing','Маркетинг'],['trash','Корзина и архив'],['integration','Настройки'],['employees','Сотрудники']] as const).filter(([key])=>session.user.staffRole!=='manager'||!['employees','integration'].includes(key)).map(([key,label])=><button key={key} aria-current={section===key?'page':undefined} onClick={()=>{if(operationsDirty&&!window.confirm('Есть несохранённые изменения. Перейти без сохранения?'))return;setSection(key);}}>{label}{key==='content'&&contentDirty?' •':''}</button>)}</nav>}
+ {session&&<nav className={shell.nav} aria-label="Разделы админки">{([['content','Редактор сайта'],['catalog','Товары'],['prices','Цены'],['merchandising','Выдача'],['orders','Заказы'],['statistics','Аналитика'],['marketing','Маркетинг'],['reviews','Отзывы'],['trash','Корзина и архив'],['integration','Настройки'],['employees','Сотрудники']] as const).filter(([key])=>session.user.staffRole!=='manager'||!['employees','integration'].includes(key)).map(([key,label])=><button key={key} aria-current={section===key?'page':undefined} onClick={()=>{if(operationsDirty&&!window.confirm('Есть несохранённые изменения. Перейти без сохранения?'))return;setSection(key);}}>{label}{key==='content'&&contentDirty?' •':''}</button>)}</nav>}
  <div className={shell.headerActions}><Link href="/">Открыть сайт ↗</Link>{session&&<button disabled={busy} onClick={()=>contentDirty||operationsDirty?setLogoutConfirm(true):void logout()}>Выйти</button>}</div></header>
  {process.env.NEXT_PUBLIC_EDITOR_PREVIEW==='true'&&<p className={shell.notice}>Предпросмотр редактора · тестовые данные на этом компьютере. Изменения не затрагивают сайт ASAYA.</p>}
  {notice&&<p role="alert" className={shell.notice}>{notice}</p>}
@@ -70,6 +71,7 @@ export function ServerAdmin(){
  {section==='integration'&&session.user.staffRole!=='manager'&&<AdminSettings session={session} onExpired={onExpired} onOrder={id=>{setSelectedOrder(id);setSection('orders');}}/>}
  <div hidden={section!=='trash'}><AdminTrash session={session}/></div>
  <div hidden={section!=='marketing'}><AdminMarketing session={session} onExpired={onExpired}/></div>
+ {section==='reviews'&&<AdminReviews session={session}/>}
  {section==='prices'&&<AdminPrices session={session} onDirty={setOperationsDirty}/>}
  {section==='merchandising'&&<AdminMerchandising session={session} onDirty={setOperationsDirty}/>}
  {section==='statistics'&&<AdminStatistics onExpired={onExpired} csrf={session.csrfToken}/>}

@@ -1,6 +1,6 @@
 'use client';
 import {AdminPromocodes} from './admin-promocodes';
-import {AdminReviews,ReplenishmentSettings} from './admin-engagement';
+import {ReplenishmentSettings} from './admin-engagement';
 import {useEffect,useState} from 'react';
 import {assetPath} from '@/lib/asset-path';
 import {createStoreRequest,AuthClientError} from '@/lib/auth-client';
@@ -30,5 +30,5 @@ export function AdminMarketing({session,onExpired}:{session:StaffSession;onExpir
  {dirty&&<p>Есть несохранённые изменения. Сначала сохраните черновик.</p>}
  {session.user.staffRole!=='manager'&&<button type="button" onClick={()=>setConfirm(true)}>Сохранить текущие как новые стандартные</button>}
  {confirm&&<div role="alert"><p>Заменить стандартные значения текущими? Сохранённый черновик и опубликованные настройки останутся прежними.</p><button type="button" onClick={()=>void act('defaults')}>Подтвердить замену стандартных</button><button type="button" onClick={()=>setConfirm(false)}>Отмена</button></div>}
- </fieldset></form></>}<AdminReviews session={session}/></div></section>;
+ </fieldset></form></>}</div></section>;
 }

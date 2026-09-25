@@ -1,0 +1,13 @@
+ALTER TABLE product_reviews ALTER COLUMN customer_id DROP NOT NULL;
+ALTER TABLE product_reviews ADD COLUMN source text NOT NULL DEFAULT 'asaya' CHECK(source IN ('asaya','wildberries'));
+ALTER TABLE product_reviews ADD COLUMN external_key text;
+ALTER TABLE product_reviews ADD COLUMN author_display_name text;
+ALTER TABLE product_reviews ADD COLUMN review_date timestamptz;
+UPDATE product_reviews SET review_date=created_at;
+ALTER TABLE product_reviews ALTER COLUMN review_date SET DEFAULT now();
+ALTER TABLE product_reviews ALTER COLUMN review_date SET NOT NULL;
+ALTER TABLE product_reviews ADD COLUMN moderated_at timestamptz;
+ALTER TABLE product_reviews ADD COLUMN replied_by uuid REFERENCES users(id);
+ALTER TABLE product_reviews ADD COLUMN replied_at timestamptz;
+CREATE UNIQUE INDEX review_external_key ON product_reviews(source,external_key) WHERE external_key IS NOT NULL;
+CREATE INDEX reviews_public_product ON product_reviews(product_id,review_date DESC) WHERE status='published';

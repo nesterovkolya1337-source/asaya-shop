@@ -2,7 +2,7 @@ import {parsePdpContent,type PdpContent} from '../../backend/src/pdp-content.ts'
 import {parseImageCrop} from '../../backend/src/image-crop.ts';
 import type { Product } from './store-data';
 
-type CatalogItem = {merchandising?:Product["merchandising"];testMode?:boolean;sku:string;name?:string;content?:unknown;slug:string;currency:'RUB';regularMinor:number;finalMinor:number;available:number;stockState?:'known'|'unknown'};
+type CatalogItem = {reviewCount?:number;reviewAverage?:number|null;merchandising?:Product["merchandising"];testMode?:boolean;sku:string;name?:string;content?:unknown;slug:string;currency:'RUB';regularMinor:number;finalMinor:number;available:number;stockState?:'known'|'unknown'};
 export type ProductContent=Pick<Product,'description'|'volume'|'category'|'usage'|'ingredients'|'aroma'|'features'|'image'|'gallery'|'badge'|'instruction'|'recommendations'|'sensory'> & {pdp?:PdpContent;imageCrops?:Record<string,string>;size?:{value:number;unit:'ml'|'g'|'pcs'};placement?:Product['placement'];safety:string;setKind:'none'|'combo'|'gift'};
 export function parseProductContent(raw:unknown):ProductContent {
  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('INVALID_CONTENT');
@@ -38,6 +38,6 @@ export function readBackendCatalog(payload:unknown):Product[] {
   const displayImage=(path:string)=>(path.startsWith('/images/')||path.startsWith('/api/store/v1/media/'))?(process.env.NEXT_PUBLIC_BASE_PATH??'')+path:path;
   return {...draft,...(item.merchandising?{merchandising:item.merchandising}:{}),...(draft.imageCrops?{imageCrops:Object.fromEntries(Object.entries(draft.imageCrops).map(([k,v])=>[displayImage(k),v]))}:{}),testMode:item.testMode===true,image:displayImage(draft.image),gallery:draft.gallery.filter(Boolean).map(displayImage),name:draft.name,sku:item.sku,price:item.finalMinor/100,oldPrice:item.regularMinor/100,
    discount:item.regularMinor>0?Math.round((item.regularMinor-item.finalMinor)/item.regularMinor*100):0,
-   stock:item.available,stockState:item.stockState??(item.available>0?'known':'unknown'),active:true,badge:draft.badge,rating:0,reviews:0};
+   stock:item.available,stockState:item.stockState??(item.available>0?'known':'unknown'),active:true,badge:draft.badge,rating:item.reviewAverage??0,reviews:item.reviewCount??0};
  });
 }

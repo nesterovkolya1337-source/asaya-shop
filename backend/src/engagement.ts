@@ -47,16 +47,23 @@ export class Engagement {
    return {created:!!r.rowCount};
   });
  }
- async publicReviews(sku:string){
+ async publicReviews(sku:string,rawOffset:unknown=0){
+  const offset=z.coerce.number().int().min(0).max(100000).parse(rawOffset);
   z.string().min(1).max(100).parse(sku);
-  return {items:(await this.db.pool.query(`SELECT r.id,r.rating,r.body,r.reply,r.created_at FROM product_reviews r
-   JOIN products p ON p.id=r.product_id WHERE p.sku=$1 AND p.active AND p.archived_at IS NULL
-   AND r.status='published' ORDER BY r.created_at DESC LIMIT 100`,[sku])).rows};
+  const filter="p.sku=$1 AND p.active AND p.archived_at IS NULL AND r.status='published'";
+  return this.db.transaction(async tx=>{
+   const aggregate=(await tx.query(`SELECT count(*)::int count,avg(r.rating)::float average FROM product_reviews r JOIN products p ON p.id=r.product_id WHERE ${filter}`,[sku])).rows[0];
+   const items=(await tx.query(`SELECT r.id,r.rating,r.body,r.reply,r.review_date created_at,
+    coalesce(r.author_display_name,nullif(c.name,''),'Покупатель ASAYA') author_display_name FROM product_reviews r
+    JOIN products p ON p.id=r.product_id LEFT JOIN customer_profiles c ON c.id=r.customer_id
+    WHERE ${filter} ORDER BY r.review_date DESC,r.id LIMIT 100 OFFSET $2`,[sku,offset])).rows;
+   return {items,aggregate,nextOffset:offset+items.length<aggregate.count?offset+items.length:null};
+  });
  }
  async reviews(actor:string){
-  return this.db.transaction(async tx=>{await staff(tx,actor);return {items:(await tx.query(`SELECT r.*,p.name product_name,p.sku,
-   c.name customer_name,EXISTS(SELECT 1 FROM loyalty_ledger l WHERE l.source_key='review:'||r.customer_id::text||':'||r.product_id::text) rewarded
-   FROM product_reviews r JOIN products p ON p.id=r.product_id JOIN customer_profiles c ON c.id=r.customer_id ORDER BY r.created_at DESC LIMIT 500`)).rows};});
+  return this.db.transaction(async tx=>{await staff(tx,actor);return {items:(await tx.query(`SELECT r.*,p.name product_name,p.sku,(SELECT published->'content'->>'image' FROM product_editor WHERE product_id=p.id) product_image,
+   coalesce(r.author_display_name,c.name) customer_name,EXISTS(SELECT 1 FROM loyalty_ledger l WHERE l.source_key='review:'||r.customer_id::text||':'||r.product_id::text) rewarded
+   FROM product_reviews r JOIN products p ON p.id=r.product_id LEFT JOIN customer_profiles c ON c.id=r.customer_id ORDER BY r.review_date DESC,r.id`)).rows};});
  }
  async moderate(actor:string,id:string,raw:unknown){
   z.uuid().parse(id);
@@ -65,11 +72,11 @@ export class Engagement {
   return this.db.transaction(async tx=>{
    await staff(tx,actor);const r=(await tx.query('SELECT * FROM product_reviews WHERE id=$1 FOR UPDATE',[id])).rows[0];
    if(!r)throw new DomainError('REVIEW_NOT_FOUND',404);
-   if(d.action==='reply')await tx.query('UPDATE product_reviews SET reply=$2,updated_at=now(),moderated_by=$3 WHERE id=$1',[id,d.reply,actor]);
+   if(d.action==='reply')await tx.query('UPDATE product_reviews SET reply=$2,updated_at=now(),replied_by=$3,replied_at=now() WHERE id=$1',[id,d.reply,actor]);
    else{
     const status=d.action==='show'?'published':d.action==='hide'?'hidden':'rejected';
-    await tx.query('UPDATE product_reviews SET status=$2,rejection_reason=$3,updated_at=now(),moderated_by=$4 WHERE id=$1',[id,status,d.action==='reject'?d.reason:null,actor]);
-    if(d.action!=='reject'&&await verified(tx,r.customer_id,r.product_id)){
+    await tx.query('UPDATE product_reviews SET status=$2,rejection_reason=$3,updated_at=now(),moderated_by=$4,moderated_at=now() WHERE id=$1',[id,status,d.action==='reject'?d.reason:null,actor]);
+    if(d.action!=='reject'&&r.customer_id&&await verified(tx,r.customer_id,r.product_id)){
      await tx.query('SELECT id FROM customer_profiles WHERE id=$1 FOR UPDATE',[r.customer_id]);
      await tx.query(`INSERT INTO loyalty_ledger(id,customer_id,type,points,source,source_key,description)
       VALUES($1,$2,'review_reward',100,'moderated_review',$3,'Баллы за отзыв') ON CONFLICT(source_key) DO NOTHING`,
