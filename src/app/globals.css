@@ -27,7 +27,7 @@ body {
   min-height: 100%;
   color: var(--color-foreground);
   background: var(--color-background);
-  font-family: var(--font-gramatika);
+  font-family: var(--font-involve);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -82,3 +82,5 @@ button {
 /* Selection exists only inside the administrator's local draft preview. */
 [data-site-editable="true"]:hover{outline:2px dashed #9365cc;outline-offset:-2px;cursor:pointer}
 [data-site-editable="true"][data-selected="true"]{outline:3px solid #7651aa;outline-offset:-3px}
+
+body:has(nav[aria-label="Разделы админки"]), body:has(main [data-admin]) { font-family: var(--font-gramatika); }

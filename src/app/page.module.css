@@ -67,7 +67,7 @@
   font-weight: 400;
   line-height: 1.04;
   letter-spacing: 0;
-  font-family: var(--font-gramatika);
+  font-family: var(--font-involve);
 }
 
 .lightButton,
@@ -82,7 +82,7 @@
   padding: 10px 24px;
   border-radius: 999px;
   font-size: 16px;
-  font-family: var(--font-gramatika);
+  font-family: var(--font-involve);
   font-weight: 500;
   line-height: 22px;
   transition: color 160ms ease, background 160ms ease, transform 160ms ease;
@@ -172,7 +172,7 @@
 }
 
 .manifesto h2 {
-  font-family: var(--font-gramatika);
+  font-family: var(--font-involve);
   font-size: clamp(42px, 5.5vw, 76px);
   font-weight: 400;
   line-height: 1.06;
@@ -251,7 +251,7 @@
   font-style: italic;
   font-weight: 600;
   line-height: 1.05;
-  font-family: var(--font-gramatika);
+  font-family: var(--font-involve);
 }
 
 .categoryImage {
@@ -293,7 +293,7 @@
 }
 
 .careCopy h2 {
-  font-family: var(--font-gramatika);
+  font-family: var(--font-involve);
   font-size: clamp(38px, 5vw, 64px);
   font-weight: 500;
   line-height: 1.04;
@@ -324,7 +324,7 @@
 }
 
 .community h2 {
-  font-family: var(--font-gramatika);
+  font-family: var(--font-involve);
   font-size: 40px;
   font-weight: 500;
 }

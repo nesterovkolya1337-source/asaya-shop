@@ -96,7 +96,7 @@
 
 .meta h3 {
   max-width: 205px;
-  font-family: var(--font-gramatika);
+  font-family: var(--font-involve);
   font-size: 16px;
   font-weight: 400;
   line-height: 1.2;
@@ -267,3 +267,11 @@
     font-size: 17px;
   }
 }
+
+/* Stable card action footprint; recommendation cards intentionally omit Quick Buy. */
+.actions{position:absolute;z-index:4;left:11px;right:11px;bottom:10px}
+.image{padding:38px 18px 108px;object-fit:contain}
+.meta h3{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media(max-width:620px){.actions{left:8px;right:8px;bottom:8px}.image{padding:34px 10px 120px}}
+
+svg.image{position:absolute;inset:0;width:100%;height:100%;box-sizing:border-box}

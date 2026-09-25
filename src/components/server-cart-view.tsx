@@ -1,4 +1,5 @@
 "use client";
+import {pdpStockLabel} from '@/lib/pdp-presentation';
 import Link from 'next/link';
 import {useEffect,useRef,useState} from 'react';
 import {useShop} from './shop-provider';
@@ -65,7 +66,7 @@ export function ServerCartView(){
  <CartProductImage product={p}/>
  <div className={cartStyles.details}><h3>{p?<Link href={`/product/${p.id}`}>{p.name}</Link>:'Товар временно недоступен'}</h3>
  {line&&p?<p className={cartStyles.prices}>{Math.round(p.oldPrice*100)>line.unitMinor&&<del>{rubles(Math.round(p.oldPrice*100))}</del>}<strong>{rubles(line.unitMinor)}</strong></p>:purchasableQuantity>0?<p>Рассчитываем цену…</p>:null}
- {state==='unavailable'&&<p role="status">Нет в наличии</p>}
+ {state==='unavailable'&&<p role="status">{p?pdpStockLabel(p):"Нет в наличии"}</p>}
  {state==='unknown'&&<p role="status">Наличие пока не подтверждено</p>}
  {state==='limited'&&<p role="status">Доступно к оформлению: {purchasableQuantity} из {quantity}.</p>}
  <div className={cartStyles.quantity}>
@@ -95,7 +96,7 @@ export function ServerCartView(){
  {(!yandexCheckoutEnabled||!checkoutEnabled)&&<p role="status">Оформление заказов пока недоступно. Корзина сохранена.</p>}
  </section></div></div>:<section className={cartStyles.empty}><h2>Корзина пока пуста</h2><Link href="/catalog/">Выбрать товары</Link></section>}
  {recommendations.length>0&&<section className={cartStyles.recommendations} aria-label="Рекомендуем добавить"><div className={cartStyles.recommendationHeading}><h2>Рекомендуем добавить</h2><div className={cartStyles.railControls}><button type="button" aria-label="Предыдущие рекомендации" onClick={()=>recommendationRail.current?.scrollBy({left:-recommendationRail.current.clientWidth,behavior:"smooth"})}><CarouselArrow previous/></button><button type="button" aria-label="Следующие рекомендации" onClick={()=>recommendationRail.current?.scrollBy({left:recommendationRail.current.clientWidth,behavior:"smooth"})}><CarouselArrow/></button></div></div><div ref={recommendationRail} className={cartStyles.recommendationGrid}>
- {recommendations.map(p=><article key={p.id} className={cartStyles.recommendation} data-recommendation-id={p.id}><div className={cartStyles.recommendationMedia}><CartProductImage product={p} sizes="(max-width: 760px) 70vw, 32vw"/>{p.discount>0&&<span className={cartStyles.badge}>−{p.discount}%</span>}<button type="button" className={cartStyles.favorite} aria-label={(favorites.includes(p.id)?"Убрать из избранного ":"В избранное ")+p.name} aria-pressed={favorites.includes(p.id)} onClick={()=>toggleFavorite(p.id)}><img src={assetPath("/images/figma/heart.svg")} alt="" width={23} height={21}/></button></div><h3><Link href={'/product/'+p.id+'/'}>{p.name}</Link></h3><div className={cartStyles.prices}><strong>{rubles(Math.round(p.price*100))}</strong>{p.oldPrice>p.price&&<del>{rubles(Math.round(p.oldPrice*100))}</del>}</div><button type="button" disabled={!!promoCode||!checkoutEnabled||p.stockState==='unknown'||p.stock<1} onClick={()=>addToCart(p.id)} aria-label={'Добавить в корзину '+p.name}>{p.stockState==='unknown'?'Наличие уточняется':p.stock<1?'Нет в наличии':'В корзину'}</button></article>)}
+ {recommendations.map(p=><article key={p.id} className={cartStyles.recommendation} data-recommendation-id={p.id}><div className={cartStyles.recommendationMedia}><CartProductImage product={p} sizes="(max-width: 760px) 70vw, 32vw"/>{p.discount>0&&<span className={cartStyles.badge}>−{p.discount}%</span>}<button type="button" className={cartStyles.favorite} aria-label={(favorites.includes(p.id)?"Убрать из избранного ":"В избранное ")+p.name} aria-pressed={favorites.includes(p.id)} onClick={()=>toggleFavorite(p.id)}><img src={assetPath("/images/figma/heart.svg")} alt="" width={23} height={21}/></button></div><h3><Link href={'/product/'+p.id+'/'}>{p.name}</Link></h3><div className={cartStyles.prices}><strong>{rubles(Math.round(p.price*100))}</strong>{p.oldPrice>p.price&&<del>{rubles(Math.round(p.oldPrice*100))}</del>}</div><button type="button" disabled={!!promoCode||!checkoutEnabled||p.stockState==='unknown'||p.stock<1} onClick={()=>addToCart(p.id)} aria-label={'Добавить в корзину '+p.name}>{p.stock<1?pdpStockLabel(p):p.stockState==='unknown'?'Наличие уточняется':'В корзину'}</button></article>)}
  </div></section>}
  </main>;
 }

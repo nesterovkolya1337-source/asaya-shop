@@ -1,4 +1,5 @@
 "use client";
+import {ProductPurchaseActions} from './product-purchase-actions';
 import {ProductRichContent} from './product-rich-content';
 import {pdpRecommendations,pdpStockLabel} from '@/lib/pdp-presentation';
 import {ProductReviews} from './customer-engagement';
@@ -7,18 +8,15 @@ import { CarouselArrow } from "@/components/carousel-arrow";
 import {CroppedImage} from './cropped-image';
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { type MouseEvent, type PointerEvent, useEffect, useRef, useState } from "react";
 import { ProductCard } from "@/components/product-card";
-import { YandexBuyButton, YandexCheckoutButton } from "@/components/yandex-buy-button";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
 import { categoryLabels, formatPrice } from "@/lib/store-data";
 import styles from "./product-view.module.css";
 
 export function ProductView({ productId }: { productId: string }) {
-  const { addToCart, cart, changeQuantity, favorites, products, toggleFavorite, catalogOnly, catalogStatus, checkoutEnabled, yandexCheckoutEnabled } = useShop();
-  const router = useRouter();
+  const { favorites, products, toggleFavorite, catalogOnly, catalogStatus } = useShop();
   const [activeImage, setActiveImage] = useState(0);
   const [recommendationDragging, setRecommendationDragging] = useState(false);
   const recommendationDrag = useRef({ active: false, moved: false, pointerId: -1, startX: 0, startY: 0, scrollLeft: 0 });
@@ -33,8 +31,8 @@ export function ProductView({ productId }: { productId: string }) {
     if (!target) return;
     // Do not show the bar while the initial CTA is still below the viewport.
     const observer = new IntersectionObserver(([entry]) => {
-      setShowSticky(!entry.isIntersecting && entry.boundingClientRect.bottom <= 0);
-    }, {threshold: 0});
+      setShowSticky(!entry.isIntersecting && entry.boundingClientRect.bottom <= 72);
+    }, {threshold: 0, rootMargin: "-72px 0px 0px 0px"});
     observer.observe(target);
     return () => observer.disconnect();
   }, [product?.id]);
@@ -49,16 +47,12 @@ export function ProductView({ productId }: { productId: string }) {
     );
   }
 
-  const quantity = cart[product.id] ?? 0;
   const isFavorite = favorites.includes(product.id);
-  const recommendations = pdpRecommendations(products,product,Object.keys(cart).filter(id=>cart[id]>0));
+  // A recommended card must remain in place after Add so its shared-cart stepper is usable.
+  const recommendations = pdpRecommendations(products,product);
   const gallery = [...new Set([product.image, ...product.gallery].filter(Boolean))];
-  const buyNow = () => {
-    if (!quantity && product.stock) addToCart(product.id);
-    router.push(catalogOnly ? "/cart" : "/checkout");
-  };
   const startRecommendationDrag = (event: PointerEvent<HTMLDivElement>) => {
-    if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+    if (event.pointerType !== "mouse" || !event.isPrimary || event.button !== 0) return;
     recommendationDrag.current = {
       active: true,
       moved: false,
@@ -156,22 +150,10 @@ export function ProductView({ productId }: { productId: string }) {
           </div>
           <p className={styles.stock}>{pdpStockLabel(product)}</p>
 
-          <div ref={mainActions} data-main-buy><div className={styles.buyArea}>
-            {quantity && product.stock>0 ? (
-              <div className={styles.quantity} aria-label={`Количество ${product.name} в корзине`}>
-                <button aria-label={`Уменьшить количество ${product.name}`} onClick={() => changeQuantity(product.id, quantity - 1)} type="button">−</button>
-                <span>{quantity}</span>
-                <button aria-label={`Увеличить количество ${product.name}`} disabled={quantity >= product.stock} onClick={() => changeQuantity(product.id, quantity + 1)} type="button">+</button>
-              </div>
-            ) : (
-              <button className={styles.addButton} disabled={(catalogOnly && !checkoutEnabled) || !product.stock} onClick={() => addToCart(product.id)} type="button">
-                {!product.stock ? "Нет в наличии" : catalogOnly && !checkoutEnabled ? "Продажи пока закрыты" : "Добавить в корзину"}
-              </button>
-            )}
-            {quantity > 0 && <Link className={styles.checkoutLink} href={catalogOnly ? "/cart" : "/checkout"}>Перейти к оформлению</Link>}
+          <div ref={mainActions} data-main-buy className={styles.mainActions}>
+            <ProductPurchaseActions product={product} addLabel="Добавить в корзину"/>
           </div>
-
-          <div className={styles.oneClick}><YandexBuyButton sku={product.sku} stock={product.stock} quantity={quantity || 1} /></div></div>
+          <p className={styles.checkoutNote}>Оформление и оплата — в Яндексе. Регистрация на ASAYA не нужна.</p>
           <ul className={styles.features}>
             {product.features.map((feature) => <li key={feature}>{feature}</li>)}
           </ul>
@@ -223,14 +205,14 @@ export function ProductView({ productId }: { productId: string }) {
           onPointerUp={stopRecommendationDrag}
           ref={recommendationRail}
         >
-          {recommendations.map((item) => <ProductCard key={item.id} product={item} />)}
+          {recommendations.map((item) => <ProductCard key={item.id} product={item} recommendation />)}
         </div>
       </section>
       }
       <aside data-visible={showSticky} className={styles.stickyBuy} aria-label="Быстрая покупка">
         <div><small>{product.name}</small><strong>{formatPrice(product.price)}</strong></div>
-        <div className={styles.stickySecondary}>{yandexCheckoutEnabled && product.sku ? <YandexCheckoutButton key={JSON.stringify([product.sku,quantity,product.stock])} compact items={[{sku:product.sku,quantity:quantity||1}]} disabled={product.stock<(quantity||1)} label={!product.stock ? 'Нет в наличии' : 'Купить сейчас'} /> : <button className={styles.buyNow} disabled={(catalogOnly && !checkoutEnabled) || !product.stock} onClick={buyNow} type="button">{!product.stock ? 'Нет в наличии' : catalogOnly && !checkoutEnabled ? 'Продажи пока закрыты' : 'Купить сейчас'}</button>}</div>
-        <button className={styles.stickyCart} disabled={(catalogOnly && !checkoutEnabled) || !product.stock || quantity >= product.stock} onClick={() => addToCart(product.id)} type="button">{!product.stock ? 'Нет в наличии' : quantity ? `В корзине · ${quantity}` : "В корзину"}</button>
+        <ProductPurchaseActions product={product} addLabel="Добавить в корзину"/>
+
       </aside>
     </main>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+import {productMediaFrames} from '@/lib/product-media-frame';
+import {ProductPurchaseActions} from './product-purchase-actions';
 import {CroppedImage} from './cropped-image';
 import Image from "next/image";
 import Link from "next/link";
@@ -11,11 +13,11 @@ import { getProductAnalytics } from '@/lib/product-analytics';
 import { getMetrika } from '@/lib/metrika';
 import styles from "./product-card.module.css";
 
-export function ProductCard({ product }: { product: Product }) {
-  const { addToCart, cart, changeQuantity, favorites, toggleFavorite, catalogOnly, checkoutEnabled } = useShop();
+export function ProductCard({ product, recommendation=false }: { product: Product; recommendation?:boolean }) {
+  const { favorites, toggleFavorite } = useShop();
   const analyticsRef=useProductImpression(product.sku);
   const isFavorite = favorites.includes(product.id);
-  const quantity = cart[product.id] ?? 0;
+  const frame = productMediaFrames[product.image];
 
   return (
     <article ref={analyticsRef} className={styles.card} id={product.id}>
@@ -24,13 +26,13 @@ export function ProductCard({ product }: { product: Product }) {
         {product.discount > 0 && <span className={styles.discountBadge}>−{product.discount}%</span>}
       </div>
       <Link className={styles.visualLink} href={`/product/${product.id}`} aria-label={`Открыть ${product.name}`} onClick={() => {getMetrika()?.productClick(product);getProductAnalytics()?.track('product_click',product.sku);}}>
-        <CroppedImage
+        {frame?<svg className={styles.image} viewBox={frame.viewBox} preserveAspectRatio="xMidYMid meet" role="img" aria-label={product.name}><image href={assetPath(product.image)} width={frame.width} height={frame.height}/></svg>:<CroppedImage
           alt={product.name}
           className={styles.image}
           fill
           sizes="(max-width: 520px) 46vw, (max-width: 900px) 44vw, 370px"
-          crop={product.imageCrops?.[product.image]} src={product.image}
-        />
+          src={product.image}
+        />}
       </Link>
       <button
         aria-label={isFavorite ? `Убрать ${product.name} из избранного` : `Добавить ${product.name} в избранное`}
@@ -52,22 +54,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
         </div>
       </div>
-      {quantity && product.stock>0 ? (
-        <div className={styles.cartControl} aria-label={`Количество ${product.name} в корзине`}>
-          <button aria-label={`Уменьшить количество ${product.name}`} onClick={() => changeQuantity(product.id, quantity - 1)} type="button">−</button>
-          <span>{quantity}</span>
-          <button aria-label={`Увеличить количество ${product.name}`} disabled={quantity >= product.stock} onClick={() => changeQuantity(product.id, quantity + 1)} type="button">+</button>
-        </div>
-      ) : (
-        <button
-          className={styles.addButton}
-          disabled={(catalogOnly && !checkoutEnabled) || !product.stock}
-          onClick={() => addToCart(product.id)}
-          type="button"
-        >
-          {!product.stock ? "Нет в наличии" : catalogOnly && !checkoutEnabled ? "Продажи пока закрыты" : "В корзину"}
-        </button>
-      )}
+      <div className={styles.actions}><ProductPurchaseActions product={product} compact quickBuy={!recommendation}/></div>
     </article>
   );
 }
