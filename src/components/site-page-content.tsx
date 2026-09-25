@@ -39,7 +39,7 @@ function Block({b,pageId,first}:{b:SiteBlock;pageId:SitePageId;first:boolean}){
  const v=b.values,Title=first?'h1':'h2',key='site-'+b.id;
  switch(b.type){
   case 'homeHero':return <section className={home.hero} data-site-hero><Photo src={v.image} alt={v.alt} className={home.heroImage} priority={first} crop={v.imageCrop}/><div className={home.heroCopy}><p>{v.eyebrow}</p><Title>{v.title}</Title><Button v={v} className={home.lightButton}/></div></section>;
-  case 'products':return <section className={home.products} aria-label={v.title}><h2 className={home.srTitle}>{v.title}</h2><ProductRail/></section>;
+  case 'products':return <ProductRail title={v.title}/>;
   case 'manifesto':return <section className={home.manifesto}><Photo src={v.image} alt={v.alt} className={home.manifestoImage} crop={v.imageCrop} defaultCrop={defaultImageCrop('manifesto',v.image)}/><div className={home.manifestoCopy}><h2>{v.title}</h2><p className={styles.text}>{v.text}</p><Button v={v} className={home.aboutButton}/></div></section>;
   case 'categories':return <section className={home.categoryGrid} aria-label={v.title}>{b.items.map((item,i)=><Link className={home.categoryCard} href={item.href||'/catalog'} key={i}><CroppedImage unoptimized alt={item.alt||item.title} className={`${home.categoryImage} ${home[['hair','body','face'][i%3]]}`} height={2700} width={1800} crop={item.imageCrop} sizes="(max-width: 760px) 92vw, 370px" src={imageUrl(item.image||'/images/figma/asaya-6205.webp')}/><span>{item.title}</span></Link>)}</section>;
   case 'gallery':return <section className={home.community} aria-labelledby={key}><CommunityCarousel photos={b.items.filter(i=>i.image).map(i=>({image:imageUrl(i.image),alt:i.alt,crop:i.imageCrop}))} titleId={key} title={v.title}/></section>;

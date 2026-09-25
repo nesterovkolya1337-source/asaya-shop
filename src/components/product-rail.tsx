@@ -7,17 +7,21 @@ import { ProductCard } from "@/components/product-card";
 import { CarouselArrow } from "@/components/carousel-arrow";
 import { useShop } from "@/components/shop-provider";
 import styles from "./product-rail.module.css";
+import home from '@/app/page.module.css';
 
 type FeaturedState = "Бестселлер" | "Новинка";
 
-export function ProductRail() {
+export function ProductRail({title}:{title:string}) {
   const { products } = useShop();
   const [state, setState] = useState<FeaturedState>("Бестселлер");
   const [dragging, setDragging] = useState(false);
   const [railState, setRailState] = useState({ hasOverflow: false, canScrollLeft: false, canScrollRight: false });
   const railRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ active: false, moved: false, pointerId: -1, startX: 0, startY: 0, scrollLeft: 0 });
-  const visibleProducts = placedProducts(products,state==='Бестселлер'?'bestsellers':'new');
+  const collections={Бестселлер:placedProducts(products,'bestsellers'),Новинка:placedProducts(products,'new')};
+  const tabs=(["Бестселлер","Новинка"] as FeaturedState[]).filter(key=>collections[key].length>0);
+  const selected=tabs.includes(state)?state:tabs[0];
+  const visibleProducts=selected?collections[selected]:[];
   const updateRailState = useCallback(() => {
     const rail = railRef.current;
     if (!rail) return;
@@ -84,11 +88,13 @@ export function ProductRail() {
     drag.current.moved = false;
   };
 
+  if(!tabs.length)return null;
   return (
-    <>
+    <section className={home.products} aria-label={title}>
+      <h2 className={home.srTitle}>{title}</h2>
       <div className={styles.heading}>
         <div className={styles.tabs} aria-label="Подборка товаров">
-          {(["Бестселлер", "Новинка"] as FeaturedState[]).map((item) => <button aria-pressed={state === item} className={state === item ? styles.active : ""} key={item} onClick={() => setState(item)} type="button">{item === "Бестселлер" ? "Бестселлеры" : "Новинки"}</button>)}
+          {tabs.map((item) => <button aria-pressed={selected === item} className={selected === item ? styles.active : ""} key={item} onClick={() => setState(item)} type="button">{item === "Бестселлер" ? "Бестселлеры" : "Новинки"}</button>)}
         </div>
         <div className={styles.headingActions}>
           {railState.hasOverflow && <div className={styles.railControls} aria-label="Навигация по товарам">
@@ -115,6 +121,6 @@ export function ProductRail() {
       >
         {visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)}
       </div>
-    </>
+    </section>
   );
 }

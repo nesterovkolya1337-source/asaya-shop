@@ -11,7 +11,7 @@ async function seed(sku:string,category:'body'|'hair'='body'){const id=randomUUI
 test('price operation patches only canonical prices and badge, retains draft content, rejects invalid/stale and non-admin',async()=>{
  const {id,d,api}=await seed('PRICE');await api.publish(actor,id,{revision:1});await api.save(actor,id,{...d,revision:2,name:'Pending content'});
  const ops=new AdminMerchandising(ctx.db);await ops.price(actor,id,{revision:3,regularMinor:12000,finalMinor:10000,badge:'Новинка'});
- const p=(await new CommerceService(ctx.db).catalog()).find(p=>p.sku==='PRICE')!;assert.equal(p.name,'PRICE');assert.equal(p.finalMinor,10000);assert.equal(p.content.badge,'Новинка');assert.equal((await api.detail(id)).draft.name,'Pending content');
+ const p=(await new CommerceService(ctx.db).catalog()).find(p=>p.sku==='PRICE')!;assert.equal(p.name,'Pending content');assert.equal(p.finalMinor,10000);assert.equal(p.content.badge,'Новинка');assert.equal((await api.detail(id)).draft.name,'Pending content');
  await assert.rejects(ops.price(actor,id,{revision:3,regularMinor:12000,finalMinor:10000,badge:''}),/EDIT_CONFLICT/);
  await assert.rejects(ops.price(actor,id,{revision:4,regularMinor:100,finalMinor:101,badge:''}));
  await assert.rejects(ops.price(randomUUID(),id,{revision:4,regularMinor:100,finalMinor:100,badge:''}),/FORBIDDEN/);
@@ -31,4 +31,28 @@ test('merchandising rejects wrong categories, duplicates, unavailable priority; 
  await ops.save(actor,{scope:'recommendations',revision:0,value:{BODY:'HAIR'}});
  const p=(await new CommerceService(ctx.db).catalog(true)).find(p=>p.sku==='BODY')!;assert.equal(p.merchandising!.prioritySku,'HAIR');assert.equal(p.merchandising!.categoryOrder,0);
  assert.equal((await body.api.detail(body.id)).active,true);assert.equal((await ctx.db.pool.query('SELECT on_hand FROM inventory_balances WHERE product_id=$1',[hair.id])).rows[0].on_hand,4);
+});
+
+test('homepage curated lists retain hidden references and do not depend on badges or stock',async()=>{
+ const one=await seed('HOME-ONE'),two=await seed('HOME-TWO','hair'),draft=await seed('HOME-DRAFT');
+ await one.api.publish(actor,one.id,{revision:1});await two.api.publish(actor,two.id,{revision:1});
+ const ops=new AdminMerchandising(ctx.db),catalog=new CommerceService(ctx.db);
+ await ops.save(actor,{scope:'home_bestsellers',revision:0,value:['HOME-TWO','HOME-ONE']});
+ await ops.save(actor,{scope:'home_new',revision:0,value:['HOME-ONE']});
+ assert.equal((await catalog.catalog(true)).find(p=>p.sku==='HOME-TWO')!.merchandising!.bestsellerOrder,0);
+ await ops.price(actor,two.id,{revision:2,regularMinor:10000,finalMinor:9000,badge:'Новинка'});
+ assert.deepEqual((await ops.read()).items.find(p=>p.scope==='home_bestsellers')!.value,['HOME-TWO','HOME-ONE']);
+ await ops.price(actor,two.id,{revision:3,regularMinor:10000,finalMinor:9000,badge:''});
+ assert.equal((await catalog.catalog(true)).find(p=>p.sku==='HOME-TWO')!.merchandising!.bestsellerOrder,0);
+ await two.api.unpublish(actor,two.id,{revision:4});
+ assert.equal((await catalog.catalog(true)).some(p=>p.sku==='HOME-TWO'),false);
+ await ops.save(actor,{scope:'home_bestsellers',revision:1,value:['HOME-ONE','HOME-TWO']});
+ await assert.rejects(ops.save(actor,{scope:'home_bestsellers',revision:2,value:['HOME-DRAFT']}),/PRODUCT_UNAVAILABLE/);
+ await two.api.publish(actor,two.id,{revision:5});
+ assert.equal((await catalog.catalog(true)).find(p=>p.sku==='HOME-TWO')!.merchandising!.bestsellerOrder,1);
+ assert.equal((await catalog.catalog(true)).find(p=>p.sku==='HOME-TWO')!.content.badge,'');
+ await ops.save(actor,{scope:'home_bestsellers',revision:2,value:[]});
+ assert.equal((await catalog.catalog(true)).find(p=>p.sku==='HOME-TWO')!.merchandising!.bestsellerOrder,-1);
+ assert.deepEqual((await ops.read()).items.find(p=>p.scope==='home_new')!.value,['HOME-ONE']);
+ await assert.rejects(ops.save(actor,{scope:'home_new',revision:0,value:[]}),/EDIT_CONFLICT/);
 });

@@ -2,7 +2,7 @@ import {z} from 'zod';
 import {randomUUID} from 'node:crypto';
 import {Database,lock} from './db.js';
 import {DomainError,money} from './core.js';
-const scope=z.enum(['catalog','hair','body','face','sets','recommendations']);
+const scope=z.enum(['catalog','hair','body','face','sets','recommendations','home_bestsellers','home_new']);
 export class AdminMerchandising{
  constructor(private db:Database){}
  async read(){return {items:(await this.db.pool.query('SELECT scope,revision,value FROM merchandising ORDER BY scope')).rows};}
@@ -26,7 +26,7 @@ export class AdminMerchandising{
     }
    }else{
     if(!Array.isArray(d.value)||new Set(d.value).size!==d.value.length)throw new DomainError('INVALID_INPUT',400);
-    for(const sku of d.value){const p=bySku.get(sku);if(!p){if(Array.isArray(prior.value)&&prior.value.includes(sku))continue;throw new DomainError('PRODUCT_UNAVAILABLE',400);}if(d.scope!=='catalog'&&p.category!==d.scope)throw new DomainError('CATEGORY_MISMATCH',400);}
+    for(const sku of d.value){const p=bySku.get(sku);if(!p){if(Array.isArray(prior.value)&&prior.value.includes(sku))continue;throw new DomainError('PRODUCT_UNAVAILABLE',400);}if(!['catalog','home_bestsellers','home_new'].includes(d.scope)&&p.category!==d.scope)throw new DomainError('CATEGORY_MISMATCH',400);}
    }
    await tx.query('UPDATE merchandising SET value=$2,revision=revision+1,updated_by=$3,updated_at=now() WHERE scope=$1',[d.scope,JSON.stringify(d.value),actor]);
    await tx.query('INSERT INTO audit_log(id,actor_id,action,entity_id,detail) VALUES($1,$2,$3,$4,$5)',[randomUUID(),actor,'merchandising.saved',d.scope,JSON.stringify({revision:d.revision+1})]);

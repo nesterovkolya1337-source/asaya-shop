@@ -6,7 +6,7 @@ export type ProductCategory = "hair" | "body" | "face" | "sets";
 export const badgeOptions = ["", "Бестселлер", "Новинка", "Выбор ASAYA", "Лимитированная серия"] as const;
 
 export type Product = {
-  merchandising?:{catalogOrder:number;categoryOrder:number;prioritySku:string|null;soldUnits:number};
+  merchandising?:{bestsellerOrder?:number;newOrder?:number;catalogOrder:number;categoryOrder:number;prioritySku:string|null;soldUnits:number};
   pdp?:PdpContent;
   imageCrops?:Record<string,string>;
   testMode?:boolean;
