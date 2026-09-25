@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
-import {richSections,pdpRecommendations} from '../src/lib/pdp-presentation.ts';
+import {richSections,pdpRecommendations,pdpStockLabel} from '../src/lib/pdp-presentation.ts';
 import {cartRecommendations} from '../src/lib/cart-presentation.ts';
 const empty={kind:'result',title:'Heading only',body:'',additionalBody:'',media:[],items:[]};
 test('rich content is optional, explicitly enabled and suppresses empty sections and incomplete FAQs',()=>{
@@ -22,4 +22,10 @@ test('hidden blocks are omitted and restored in canonical order without erasing 
  assert.deepEqual(richSections({...pdp,enabled:false}),[]);
  assert.equal(pdp.sections[1].body,'Second');
  assert.deepEqual(richSections({...pdp,sections:sections.map(s=>({...s,visible:true}))}).map(s=>s.kind),['result','feature','faq']);
+});
+
+test('new unavailable PDP products say soon without mutating stock or eligibility',()=>{
+ for(const [badge,stock,label] of [['Новинка',0,'Скоро'],['Новинка',1,'В наличии'],['',0,'Нет в наличии'],['Бестселлер',0,'Нет в наличии']]){
+  const p=Object.freeze({badge,stock});assert.equal(pdpStockLabel(p),label);assert.equal(p.stock,stock);
+ }
 });

@@ -1,0 +1,1106 @@
+[
+  {
+    "sku": "1S-BA-02-02",
+    "node": "440:2890",
+    "expected": {
+      "body": "",
+      "kind": "howTo",
+      "items": [
+        {
+          "body": "Нанесите каплю геля, превращая ее в воздушную пену",
+          "media": {
+            "src": "/images/figma/rich-content/273c4a4e8204016c9bfbaf61b2e4ead20e3523d7.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -27.93026,
+              "y": -5.27165,
+              "flipX": false,
+              "flipY": false,
+              "width": 145.16276,
+              "height": 158.11071,
+              "rotation": -16.92
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Мягкая ароматная пена очищает и увлажняет кожу",
+          "media": {
+            "src": "/images/figma/rich-content/43d95a1be3d8413e1e5aba0ae0af3e0eb172b197.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -17.99793,
+              "y": -15.04023,
+              "flipX": false,
+              "flipY": false,
+              "width": 139.98045,
+              "height": 193.3291,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Смойте, ощущая гладкость и питание кожи",
+          "media": {
+            "src": "/images/figma/rich-content/09a437dd75687e77b2f9609e5535dcefe861d086.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -0.3958,
+              "y": 3.57143,
+              "flipX": false,
+              "flipY": true,
+              "width": 100.81034,
+              "height": 143.11357,
+              "rotation": 180
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Наслаждайтесь свежестью и комфортом после душа",
+          "media": {
+            "src": "/images/figma/rich-content/d79b5cb7593fd70e08e94507d4bf3068a730c329.jpg",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 7.23509,
+              "y": -43.69908,
+              "flipX": false,
+              "flipY": false,
+              "width": 125.06679,
+              "height": 194.22782,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        }
+      ],
+      "media": [],
+      "title": "Как использовать ",
+      "additionalBody": ""
+    },
+    "replacement": {
+      "body": "",
+      "kind": "howTo",
+      "items": [
+        {
+          "title": "",
+          "body": "Нанесите каплю геля, превращая ее в воздушную пену",
+          "media": {
+            "src": "/images/figma/rich-content/af33f29eaccc915d19558e4e0259f242528ccd9e.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -27.939642895275778,
+              "y": -9.285114530382543,
+              "width": 145.16284460308907,
+              "height": 166.0161590576172,
+              "rotation": -16.91769547505068,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        },
+        {
+          "title": "",
+          "body": "Мягкая ароматная пена очищает и увлажняет кожу",
+          "media": {
+            "src": "/images/figma/rich-content/eb6550d68a1bc330b8745b6ad9d8dfa2bbb426dd.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -18.007363505747126,
+              "y": -19.542251586914062,
+              "width": 139.9804547189296,
+              "height": 202.99555969238284,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        },
+        {
+          "title": "",
+          "body": "Смойте, ощущая гладкость и питание кожи",
+          "media": {
+            "src": "/images/figma/rich-content/98c5646badf8b3d5291855d270e3690fd1047824.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -0.40522432875359193,
+              "y": 0.0,
+              "width": 100.8104486575072,
+              "height": 150.2693634033203,
+              "rotation": 180,
+              "flipX": false,
+              "flipY": true
+            }
+          }
+        },
+        {
+          "title": "",
+          "body": "Наслаждайтесь свежестью и комфортом после душа",
+          "media": {
+            "src": "/images/figma/rich-content/d79b5cb7593fd70e08e94507d4bf3068a730c329.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 7.225690381280307,
+              "y": -49.634033203125,
+              "width": 125.06678789511494,
+              "height": 203.939208984375,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        }
+      ],
+      "media": [],
+      "title": "Как использовать ",
+      "additionalBody": "",
+      "visualAspectRatio": 1.0875
+    }
+  },
+  {
+    "sku": "1S-HK-02",
+    "node": "520:1929",
+    "expected": {
+      "body": "",
+      "kind": "howTo",
+      "items": [
+        {
+          "body": "Встряхните флакон перед использованием",
+          "media": {
+            "src": "/images/figma/rich-content/b994ce991b106f50468f8906d41815301c341792.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -16.83235,
+              "y": -35.51967,
+              "flipX": false,
+              "flipY": false,
+              "width": 114.85907,
+              "height": 158.61491,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Распылите по длине на расстояние 15-20 см, избегая области у корней",
+          "media": {
+            "src": "/images/figma/rich-content/219c21b70a5577b8791c7d1514f572e743f279cf.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -51.76904,
+              "y": -143.26009,
+              "flipX": false,
+              "flipY": false,
+              "width": 283.9974,
+              "height": 388.14372,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Расчешите для равномерного распределения",
+          "media": {
+            "src": "/images/figma/rich-content/212e325b1c44f27f311d7ff5d396abc088d0c88a.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 0.00943,
+              "y": -7.96515,
+              "flipX": false,
+              "flipY": false,
+              "width": 99.99999,
+              "height": 155.256,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Не смывая, приступите к укладке обычным или «кудрявым» методом",
+          "media": {
+            "src": "/images/figma/rich-content/1ad2db261ec175fa0a95dd61b60b731ef7168a6d.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -3.95339,
+              "y": -27.78367,
+              "flipX": false,
+              "flipY": false,
+              "width": 107.92542,
+              "height": 149.14279,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        }
+      ],
+      "media": [],
+      "title": "Как использовать ",
+      "additionalBody": ""
+    },
+    "replacement": {
+      "body": "",
+      "kind": "howTo",
+      "items": [
+        {
+          "title": "",
+          "body": "Встряхните флакон перед использованием",
+          "media": {
+            "src": "/images/figma/rich-content/58d18263dcdd01a3a6b39214cc8813e57b7cbade.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -16.84180073354436,
+              "y": -36.386004192073166,
+              "width": 114.85907192887932,
+              "height": 162.4835651676829,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        },
+        {
+          "title": "",
+          "body": "Распылите по длине на расстояние 15-20 см, избегая области у корней",
+          "media": {
+            "src": "/images/figma/rich-content/219c21b70a5577b8791c7d1514f572e743f279cf.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -51.77846623563218,
+              "y": -146.7542099371189,
+              "width": 283.9973958333333,
+              "height": 397.61063738567077,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        },
+        {
+          "title": "",
+          "body": "Расчешите для равномерного распределения",
+          "media": {
+            "src": "/images/figma/rich-content/212e325b1c44f27f311d7ff5d396abc088d0c88a.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 0.0,
+              "y": -8.159430899271152,
+              "width": 99.9999929844648,
+              "height": 159.0427305640244,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        },
+        {
+          "title": "",
+          "body": "Не смывая, приступите к укладке обычным или «кудрявым» методом",
+          "media": {
+            "src": "/images/figma/rich-content/1ad2db261ec175fa0a95dd61b60b731ef7168a6d.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -3.9627062041184,
+              "y": -28.461318597560975,
+              "width": 107.9254220545977,
+              "height": 152.78041932641005,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        }
+      ],
+      "media": [],
+      "title": "Как использовать ",
+      "additionalBody": "",
+      "visualAspectRatio": 1.0609756097560976
+    }
+  },
+  {
+    "sku": "1S-HK-04",
+    "node": "523:3742",
+    "expected": {
+      "body": "",
+      "kind": "howTo",
+      "items": [
+        {
+          "body": "Встряхните флакон перед использованием",
+          "media": {
+            "src": "/images/figma/rich-content/96e461a50c182e3ec732caef747ef22af022615f.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -9.63452,
+              "y": -29.9728,
+              "flipX": false,
+              "flipY": false,
+              "width": 107.19602,
+              "height": 148.06803,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Распылите на чистые и подсушенные полотенцем волосы, на расстоянии 15-20 см",
+          "title": ""
+        },
+        {
+          "body": "Расчешите для равномерного распределения",
+          "title": ""
+        },
+        {
+          "body": "Не смывая, приступите к укладке обычным или «кудрявым» методом",
+          "media": {
+            "src": "/images/figma/rich-content/e23ccd6148e84dbae323923a9dedf936e5e976ef.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -0.27299,
+              "y": -14.72703,
+              "flipX": false,
+              "flipY": false,
+              "width": 101.33598,
+              "height": 131.1556,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        }
+      ],
+      "media": [],
+      "title": "Как использовать ",
+      "additionalBody": ""
+    },
+    "replacement": {
+      "body": "",
+      "kind": "howTo",
+      "items": [
+        {
+          "title": "",
+          "body": "Встряхните флакон перед использованием",
+          "media": {
+            "src": "/images/figma/rich-content/ee5902abe8d870db59d2e2fa6bbcbe2cbe937a32.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -9.644700850563488,
+              "y": -30.70383955792683,
+              "width": 107.19602387526939,
+              "height": 151.6794493140244,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        },
+        {
+          "title": "",
+          "body": "Распылите на чистые волосы на расстоянии 15-20 см"
+        },
+        {
+          "title": "",
+          "body": "Расчешите для равномерного распределения"
+        },
+        {
+          "title": "",
+          "body": "Не смывая, приступите к укладке обычным или «кудрявым» методом",
+          "media": {
+            "src": "/images/figma/rich-content/e23ccd6148e84dbae323923a9dedf936e5e976ef.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -0.28185877306707974,
+              "y": -15.08622332317073,
+              "width": 101.33598239942529,
+              "height": 134.35451600609755,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        }
+      ],
+      "media": [],
+      "title": "Как использовать ",
+      "additionalBody": "",
+      "visualAspectRatio": 1.0609756097560976
+    }
+  },
+  {
+    "sku": "1S-HK-03",
+    "node": "523:4499",
+    "expected": {
+      "body": "",
+      "kind": "howTo",
+      "items": [
+        {
+          "body": "Нанеси на чистые влажные волосы по длине, избегая зоны у корней",
+          "media": {
+            "src": "/images/figma/rich-content/ea755d3287a7fb6d8aa1ff512de2afeac2063740.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 6.89655,
+              "y": -11.61761,
+              "flipX": false,
+              "flipY": false,
+              "width": 93.78742,
+              "height": 121.37953,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Равномерно распредели по длине уделив внимание кончикам",
+          "media": {
+            "src": "/images/figma/rich-content/b47136cfab1367493bf3b16702cd8c1e5f6c889a.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 0.00898,
+              "y": -92.06729,
+              "flipX": false,
+              "flipY": false,
+              "width": 151.21498,
+              "height": 234.80863,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Оставь на 1–2 минуты (не требует долгого выдерживания!)",
+          "media": {
+            "src": "/images/figma/rich-content/212e325b1c44f27f311d7ff5d396abc088d0c88a.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 0.00898,
+              "y": -7.96515,
+              "flipX": false,
+              "flipY": false,
+              "width": 99.99999,
+              "height": 155.256,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Тщательно смой прохладной водой для запечатывания кутикулы",
+          "media": {
+            "src": "/images/figma/rich-content/c175740bafc1959e36c651515fc7bc2d7bb517e2.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -107.88748,
+              "y": -141.62621,
+              "flipX": false,
+              "flipY": false,
+              "width": 241.26437,
+              "height": 374.6385,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        }
+      ],
+      "media": [],
+      "title": "Как использовать ",
+      "additionalBody": ""
+    },
+    "replacement": {
+      "body": "",
+      "kind": "howTo",
+      "items": [
+        {
+          "title": "",
+          "body": "Нанеси на чистые влажные волосы по длине, избегая зоны у корней",
+          "media": {
+            "src": "/images/figma/rich-content/f4dbaa9efe69c7c28645732dfbabf0aae38ff69a.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 6.88757183908046,
+              "y": -11.900977157964938,
+              "width": 93.78742086476292,
+              "height": 124.34000154820883,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        },
+        {
+          "title": "",
+          "body": "Равномерно распредели по длине уделив внимание кончикам",
+          "media": {
+            "src": "/images/figma/rich-content/b47136cfab1367493bf3b16702cd8c1e5f6c889a.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 0.0,
+              "y": -94.31279624380716,
+              "width": 151.21497844827587,
+              "height": 240.53566537252286,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        },
+        {
+          "title": "",
+          "body": "Оставь на 1–2 минуты (не требует долгого выдерживания!)",
+          "media": {
+            "src": "/images/figma/rich-content/212e325b1c44f27f311d7ff5d396abc088d0c88a.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 0.0,
+              "y": -8.159430899271152,
+              "width": 99.9999929844648,
+              "height": 159.0427305640244,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        },
+        {
+          "title": "",
+          "body": "Тщательно смой прохладной водой для запечатывания кутикулы",
+          "media": {
+            "src": "/images/figma/rich-content/c175740bafc1959e36c651515fc7bc2d7bb517e2.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -107.89630758351294,
+              "y": -145.0805068597561,
+              "width": 241.26436781609195,
+              "height": 383.7760218178353,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        }
+      ],
+      "media": [],
+      "title": "Как использовать ",
+      "additionalBody": "",
+      "visualAspectRatio": 1.0609756097560976
+    }
+  },
+  {
+    "sku": "1S-HK-01",
+    "node": "527:5280",
+    "expected": {
+      "body": "",
+      "kind": "howTo",
+      "items": [
+        {
+          "body": "Нанеси шампунь на корни волос",
+          "media": {
+            "src": "/images/figma/rich-content/10ff4690c47a4b7aa12fcfe8dcbf00eb4ee4a93f.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 6.38411,
+              "y": -8.63677,
+              "flipX": false,
+              "flipY": false,
+              "width": 92.0023,
+              "height": 119.06905,
+              "rotation": -1.64
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Промассируй подушечками пальцев 1-2 минуты",
+          "media": {
+            "src": "/images/figma/rich-content/a9aa1e61b45c99e4b9abb2611e6eb59a3a3d1991.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -22.58396,
+              "y": -89.24363,
+              "flipX": false,
+              "flipY": false,
+              "width": 145.18566,
+              "height": 198.29125,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Тщательно смой шампунь водой",
+          "media": {
+            "src": "/images/figma/rich-content/212e325b1c44f27f311d7ff5d396abc088d0c88a.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 0.00898,
+              "y": -8.67943,
+              "flipX": false,
+              "flipY": false,
+              "width": 99.99999,
+              "height": 155.256,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Приступите к дальнейшему уходу",
+          "title": ""
+        }
+      ],
+      "media": [],
+      "title": "Как использовать ",
+      "additionalBody": ""
+    },
+    "replacement": {
+      "body": "",
+      "kind": "howTo",
+      "items": [
+        {
+          "title": "",
+          "body": "Нанеси шампунь на корни волос",
+          "media": {
+            "src": "/images/figma/rich-content/4ce2dfbb0c50f22e7c474ab4c42be2708a7592ea.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 6.375159159090253,
+              "y": -8.115696397794677,
+              "width": 92.00221971533765,
+              "height": 121.97323682831555,
+              "rotation": -1.6362935672375523,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        },
+        {
+          "title": "",
+          "body": "Промассируй подушечками пальцев 1-2 минуты",
+          "media": {
+            "src": "/images/figma/rich-content/a9aa1e61b45c99e4b9abb2611e6eb59a3a3d1991.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -22.592887439947017,
+              "y": -90.6885956554878,
+              "width": 145.18565912356323,
+              "height": 203.1276200457317,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        },
+        {
+          "title": "",
+          "body": "Тщательно смой шампунь водой",
+          "media": {
+            "src": "/images/figma/rich-content/212e325b1c44f27f311d7ff5d396abc088d0c88a.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 0.0,
+              "y": -8.159430899271152,
+              "width": 99.9999929844648,
+              "height": 159.0427305640244,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        },
+        {
+          "title": "",
+          "body": "Приступите к дальнейшему уходу",
+          "media": {
+            "src": "/images/figma/rich-content/5aedeec8a68717e030d43ad06078a4ab58b7cac5.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -50.06495684042744,
+              "y": -54.206126143292686,
+              "width": 200.12991368085488,
+              "height": 318.3440120045732,
+              "rotation": 0,
+              "flipX": false,
+              "flipY": false
+            }
+          }
+        }
+      ],
+      "media": [],
+      "title": "Как использовать ",
+      "additionalBody": "",
+      "visualAspectRatio": 1.0609756097560976
+    }
+  },
+  {
+    "sku": "1S-BA-02-01",
+    "node": "457:4920",
+    "expected": {
+      "body": "",
+      "kind": "howTo",
+      "items": [
+        {
+          "body": "Нанесите каплю геля, превращая ее в воздушную пену",
+          "media": {
+            "src": "/images/figma/rich-content/19d1701670bddd164b985e3701d03d841b912f98.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 58.72261,
+              "y": -26.23396,
+              "flipX": false,
+              "flipY": false,
+              "width": 198.67826,
+              "height": 235.0293,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Мягкая ароматная пена очищает и увлажняет кожу",
+          "media": {
+            "src": "/images/figma/rich-content/19d1701670bddd164b985e3701d03d841b912f98.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -45.87509,
+              "y": -26.23396,
+              "flipX": false,
+              "flipY": false,
+              "width": 198.67826,
+              "height": 235.0293,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Смойте, ощущая гладкость и питание кожи",
+          "media": {
+            "src": "/images/figma/rich-content/09a437dd75687e77b2f9609e5535dcefe861d086.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -0.3958,
+              "y": 1.19048,
+              "flipX": false,
+              "flipY": true,
+              "width": 100.81034,
+              "height": 143.11357,
+              "rotation": 180
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Наслаждайтесь свежестью и комфортом после душа",
+          "media": {
+            "src": "/images/figma/rich-content/d79b5cb7593fd70e08e94507d4bf3068a730c329.jpg",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 7.23509,
+              "y": -46.08003,
+              "flipX": false,
+              "flipY": false,
+              "width": 125.06679,
+              "height": 194.22782,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        }
+      ],
+      "media": [],
+      "title": "Как использовать ",
+      "additionalBody": ""
+    },
+    "replacement": {
+      "body": "",
+      "kind": "howTo",
+      "items": [
+        {
+          "body": "Нанесите каплю геля, превращая ее в воздушную пену",
+          "media": {
+            "src": "/images/figma/rich-content/b5cf5272c23debc9b8f1819d22002082c9e295fb.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -27.840713656169104,
+              "y": -8.625023101397057,
+              "width": 145.60472510326866,
+              "height": 162.4180789110137,
+              "rotation": -16.9199993,
+              "flipX": false,
+              "flipY": false
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Мягкая ароматная пена очищает и увлажняет кожу",
+          "media": {
+            "src": "/images/figma/rich-content/19d1701670bddd164b985e3701d03d841b912f98.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -45.87509,
+              "y": -26.87381268292683,
+              "flipX": false,
+              "flipY": false,
+              "width": 198.67826,
+              "height": 240.76172195121953,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Смойте, ощущая гладкость и питание кожи",
+          "media": {
+            "src": "/images/figma/rich-content/09a437dd75687e77b2f9609e5535dcefe861d086.png",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": -0.3958,
+              "y": 1.2195160975609756,
+              "flipX": false,
+              "flipY": true,
+              "width": 100.81034,
+              "height": 146.6041448780488,
+              "rotation": 180
+            }
+          },
+          "title": ""
+        },
+        {
+          "body": "Наслаждайтесь свежестью и комфортом после душа",
+          "media": {
+            "src": "/images/figma/rich-content/d79b5cb7593fd70e08e94507d4bf3068a730c329.jpg",
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "layout": {
+              "x": 7.23509,
+              "y": -47.20393317073171,
+              "flipX": false,
+              "flipY": false,
+              "width": 125.06679,
+              "height": 198.96508390243903,
+              "rotation": 0
+            }
+          },
+          "title": ""
+        }
+      ],
+      "media": [],
+      "title": "Как использовать ",
+      "additionalBody": "",
+      "visualAspectRatio": 1.0609756097560976
+    }
+  }
+]

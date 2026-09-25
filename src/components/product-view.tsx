@@ -1,6 +1,6 @@
 "use client";
 import {ProductRichContent} from './product-rich-content';
-import {pdpRecommendations} from '@/lib/pdp-presentation';
+import {pdpRecommendations,pdpStockLabel} from '@/lib/pdp-presentation';
 import {ProductReviews} from './customer-engagement';
 import { CarouselArrow } from "@/components/carousel-arrow";
 
@@ -154,7 +154,7 @@ export function ProductView({ productId }: { productId: string }) {
             <strong>{formatPrice(product.price)}</strong>
             {product.oldPrice > product.price && <span>{formatPrice(product.oldPrice)}</span>}
           </div>
-          <p className={styles.stock}>{product.stock > 0 ? "В наличии" : "Нет в наличии"}</p>
+          <p className={styles.stock}>{pdpStockLabel(product)}</p>
 
           <div ref={mainActions} data-main-buy><div className={styles.buyArea}>
             {quantity && product.stock>0 ? (
@@ -171,13 +171,13 @@ export function ProductView({ productId }: { productId: string }) {
             {quantity > 0 && <Link className={styles.checkoutLink} href={catalogOnly ? "/cart" : "/checkout"}>Перейти к оформлению</Link>}
           </div>
 
-          <YandexBuyButton sku={product.sku} stock={product.stock} quantity={quantity || 1} /></div>
+          <div className={styles.oneClick}><YandexBuyButton sku={product.sku} stock={product.stock} quantity={quantity || 1} /></div></div>
           <ul className={styles.features}>
             {product.features.map((feature) => <li key={feature}>{feature}</li>)}
           </ul>
 
           <div className={styles.accordions}>
-            <details open>
+            <details>
               <summary>Как использовать</summary>
               <p>{product.usage}</p>
               <Link className={styles.instructionLink} href={`/instructions/${product.id}`}>Подробная инструкция →</Link>

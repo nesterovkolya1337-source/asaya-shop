@@ -1,6 +1,6 @@
 import {parseImageCrop} from './image-crop.ts';
 
-export const pdpNodes=['440:2890','457:3502','457:4268','457:4920','457:5317','418:3505','418:3744','418:3983','418:4215','418:4470','418:4726','418:4981','418:2286','300:1010','315:1453','315:1859','315:2680','315:3149','334:1380','335:1878','315:1065','354:1485','360:1710','368:1627','383:2020'] as const;
+export const pdpNodes=['520:1929','523:3742','523:4499','527:5280','530:5905','504:1878','511:3538','440:2890','457:3502','457:4268','457:4920','457:5317','418:3505','418:3744','418:3983','418:4215','418:4470','418:4726','418:4981','418:2286','300:1010','315:1453','315:1859','315:2680','315:3149','334:1380','335:1878','315:1065','354:1485','360:1710','368:1627','383:2020'] as const;
 export type PdpMedia={src:string;crop?:string;frame?:{x:number;y:number;width:number;height:number};layout?:{x:number;y:number;width:number;height:number;rotation:number;flipX:boolean;flipY:boolean}};
 export type PdpSection={visible?:boolean;eyebrow?:string;visualAspectRatio?:number;kind:'result'|'feature'|'ingredients'|'howTo'|'lifehack'|'fragrance'|'faq';title:string;body:string;additionalBody:string;media:PdpMedia[];items:Array<{title:string;body:string;media?:PdpMedia}>};
 export type PdpContent={enabled?:boolean;version:1;node:typeof pdpNodes[number];sections:PdpSection[];recommendations:string[]};

@@ -8,3 +8,7 @@ export function richSections(pdp?:PdpContent):PdpSection[]{
 export function pdpRecommendations(products:Product[],product:Product,cartIds:string[]=[]){
  return selectRecommendations(products,[product.id],[],cartIds);
 }
+
+export function pdpStockLabel(product:Pick<Product,"stock"|"badge">):string {
+ return product.stock>0?"В наличии":product.badge==="Новинка"?"Скоро":"Нет в наличии";
+}
