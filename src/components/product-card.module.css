@@ -275,3 +275,17 @@
 @media(max-width:620px){.actions{left:8px;right:8px;bottom:8px}.image{padding:34px 10px 120px}}
 
 svg.image{position:absolute;inset:0;width:100%;height:100%;box-sizing:border-box}
+
+/* Media and content occupy separate normal-flow rows at every card width. */
+.card{display:flex;flex-direction:column;aspect-ratio:auto;min-height:0;height:100%}
+.visualLink{position:relative;inset:auto;display:block;flex:none;aspect-ratio:370/370;overflow:hidden}
+.image{padding:38px 18px 12px}
+.info{position:static;display:grid;align-items:stretch;gap:12px;padding:12px 20px 0;pointer-events:auto}
+.meta{min-width:0}.meta h3{max-width:none;min-height:2.4em;margin:8px 0 0}
+.price{display:flex;justify-content:flex-start;align-items:baseline;gap:10px}
+.actions{position:static;padding:14px 11px 10px;margin-top:auto}
+@media(max-width:620px){
+ .visualLink{aspect-ratio:168/220}.image{padding:34px 10px 10px}
+ .info{padding:10px 10px 0;gap:9px}.meta h3{font-size:12px;line-height:1.25;min-height:2.5em;margin-top:6px}
+ .price{font-size:13px;gap:6px}.actions{padding:12px 8px 8px}
+}

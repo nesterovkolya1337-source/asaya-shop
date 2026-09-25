@@ -1181,3 +1181,5 @@
  .features{gap:12px;margin-top:22px}.features li{font-size:15px;line-height:1.45}
  .accordions{margin-top:24px}.accordions summary{padding-block:17px;font-size:17px}
 }
+
+@media(min-width:901px){.features{grid-template-columns:auto auto minmax(0,1fr);gap:8px}.features li{font-size:14px;letter-spacing:-.25px;gap:5px;white-space:nowrap;padding:0}}

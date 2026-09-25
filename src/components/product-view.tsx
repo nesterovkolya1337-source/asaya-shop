@@ -84,6 +84,7 @@ export function ProductView({ productId }: { productId: string }) {
 
         <div className={styles.details} tabIndex={0} role="region" aria-label="Информация о товаре">
 
+          <ProductRating rating={product.rating} count={product.reviews}/>
           <div className={styles.titleRow}>
             <h1 id="product-title">{product.name}</h1>
             <button
@@ -96,7 +97,6 @@ export function ProductView({ productId }: { productId: string }) {
               <Image alt="" height={23} src={assetPath("/images/figma/heart.svg")} width={25} />
             </button>
           </div>
-          <ProductRating rating={product.rating} count={product.reviews}/>
           <p className={styles.description}>{product.description}</p>
 
           <div className={styles.priceBlock}>

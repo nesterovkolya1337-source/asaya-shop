@@ -3,7 +3,7 @@
 import {placedProducts} from '@/lib/product-placement';
 import Image from "next/image";
 import Link from "next/link";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, useRef } from "react";
 import { ProductCard } from "@/components/product-card";
 import { useShop } from "@/components/shop-provider";
 import { assetPath } from "@/lib/asset-path";
@@ -52,6 +52,8 @@ export function CatalogView({ initialFilter = "all" }: { initialFilter?: Filter 
   const { products, catalogOnly, catalogStatus } = useShop();
   const [filter, setFilter] = useState<Filter>(initialFilter);
   const [search, setSearch] = useState("");
+  const sortMenu=useRef<HTMLDetailsElement>(null);
+  const [filtersOpen,setFiltersOpen]=useState(true);
   const [sort, setSort] = useState<Sort>("featured");
 
   useEffect(() => {
@@ -95,7 +97,7 @@ export function CatalogView({ initialFilter = "all" }: { initialFilter?: Filter 
 
       <section className={styles.catalog} aria-labelledby="catalog-title">
         <div className={styles.controls}>
-          <div className={styles.filters} aria-label="Фильтр по категориям">
+          <div className={styles.filters} aria-label="Фильтр по категориям" id="catalog-filters" hidden={!filtersOpen}>
             {filters.map((item) => (
               <button
                 aria-pressed={filter === item.id}
@@ -119,7 +121,13 @@ export function CatalogView({ initialFilter = "all" }: { initialFilter?: Filter 
               />
               <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg>
             </label>
-            <label className={styles.sort}><span className={styles.srOnly}>Сортировка</span><select onChange={(event) => setSort(event.target.value as Sort)} value={sort}><option value="featured">По умолчанию</option><option value="price-asc">Сначала дешевле</option><option value="price-desc">Сначала дороже</option><option value="name">По названию</option></select></label>
+            <div className={styles.sortControls}>
+              <button className={styles.filterControl} type="button" aria-expanded={filtersOpen} aria-controls="catalog-filters" onClick={()=>setFiltersOpen(v=>!v)}>Фильтры <span aria-hidden="true">☷</span></button>
+              <details className={styles.sort} ref={sortMenu} onKeyDown={e=>{if(e.key==='Escape'){e.currentTarget.open=false;e.currentTarget.querySelector('summary')?.focus();}}} onBlur={e=>{if(!e.currentTarget.contains(e.relatedTarget))e.currentTarget.open=false;}}>
+                <summary aria-label="Сортировка">{{featured:'По умолчанию','price-asc':'Сначала дешевле','price-desc':'Сначала дороже',name:'По названию'}[sort]}<span aria-hidden="true">⌄</span></summary>
+                <div className={styles.sortOptions}>{([['featured','По умолчанию'],['price-asc','Сначала дешевле'],['price-desc','Сначала дороже'],['name','По названию']] as const).map(([value,label])=><button key={value} type="button" aria-pressed={sort===value} onClick={()=>{setSort(value);if(sortMenu.current){sortMenu.current.open=false;sortMenu.current.querySelector('summary')?.focus();}}}>{label}</button>)}</div>
+              </details>
+            </div>
           </div>
         </div>
 

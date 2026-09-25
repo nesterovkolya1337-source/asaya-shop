@@ -46,8 +46,8 @@ export function ProductCard({ product, recommendation=false,interactionsDisabled
       </button>
       <div className={styles.info}>
         <div className={styles.meta}>
+          <ProductRating rating={product.rating} count={product.reviews} compact/>
           <h3>{product.name}</h3>
-          <ProductRating rating={product.rating} count={product.reviews}/>
         </div>
         <div className={styles.price}>
           <strong>{formatPrice(product.price)}</strong>
