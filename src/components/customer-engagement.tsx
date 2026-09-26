@@ -27,6 +27,9 @@ export function CustomerEngagement({session,onExpired,section,onReminders}:{sess
 type PublicReview={id:string;rating:number;body:string;reply:string|null;created_at:string;author_display_name:string};
 export function ProductReviews({sku,slug}:{sku:string;slug:string}){
  const rail=useRef<HTMLDivElement>(null),loadingMore=useRef(false);
+ const [visible,setVisible]=useState(1);
+ useEffect(()=>{const update=()=>setVisible(window.innerWidth>=1100?3:window.innerWidth>620?2:1);update();window.addEventListener('resize',update);return()=>window.removeEventListener('resize',update);},[]);
+ const scrollReview=(at:number)=>{const el=rail.current,child=el?.children[at] as HTMLElement|undefined,first=el?.children[0] as HTMLElement|undefined;if(el&&child&&first)el.scrollTo({left:child.offsetLeft-first.offsetLeft,behavior:'smooth'});};
  const [index,setIndex]=useState(0),[moreError,setMoreError]=useState(false),[busyMore,setBusyMore]=useState(false);
  const [nextOffset,setNextOffset]=useState<number|null>(null);
  const [aggregate,setAggregate]=useState<{count:number;average:number|null}>({count:0,average:null});
@@ -37,21 +40,23 @@ export function ProductReviews({sku,slug}:{sku:string;slug:string}){
  void request('account/engagement','GET').then(v=>{if(active)setEligible((v as Data).products.some(p=>p.slug===slug&&!p.reviewed));}).catch(()=>{});
  return ()=>{active=false;};},[sku,slug]);
  async function next(){
-  if(index<items.length-1){rail.current?.scrollTo({left:(index+1)*rail.current.clientWidth,behavior:'smooth'});return;}
+  if(index+visible<items.length){scrollReview(index+1);return;}
   if(nextOffset===null||loadingMore.current)return;
   loadingMore.current=true;setBusyMore(true);setMoreError(false);
   try{const v=await request('reviews/'+encodeURIComponent(sku)+'?offset='+nextOffset,'GET') as {items:PublicReview[];nextOffset:number|null};setItems(items=>[...items,...v.items]);setNextOffset(v.nextOffset);
-   requestAnimationFrame(()=>rail.current?.scrollTo({left:(index+1)*rail.current.clientWidth,behavior:'smooth'}));
+   requestAnimationFrame(()=>scrollReview(index+1));
   }catch{setMoreError(true);}finally{loadingMore.current=false;setBusyMore(false);}
  }
+ const [railHeight,setRailHeight]=useState<number>();
+ useEffect(()=>{const el=rail.current;if(!el)return;const cards=Array.from(el.children).slice(index,index+visible);const measure=()=>setRailHeight(Math.max(0,...cards.map(c=>c.getBoundingClientRect().height)));const observer=new ResizeObserver(measure);cards.forEach(c=>observer.observe(c));measure();return()=>observer.disconnect();},[items,index,visible]);
  const average=aggregate.average??0;
  return <section className={reviewStyles.section} aria-label="Отзывы" data-product-reviews>
   <header className={reviewStyles.heading}><div><h2>Отзывы</h2>{aggregate.count>0&&<div className={reviewStyles.aggregate}><strong>{average.toLocaleString('ru-RU',{maximumFractionDigits:1})}</strong><span aria-label={`Средняя оценка ${average.toFixed(1)} из 5`}>{'★'.repeat(Math.round(average))}{'☆'.repeat(5-Math.round(average))}</span><span>На основе {aggregate.count} отзывов</span></div>}</div>{eligible&&<a className={reviewStyles.action} href={assetPath('/account/#reviews')}>Оставить отзыв</a>}</header>
   {status!=='ready'?<p className={reviewStyles.empty} role="status">{status==='loading'?'Загружаем отзывы…':'Не удалось загрузить отзывы. Попробуйте обновить страницу.'}</p>:!items.length?<div className={reviewStyles.empty}><h3>Отзывов пока нет</h3><p>☆☆☆☆☆ · 0 отзывов</p><p>Здесь появятся впечатления покупателей об этом товаре.</p></div>:<>
-   <div className={reviewStyles.list} ref={rail} tabIndex={0} aria-label="Карусель отзывов" onScroll={e=>setIndex(Math.round(e.currentTarget.scrollLeft/e.currentTarget.clientWidth))}>
-    {items.map((r,i)=><article key={r.id} className={reviewStyles.card} aria-label={`Отзыв ${i+1} из ${aggregate.count}`}><div className={reviewStyles.meta}><h3>Покупатель</h3><strong>{r.author_display_name}</strong>{r.created_at&&<time dateTime={r.created_at}>{new Date(r.created_at).toLocaleDateString('ru-RU')}</time>}</div><div className={reviewStyles.reviewContent}><p className={reviewStyles.stars} aria-label={`Оценка ${r.rating} из 5`}>{'★'.repeat(r.rating)}{'☆'.repeat(5-r.rating)}</p><h3>Достоинства</h3>{r.body&&<p className={reviewStyles.body}>{r.body}</p>}<h3>Недостатки</h3><p className={reviewStyles.body}>Нет</p>{r.reply&&<div className={reviewStyles.reply}><strong>Ответ ASAYA</strong><p>{r.reply}</p></div>}</div></article>)}
+   <div className={reviewStyles.carousel}><div className={reviewStyles.list} style={{height:railHeight}} ref={rail} tabIndex={0} aria-label="Карусель отзывов" onScroll={e=>{const el=e.currentTarget,first=el.children[0] as HTMLElement,second=el.children[1] as HTMLElement|undefined;setIndex(second?Math.round(el.scrollLeft/(second.offsetLeft-first.offsetLeft)):0);}}>
+    {items.map((r,i)=><article key={r.id} className={reviewStyles.card} aria-label={`Отзыв ${i+1} из ${aggregate.count}`}><div className={reviewStyles.meta}><strong>{r.author_display_name}</strong>{r.created_at&&<time dateTime={r.created_at}>{new Date(r.created_at).toLocaleDateString('ru-RU')}</time>}</div><div className={reviewStyles.reviewContent}><p className={reviewStyles.stars} aria-label={`Оценка ${r.rating} из 5`}>{'★'.repeat(r.rating)}{'☆'.repeat(5-r.rating)}</p><h3>Достоинства</h3>{r.body&&<p className={reviewStyles.body}>{r.body}</p>}<h3>Недостатки</h3><p className={reviewStyles.body}>Нет</p>{r.reply&&<div className={reviewStyles.reply}><strong>Ответ ASAYA</strong><p>{r.reply}</p></div>}</div></article>)}
    </div>
-   <div className={reviewStyles.controls}><button type="button" aria-label="Предыдущий отзыв" disabled={index===0} onClick={()=>rail.current?.scrollTo({left:(index-1)*rail.current.clientWidth,behavior:'smooth'})}><CarouselArrow previous/></button><span aria-live="polite">{index+1} / {aggregate.count}</span><button type="button" aria-label="Следующий отзыв" disabled={busyMore||(index>=items.length-1&&nextOffset===null)} onClick={()=>void next()}><CarouselArrow/></button></div>
+   <div className={reviewStyles.controls}><button type="button" aria-label="Предыдущий отзыв" disabled={index===0} onClick={()=>scrollReview(index-1)}><CarouselArrow previous/></button><span aria-live="polite">{index+1}–{Math.min(index+visible,items.length)} / {aggregate.count}</span><button type="button" aria-label="Следующий отзыв" disabled={busyMore||(index+visible>=items.length&&nextOffset===null)} onClick={()=>void next()}><CarouselArrow/></button></div></div>
    {moreError&&<p role="status">Не удалось загрузить следующий отзыв. Нажмите стрелку ещё раз.</p>}
   </>}
  </section>;

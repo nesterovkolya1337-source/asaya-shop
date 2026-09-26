@@ -1,4 +1,5 @@
 "use client";
+import {readPdpOrder} from '../../backend/src/pdp-order';
 import {ProductRating} from './product-rating';
 import {ProductPurchaseActions} from './product-purchase-actions';
 import {ProductRichContent} from './product-rich-content';
@@ -20,9 +21,12 @@ export function ProductView({ productId }: { productId: string }) {
   const [activeImage, setActiveImage] = useState(0);
   const product = products.find((item) => item.id === productId && item.active);
 
+  const [pdpOrder,setPdpOrder]=useState(()=>readPdpOrder(null));
+  useEffect(()=>{const controller=new AbortController();void fetch(assetPath('/api/store/v1/appearance'),{cache:'no-store',signal:controller.signal}).then(r=>{if(!r.ok)throw new Error('appearance');return r.json();}).then(v=>setPdpOrder(readPdpOrder(v.order))).catch(()=>{});return()=>controller.abort();},[]);
   const mainActions = useRef<HTMLDivElement>(null);
   const [showSticky, setShowSticky] = useState(false);
   useEffect(() => {
+    if(window.matchMedia('(max-width:760px)').matches){setShowSticky(true);return;}
     setShowSticky(false);
     const target = mainActions.current;
     if (!target) return;
@@ -135,10 +139,7 @@ export function ProductView({ productId }: { productId: string }) {
         </div>
       </section>
 
-      {product.sku&&<ProductReviews sku={product.sku} slug={product.id}/>}
-      <ProductRichContent content={product.pdp} sku={product.sku}/>
-
-      <ProductRecommendations products={recommendations}/>
+      {pdpOrder.map(block=><div className={styles.pdpSection} key={block} data-pdp-block={block}>{block==='reviews'?(product.sku&&<ProductReviews sku={product.sku} slug={product.id}/>):block==='richContent'?<ProductRichContent content={product.pdp} sku={product.sku}/>:<ProductRecommendations products={recommendations}/>}</div>)}
       <aside data-visible={showSticky} className={styles.stickyBuy} aria-label="Быстрая покупка">
         <div><small>{product.name}</small><strong>{formatPrice(product.price)}</strong></div>
         <ProductPurchaseActions product={product} addLabel="Добавить в корзину"/>

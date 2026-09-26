@@ -34,3 +34,18 @@ test('existing image crop survives save/reopen/re-crop without changing source, 
  await c.saveStock(actor,id,{enabled:false,quantity:5,revision:1});assert.equal((await commerce.catalog(true)).find(p=>p.sku==='CROP-OLD')!.available,0);assert.equal((await c.stock(id)).quantity,5);
  assert.equal((await ctx.db.pool.query('SELECT 1 FROM inventory_reservations')).rowCount,0);
 });
+
+test('appearance order persists globally, rejects invalid permutations, protects concurrent edits and other settings',async()=>{
+ const c=new StorefrontControls(ctx.db),admin=randomUUID(),buyer=randomUUID();await ctx.db.pool.query("INSERT INTO users(id,role) VALUES($1,'admin'),($2,'customer')",[admin,buyer]);
+ const before=await c.banner(),sales=await c.sales(),initial=await c.appearance();
+ assert.deepEqual(initial.order,['reviews','richContent','recommendations']);
+ const v={order:['recommendations','reviews','richContent'],revision:initial.revision};
+ await assert.rejects(c.saveAppearance(buyer,v),/FORBIDDEN/);
+ for(const order of [['reviews','reviews','richContent'],['product','reviews','richContent'],['reviews']])await assert.rejects(c.saveAppearance(admin,{...v,order}));
+ await c.saveAppearance(admin,v);assert.deepEqual((await c.appearance()).order,v.order);
+ await assert.rejects(c.saveAppearance(admin,v),/EDIT_CONFLICT/);
+ assert.deepEqual(await c.banner(),before);assert.deepEqual(await c.sales(),sales);
+ const app=await buildApp({db:ctx.db,otpSecret:'appearance-secret-at-least-32-characters',staffSecret:'appearance-staff-at-least-32-characters',otpSender:new DisabledOtpSender(),origin:'http://localhost:3200',secureCookies:false});
+ try{assert.deepEqual((await app.inject('/api/store/v1/appearance')).json(),{order:v.order});assert.equal((await app.inject({method:'PUT',url:'/api/admin/v1/appearance',payload:v,headers:{origin:'http://localhost:3200'}})).statusCode,401);}finally{await app.close();}
+ await ctx.db.pool.query("UPDATE storefront_banner SET pdp_order='[]'::jsonb WHERE singleton");assert.deepEqual((await c.appearance()).order,initial.order);
+});

@@ -45,8 +45,8 @@ export function ProductCard({ product, recommendation=false,interactionsDisabled
         <Image alt="" height={21} src={assetPath("/images/figma/heart.svg")} width={23} />
       </button>
       <div className={styles.info}>
+        <div className={styles.rating}><ProductRating rating={product.rating} count={product.reviews} compact/></div>
         <div className={styles.meta}>
-          <ProductRating rating={product.rating} count={product.reviews} compact/>
           <h3>{product.name}</h3>
         </div>
         <div className={styles.price}>

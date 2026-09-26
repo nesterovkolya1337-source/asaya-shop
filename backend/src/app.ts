@@ -245,6 +245,8 @@ export async function buildApp(options:{promoLocalPreview?:boolean;stock?:StockS
   for(const action of ['save','publish','restore','defaults'] as const)secured.post('/api/admin/v1/marketing/'+action,async req=>marketing.change(await actor(req.cookies[staffCookie]),action,req.body));
   secured.get('/api/admin/v1/sales',async()=>controls.sales());
   secured.put('/api/admin/v1/sales',async req=>controls.saveSales(await actor(req.cookies[staffCookie]),req.body));
+  secured.get('/api/admin/v1/appearance',async()=>controls.appearance());
+  secured.put('/api/admin/v1/appearance',async req=>controls.saveAppearance(await actor(req.cookies[staffCookie]),req.body));
   secured.get('/api/admin/v1/banner',async()=>controls.banner());
   secured.put('/api/admin/v1/banner',async req=>controls.saveBanner(await actor(req.cookies[staffCookie]),req.body));
   secured.get('/api/admin/v1/products/:id/test-stock',async req=>controls.stock(id(req.params)));
@@ -267,6 +269,7 @@ export async function buildApp(options:{promoLocalPreview?:boolean;stock?:StockS
    return {...quote,loyalty:{cashbackPoints:loyaltyAmounts(quote.subtotalMinor,loyalty.balance,0,quote.settings.loyalty).cashbackPoints,balance:loyalty.balance,maximum:loyaltyAmounts(quote.subtotalMinor,loyalty.balance,0,quote.settings.loyalty).maximum,redemptionAvailable:false}};
   }catch(e){if(e instanceof DomainError&&e.code==='UNAUTHENTICATED')return {...quote,loyalty:null};throw e;}
  });
+ app.get('/api/store/v1/appearance',async()=>{const {order}=await controls.appearance();return {order};});
  app.get('/api/store/v1/banner',async()=>{const {revision,...banner}=await controls.banner();return banner;});
  app.get('/health/live',async()=>({status:'ok'}));
  if(options.cdekTracking)app.post('/api/integrations/cdek/:key',{config:{cdekWebhook:true}},async req=>{await options.cdekTracking!.service.webhook(req.body);return {ok:true};});

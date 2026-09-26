@@ -2,6 +2,7 @@ import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
 import {Database,lock,type Tx} from './db.js';
 import {DomainError} from './core.js';
+import {isPdpOrder,readPdpOrder} from './pdp-order.js';
 const revision=z.number().int().nonnegative();
 export const bannerSchema=z.object({enabled:z.boolean(),message:z.string().trim().max(2000),buttonText:z.string().trim().max(100),buttonUrl:z.string().trim().max(1000).refine(v=>!v||/^\/(?!\/)[^\s\\]*$/.test(v)||(()=>{try{const u=new URL(v);return u.protocol==='https:'&&!u.username&&!u.password;}catch{return false;}})()),revision}).strict().refine(v=>!v.enabled||!!v.message);
 export const testStockSchema=z.object({enabled:z.boolean(),quantity:z.number().int().min(0).max(1000000),revision}).strict();
@@ -10,6 +11,8 @@ export async function salesEnabled(db:Pick<Tx,'query'>,holdLock=false){return (a
 export async function requireSales(db:Pick<Tx,'query'>){if(!await salesEnabled(db,true))throw new DomainError('SALES_CLOSED',409);}
 export class StorefrontControls{
  constructor(private db:Database,private production=true){}
+ async appearance(){const r=(await this.db.pool.query('SELECT pdp_order,appearance_revision FROM storefront_banner WHERE singleton')).rows[0];return {order:readPdpOrder(r?.pdp_order),revision:r?.appearance_revision??0};}
+ async saveAppearance(actor:string,raw:unknown){const v=z.object({order:z.unknown().refine(isPdpOrder),revision}).strict().parse(raw);return this.db.transaction(async tx=>{await admin(tx,actor);const result=await tx.query('UPDATE storefront_banner SET pdp_order=$1,appearance_revision=appearance_revision+1 WHERE singleton AND appearance_revision=$2 RETURNING appearance_revision',[JSON.stringify(v.order),v.revision]);if(!result.rowCount)throw new DomainError('EDIT_CONFLICT',409);await tx.query("INSERT INTO audit_log(id,actor_id,action,entity_id,detail) VALUES($1,$2,'storefront.appearance.saved','storefront',$3)",[randomUUID(),actor,JSON.stringify(v)]);return {order:readPdpOrder(v.order),revision:result.rows[0].appearance_revision};});}
  async sales(){const r=(await this.db.pool.query('SELECT sales_enabled,sales_revision FROM storefront_banner WHERE singleton')).rows[0];return {enabled:r.sales_enabled,revision:r.sales_revision};}
  async saveSales(actor:string,raw:unknown){const v=z.object({enabled:z.boolean(),revision}).strict().parse(raw);return this.db.transaction(async tx=>{await admin(tx,actor);const r=await tx.query('UPDATE storefront_banner SET sales_enabled=$1,sales_revision=sales_revision+1 WHERE singleton AND sales_revision=$2 RETURNING sales_revision',[v.enabled,v.revision]);if(!r.rowCount)throw new DomainError('EDIT_CONFLICT',409);await tx.query("INSERT INTO audit_log(id,actor_id,action,entity_id,detail) VALUES($1,$2,'storefront.sales.saved','storefront',$3)",[randomUUID(),actor,JSON.stringify(v)]);return {enabled:v.enabled,revision:r.rows[0].sales_revision};});}
  async banner(){const r=(await this.db.pool.query('SELECT * FROM storefront_banner WHERE singleton')).rows[0];return {enabled:r.enabled,message:r.message,buttonText:r.button_text,buttonUrl:r.button_url,revision:r.revision};}

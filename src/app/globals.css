@@ -84,3 +84,7 @@ button {
 [data-site-editable="true"][data-selected="true"]{outline:3px solid #7651aa;outline-offset:-3px}
 
 body:has(nav[aria-label="Разделы админки"]), body:has(main [data-admin]) { font-family: var(--font-gramatika); }
+
+@media(max-width:760px){html{scroll-padding-top:110px}main :is(section,[id]){scroll-margin-top:110px}}
+
+@media(max-width:760px){body:has([aria-label="Быстрая покупка"],main[data-cart-sticky="true"]) footer{padding-bottom:calc(96px + env(safe-area-inset-bottom))}}

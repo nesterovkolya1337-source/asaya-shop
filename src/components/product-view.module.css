@@ -1183,3 +1183,11 @@
 }
 
 @media(min-width:901px){.features{grid-template-columns:auto auto minmax(0,1fr);gap:8px}.features li{font-size:14px;letter-spacing:-.25px;gap:5px;white-space:nowrap;padding:0}}
+
+@media(max-width:760px){
+ .stickyBuy[data-visible="false"]{display:grid}
+ .stickyBuy>[data-purchase-actions],.stickyBuy>[data-purchase-actions] button{font-size:15px}
+ .main,.main:has(.stickyBuy[data-visible]){padding-bottom:24px}
+}
+.pdpSection{order:0;min-width:0}.pdpSection:empty{display:none}
+@media(max-width:620px){.recommendationGrid{grid-auto-columns:60%}}

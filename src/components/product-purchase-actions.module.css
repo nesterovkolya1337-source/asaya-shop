@@ -10,3 +10,5 @@
 .compact{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;--purchase-height:38px;font-size:14px}
 .compact:not(:has(.quick)){grid-template-columns:1fr}
 @media(max-width:620px){.compact{font-size:10px;--purchase-height:34px;gap:4px}.compact .quick button{padding:4px 2px}.compact .stepper button{font-size:18px}}
+
+.actions{font-size:20px}.compact{font-size:16px}@media(max-width:620px){.compact{font-size:12px}}
